@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/community_post.dart';
 import '../services/community_service.dart';
 
+import '../config/supabase_config.dart';
+
 // Service Provider
 final communityServiceProvider =
-    Provider<CommunityService>((ref) => CommunityService());
+    Provider<CommunityService>((ref) => CommunityService(SupabaseConfig.client));
 
 // 커뮤니티 게시글 목록 Provider
 final communityPostsProvider =

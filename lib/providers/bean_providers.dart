@@ -3,9 +3,11 @@ import '../models/coffee_bean.dart';
 import '../services/coffee_bean_service.dart';
 import 'auth_provider.dart';
 
+import '../config/supabase_config.dart';
+
 // Service Provider
 final coffeeBeanServiceProvider =
-    Provider<CoffeeBeanService>((ref) => CoffeeBeanService());
+    Provider<CoffeeBeanService>((ref) => CoffeeBeanService(SupabaseConfig.client));
 
 // 원두 목록 Provider
 final beansProvider = FutureProvider.family<List<CoffeeBean>, BeanFilters>(

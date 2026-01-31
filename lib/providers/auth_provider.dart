@@ -3,8 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 
+import '../config/supabase_config.dart';
+
 // AuthService Provider
-final authServiceProvider = Provider<AuthService>((ref) => AuthService());
+final authServiceProvider = Provider<AuthService>((ref) => AuthService(SupabaseConfig.client));
 
 // 현재 인증 상태 Provider
 final authStateProvider = StreamProvider<AuthState>((ref) {

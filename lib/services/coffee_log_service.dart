@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
-import '../config/supabase_config.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/coffee_log.dart';
 
 class CoffeeLogService {
-  final _client = SupabaseConfig.client;
+  final SupabaseClient _client;
+
+  CoffeeLogService(this._client);
 
   // 커피 로그 목록 조회
   Future<List<CoffeeLog>> getLogs({

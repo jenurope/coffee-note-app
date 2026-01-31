@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
-import '../config/supabase_config.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/coffee_bean.dart';
 import '../models/bean_detail.dart';
 import '../models/brew_detail.dart';
 
 class CoffeeBeanService {
-  final _client = SupabaseConfig.client;
+  final SupabaseClient _client;
+
+  CoffeeBeanService(this._client);
 
   // 원두 목록 조회 (검색, 정렬, 필터 지원)
   Future<List<CoffeeBean>> getBeans({

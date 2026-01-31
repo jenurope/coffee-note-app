@@ -1,11 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../config/supabase_config.dart';
+
 import '../models/user_profile.dart';
 
 class AuthService {
-  final _client = SupabaseConfig.client;
-  final _auth = SupabaseConfig.auth;
+  final SupabaseClient _client;
+  late final GoTrueClient _auth;
+
+  AuthService(this._client) {
+    _auth = _client.auth;
+  }
 
   // 현재 사용자 가져오기
   User? get currentUser => _auth.currentUser;

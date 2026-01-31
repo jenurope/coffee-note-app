@@ -3,9 +3,11 @@ import '../models/coffee_log.dart';
 import '../services/coffee_log_service.dart';
 import 'auth_provider.dart';
 
+import '../config/supabase_config.dart';
+
 // Service Provider
 final coffeeLogServiceProvider =
-    Provider<CoffeeLogService>((ref) => CoffeeLogService());
+    Provider<CoffeeLogService>((ref) => CoffeeLogService(SupabaseConfig.client));
 
 // 커피 로그 목록 Provider
 final coffeeLogsProvider = FutureProvider.family<List<CoffeeLog>, LogFilters>(

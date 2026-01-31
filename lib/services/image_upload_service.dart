@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../config/supabase_config.dart';
+
 
 class ImageUploadService {
-  final _client = SupabaseConfig.client;
+  final SupabaseClient _client;
   final _imagePicker = ImagePicker();
+
+  ImageUploadService(this._client);
 
   /// 갤러리에서 이미지 선택
   Future<XFile?> pickImageFromGallery() async {

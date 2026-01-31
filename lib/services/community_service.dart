@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
-import '../config/supabase_config.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/community_post.dart';
 
 class CommunityService {
-  final _client = SupabaseConfig.client;
+  final SupabaseClient _client;
+
+  CommunityService(this._client);
 
   // 게시글 목록 조회
   Future<List<CommunityPost>> getPosts({
