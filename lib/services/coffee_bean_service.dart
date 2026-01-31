@@ -130,11 +130,7 @@ class CoffeeBeanService {
   // 원두 삭제
   Future<void> deleteBean(String id) async {
     try {
-      // 먼저 관련 데이터 삭제
-      await _client.from('bean_details').delete().eq('coffee_bean_id', id);
-      await _client.from('brew_details').delete().eq('coffee_bean_id', id);
-
-      // 원두 삭제
+      // Supabase의 Cascade Delete가 설정되어 있으므로 원두만 삭제하면 됩니다.
       await _client.from('coffee_beans').delete().eq('id', id);
     } catch (e) {
       debugPrint('Delete bean error: $e');
