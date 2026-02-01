@@ -35,7 +35,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      await ref.read(authNotifierProvider.notifier).signIn(
+      await ref
+          .read(authNotifierProvider.notifier)
+          .signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
@@ -77,11 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 48),
 
                 // 로고 및 타이틀
-                Icon(
-                  Icons.coffee,
-                  size: 80,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.coffee, size: 80, color: theme.colorScheme.primary),
                 const SizedBox(height: 16),
                 Text(
                   '나만의 커피 로그',
@@ -112,10 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: theme.colorScheme.error,
-                        ),
+                        Icon(Icons.error, color: theme.colorScheme.error),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -135,14 +130,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   hint: 'example@email.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_outlined,
+                  prefixIcon: Icons.email,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return '이메일을 입력해주세요';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return '올바른 이메일 형식을 입력해주세요';
                     }
                     return null;
@@ -155,7 +151,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: '비밀번호',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  prefixIcon: Icons.lock_outlined,
+                  prefixIcon: Icons.lock,
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _handleLogin(),
                   suffix: IconButton(
@@ -204,10 +200,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      '아직 계정이 없으신가요?',
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                    Text('아직 계정이 없으신가요?', style: theme.textTheme.bodyMedium),
                     TextButton(
                       onPressed: () => context.push('/auth/signup'),
                       child: const Text('회원가입'),
@@ -226,7 +219,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Text(
                         '또는',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -241,7 +236,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   text: '게스트로 둘러보기',
                   onPressed: _handleGuestMode,
                   isOutlined: true,
-                  icon: Icons.person_outline,
+                  icon: Icons.person,
                   width: double.infinity,
                 ),
               ],

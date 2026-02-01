@@ -19,9 +19,7 @@ class ProfileScreen extends ConsumerWidget {
     // 게스트 모드일 때
     if (isGuest) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('프로필'),
-        ),
+        appBar: AppBar(title: const Text('프로필')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -29,7 +27,7 @@ class ProfileScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.person_outline,
+                  Icons.person,
                   size: 80,
                   color: theme.colorScheme.primary.withValues(alpha: 0.5),
                 ),
@@ -77,12 +75,8 @@ class ProfileScreen extends ConsumerWidget {
     // 로그인하지 않은 경우
     if (currentUser == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('프로필'),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        appBar: AppBar(title: const Text('프로필')),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -91,12 +85,12 @@ class ProfileScreen extends ConsumerWidget {
         title: const Text('프로필'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               // TODO: 설정 화면
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('설정 기능은 준비 중입니다.')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('설정 기능은 준비 중입니다.')));
             },
           ),
         ],
@@ -114,8 +108,9 @@ class ProfileScreen extends ConsumerWidget {
                     // 아바타
                     CircleAvatar(
                       radius: 48,
-                      backgroundColor:
-                          theme.colorScheme.primary.withValues(alpha: 0.1),
+                      backgroundColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.1,
+                      ),
                       child: userProfile.when(
                         data: (profile) => Text(
                           profile?.nickname.characters.first.toUpperCase() ??
@@ -153,7 +148,9 @@ class ProfileScreen extends ConsumerWidget {
                     Text(
                       currentUser.email ?? '',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],
@@ -214,9 +211,9 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.forum,
                     title: '내 게시글',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('준비 중입니다.')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text('준비 중입니다.')));
                     },
                   ),
                 ],
@@ -231,18 +228,18 @@ class ProfileScreen extends ConsumerWidget {
                 children: [
                   _buildMenuTile(
                     context,
-                    icon: Icons.help_outline,
+                    icon: Icons.help,
                     title: '도움말',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('준비 중입니다.')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text('준비 중입니다.')));
                     },
                   ),
                   const Divider(height: 1),
                   _buildMenuTile(
                     context,
-                    icon: Icons.info_outline,
+                    icon: Icons.info,
                     title: '앱 정보',
                     onTap: () {
                       showAboutDialog(
@@ -254,9 +251,7 @@ class ProfileScreen extends ConsumerWidget {
                           size: 48,
                           color: theme.colorScheme.primary,
                         ),
-                        children: [
-                          const Text('당신의 커피 여정을 기록하세요.'),
-                        ],
+                        children: [const Text('당신의 커피 여정을 기록하세요.')],
                       );
                     },
                   ),

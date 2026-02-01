@@ -18,27 +18,27 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   final _navItems = const [
     BottomNavigationBarItem(
-      icon: Icon(Icons.dashboard_outlined),
+      icon: Icon(Icons.dashboard),
       activeIcon: Icon(Icons.dashboard),
       label: '대시보드',
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.coffee_outlined),
+      icon: Icon(Icons.coffee),
       activeIcon: Icon(Icons.coffee),
       label: '원두 기록',
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.local_cafe_outlined),
+      icon: Icon(Icons.local_cafe),
       activeIcon: Icon(Icons.local_cafe),
       label: '커피 기록',
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.forum_outlined),
+      icon: Icon(Icons.forum),
       activeIcon: Icon(Icons.forum),
       label: '커뮤니티',
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.person_outline),
+      icon: Icon(Icons.person),
       activeIcon: Icon(Icons.person),
       label: '프로필',
     ),
@@ -83,8 +83,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     // 대시보드 경로인 경우 DashboardScreen을 직접 렌더링
     final location = GoRouterState.of(context).matchedLocation;
-    final Widget bodyContent =
-        location == '/' ? const DashboardScreen() : widget.child;
+    final Widget bodyContent = location == '/'
+        ? const DashboardScreen()
+        : widget.child;
 
     return Scaffold(
       body: bodyContent,
@@ -96,11 +97,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
               child: Row(
                 children: [
                   Icon(
-                    Icons.info_outline,
+                    Icons.info,
                     size: 16,
                     color: Theme.of(context).colorScheme.primary,
                   ),

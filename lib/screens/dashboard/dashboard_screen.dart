@@ -25,11 +25,11 @@ class DashboardScreen extends ConsumerWidget {
         title: const Text('나만의 커피 로그'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.notifications),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('알림 기능은 준비 중입니다.')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('알림 기능은 준비 중입니다.')));
             },
           ),
         ],
@@ -169,9 +169,11 @@ class DashboardScreen extends ConsumerWidget {
                         child: Column(
                           children: [
                             Icon(
-                              Icons.coffee_outlined,
+                              Icons.coffee,
                               size: 48,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.5,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             const Text('아직 기록한 원두가 없습니다'),
@@ -233,9 +235,11 @@ class DashboardScreen extends ConsumerWidget {
                         child: Column(
                           children: [
                             Icon(
-                              Icons.local_cafe_outlined,
+                              Icons.local_cafe,
                               size: 48,
-                              color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.5,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             const Text('아직 커피 기록이 없습니다'),
@@ -253,13 +257,15 @@ class DashboardScreen extends ConsumerWidget {
                   }
                   return Column(
                     children: logs
-                        .map((log) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: CoffeeLogListTile(
-                                log: log,
-                                onTap: () => context.push('/logs/${log.id}'),
-                              ),
-                            ))
+                        .map(
+                          (log) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: CoffeeLogListTile(
+                              log: log,
+                              onTap: () => context.push('/logs/${log.id}'),
+                            ),
+                          ),
+                        )
                         .toList(),
                   );
                 },
@@ -288,9 +294,9 @@ class DashboardScreen extends ConsumerWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         if (onViewAll != null)
           TextButton(
@@ -300,7 +306,7 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 Text('더보기'),
                 SizedBox(width: 4),
-                Icon(Icons.arrow_forward_ios, size: 14),
+                Icon(Icons.chevron_right, size: 14),
               ],
             ),
           ),

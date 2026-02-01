@@ -161,10 +161,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: theme.colorScheme.error,
-                        ),
+                        Icon(Icons.error, color: theme.colorScheme.error),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -184,15 +181,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   hint: 'example@email.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_outlined,
+                  prefixIcon: Icons.email,
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _handleResetPassword(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return '이메일을 입력해주세요';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return '올바른 이메일 형식을 입력해주세요';
                     }
                     return null;

@@ -41,7 +41,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     });
 
     try {
-      await ref.read(authNotifierProvider.notifier).signUp(
+      await ref
+          .read(authNotifierProvider.notifier)
+          .signUp(
             email: _emailController.text.trim(),
             password: _passwordController.text,
             nickname: _nicknameController.text.trim(),
@@ -149,10 +151,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: theme.colorScheme.error,
-                        ),
+                        Icon(Icons.error, color: theme.colorScheme.error),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -172,14 +171,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   hint: 'example@email.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_outlined,
+                  prefixIcon: Icons.email,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return '이메일을 입력해주세요';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return '올바른 이메일 형식을 입력해주세요';
                     }
                     return null;
@@ -193,7 +193,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   hint: '10자 이상 입력해주세요',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  prefixIcon: Icons.lock_outlined,
+                  prefixIcon: Icons.lock,
                   textInputAction: TextInputAction.next,
                   suffix: IconButton(
                     icon: Icon(
@@ -225,7 +225,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   label: '비밀번호 확인',
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
-                  prefixIcon: Icons.lock_outlined,
+                  prefixIcon: Icons.lock,
                   textInputAction: TextInputAction.next,
                   suffix: IconButton(
                     icon: Icon(
@@ -257,7 +257,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   label: '닉네임',
                   hint: '2자 이상 입력해주세요',
                   controller: _nicknameController,
-                  prefixIcon: Icons.person_outline,
+                  prefixIcon: Icons.person,
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _handleSignup(),
                   validator: (value) {
@@ -286,10 +286,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      '이미 계정이 있으신가요?',
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                    Text('이미 계정이 있으신가요?', style: theme.textTheme.bodyMedium),
                     TextButton(
                       onPressed: () => context.pop(),
                       child: const Text('로그인'),

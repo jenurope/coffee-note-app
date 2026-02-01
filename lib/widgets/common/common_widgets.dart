@@ -182,7 +182,7 @@ class StatCard extends StatelessWidget {
                   if (onTap != null) ...[
                     const Spacer(),
                     Icon(
-                      Icons.arrow_forward_ios,
+                      Icons.chevron_right,
                       size: 16,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
@@ -248,10 +248,7 @@ class RatingStars extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             rating.toStringAsFixed(1),
-            style: TextStyle(
-              fontSize: size * 0.8,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: size * 0.8, fontWeight: FontWeight.bold),
           ),
         ],
       ],
@@ -308,10 +305,7 @@ class EmptyState extends StatelessWidget {
             ],
             if (buttonText != null && onButtonPressed != null) ...[
               const SizedBox(height: 24),
-              CustomButton(
-                text: buttonText!,
-                onPressed: onButtonPressed,
-              ),
+              CustomButton(text: buttonText!, onPressed: onButtonPressed),
             ],
           ],
         ),
@@ -338,9 +332,7 @@ class LoadingOverlay extends StatelessWidget {
         if (isLoading)
           Container(
             color: Colors.black26,
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           ),
       ],
     );
