@@ -160,6 +160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? Icons.visibility_off
                           : Icons.visibility,
                       size: 20,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     onPressed: () {
                       setState(() {

@@ -114,6 +114,9 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final iconColor = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+
     return TextFormField(
       controller: controller,
       validator: validator,
@@ -128,8 +131,10 @@ class CustomTextField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-        suffix: suffix,
+        prefixIcon: prefixIcon != null
+            ? Icon(prefixIcon, color: iconColor)
+            : null,
+        suffixIcon: suffix,
       ),
     );
   }
