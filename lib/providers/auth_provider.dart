@@ -6,7 +6,9 @@ import '../services/auth_service.dart';
 import '../config/supabase_config.dart';
 
 // AuthService Provider
-final authServiceProvider = Provider<AuthService>((ref) => AuthService(SupabaseConfig.client));
+final authServiceProvider = Provider<AuthService>(
+  (ref) => AuthService(SupabaseConfig.client),
+);
 
 // 현재 인증 상태 Provider
 final authStateProvider = StreamProvider<AuthState>((ref) {
@@ -17,9 +19,7 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 // 현재 사용자 Provider
 final currentUserProvider = Provider<User?>((ref) {
   final authState = ref.watch(authStateProvider);
-  return authState.whenOrNull(
-    data: (state) => state.session?.user,
-  );
+  return authState.whenOrNull(data: (state) => state.session?.user);
 });
 
 // 게스트 모드 Notifier
@@ -62,10 +62,7 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
     return AsyncValue.data(user);
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     state = const AsyncValue.loading();
     try {
       final response = await _authService.signIn(
@@ -93,6 +90,18 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
         nickname: nickname,
       );
       state = AsyncValue.data(response.user);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authService.signInWithGoogle();
+      state = AsyncValue.data(response.user);
+      ref.read(isGuestModeProvider.notifier).exit();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;

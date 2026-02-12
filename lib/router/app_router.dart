@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
-import '../screens/auth/signup_screen.dart';
-import '../screens/auth/forgot_password_screen.dart';
 import '../screens/main/main_screen.dart';
 import '../screens/beans/bean_list_screen.dart';
 import '../screens/beans/bean_detail_screen.dart';
@@ -43,16 +41,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/',
             name: 'dashboard',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: DashboardContent(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: DashboardContent()),
           ),
           GoRoute(
             path: '/beans',
             name: 'beans',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: BeanListScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BeanListScreen()),
             routes: [
               GoRoute(
                 path: 'new',
@@ -62,16 +58,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: ':id',
                 name: 'bean-detail',
-                builder: (context, state) => BeanDetailScreen(
-                  beanId: state.pathParameters['id']!,
-                ),
+                builder: (context, state) =>
+                    BeanDetailScreen(beanId: state.pathParameters['id']!),
                 routes: [
                   GoRoute(
                     path: 'edit',
                     name: 'bean-edit',
-                    builder: (context, state) => BeanFormScreen(
-                      beanId: state.pathParameters['id'],
-                    ),
+                    builder: (context, state) =>
+                        BeanFormScreen(beanId: state.pathParameters['id']),
                   ),
                 ],
               ),
@@ -80,9 +74,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/logs',
             name: 'logs',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: CoffeeLogListScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: CoffeeLogListScreen()),
             routes: [
               GoRoute(
                 path: 'new',
@@ -92,16 +85,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: ':id',
                 name: 'log-detail',
-                builder: (context, state) => CoffeeLogDetailScreen(
-                  logId: state.pathParameters['id']!,
-                ),
+                builder: (context, state) =>
+                    CoffeeLogDetailScreen(logId: state.pathParameters['id']!),
                 routes: [
                   GoRoute(
                     path: 'edit',
                     name: 'log-edit',
-                    builder: (context, state) => CoffeeLogFormScreen(
-                      logId: state.pathParameters['id'],
-                    ),
+                    builder: (context, state) =>
+                        CoffeeLogFormScreen(logId: state.pathParameters['id']),
                   ),
                 ],
               ),
@@ -110,9 +101,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/community',
             name: 'community',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: CommunityScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: CommunityScreen()),
             routes: [
               GoRoute(
                 path: 'new',
@@ -122,16 +112,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: ':id',
                 name: 'post-detail',
-                builder: (context, state) => PostDetailScreen(
-                  postId: state.pathParameters['id']!,
-                ),
+                builder: (context, state) =>
+                    PostDetailScreen(postId: state.pathParameters['id']!),
                 routes: [
                   GoRoute(
                     path: 'edit',
                     name: 'post-edit',
-                    builder: (context, state) => PostFormScreen(
-                      postId: state.pathParameters['id'],
-                    ),
+                    builder: (context, state) =>
+                        PostFormScreen(postId: state.pathParameters['id']),
                   ),
                 ],
               ),
@@ -140,9 +128,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/profile',
             name: 'profile',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ProfileScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ProfileScreen()),
           ),
         ],
       ),
@@ -152,16 +139,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/auth/login',
         name: 'login',
         builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/auth/signup',
-        name: 'signup',
-        builder: (context, state) => const SignupScreen(),
-      ),
-      GoRoute(
-        path: '/auth/forgot-password',
-        name: 'forgot-password',
-        builder: (context, state) => const ForgotPasswordScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
