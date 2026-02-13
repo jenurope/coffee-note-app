@@ -50,19 +50,42 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
+  late int _activeIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeIndex = widget.navigationShell.currentIndex;
+  }
+
+  @override
+  void didUpdateWidget(covariant MainScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextIndex = widget.navigationShell.currentIndex;
+    if (_activeIndex != nextIndex) {
+      _activeIndex = nextIndex;
+    }
+  }
+
   StatefulNavigationShell get _navigationShell => widget.navigationShell;
 
-  int get _currentIndex => _navigationShell.currentIndex;
+  int get _currentIndex => _activeIndex;
 
   NavigatorState? get _currentBranchNavigator =>
       widget.branchNavigatorKeys[_currentIndex].currentState;
 
   void _onItemTapped(int index) {
+    // Prevent hidden form fields from keeping focus and consuming the first back gesture.
+    FocusManager.instance.primaryFocus?.unfocus();
+
     if (index == _currentIndex) {
       _navigationShell.goBranch(index, initialLocation: true);
       return;
     }
 
+    setState(() {
+      _activeIndex = index;
+    });
     _navigationShell.goBranch(index);
   }
 
@@ -86,8 +109,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final isGuest = ref.watch(isGuestModeProvider);
 
-    return BackButtonListener(
-      onBackButtonPressed: () => _onBackPressed(context, isGuest),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          return;
+        }
+        _onBackPressed(context, isGuest);
+      },
       child: Scaffold(
         body: _navigationShell,
         bottomNavigationBar: Column(

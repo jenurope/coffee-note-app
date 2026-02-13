@@ -283,6 +283,11 @@ void main() {
 
         expect(didHandleBack, isTrue);
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+
+        // The first back should not consume hidden tab stack entries.
+        await tester.tap(find.text('원두 기록'));
+        await tester.pumpAndSettle();
+        expect(find.text('BEAN_NEW'), findsOneWidget);
       },
     );
 
@@ -318,6 +323,11 @@ void main() {
 
         expect(didHandleBack, isTrue);
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+
+        // The first back should not consume hidden tab stack entries.
+        await tester.tap(find.text('커피 기록'));
+        await tester.pumpAndSettle();
+        expect(find.text('LOG_NEW'), findsOneWidget);
       },
     );
   });
