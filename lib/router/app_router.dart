@@ -195,8 +195,10 @@ GoRouter createAppRouter({
         builder: (context, state) => routeBuilders.buildSplash(context, state),
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            MainScreen(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) => MainScreen(
+          navigationShell: navigationShell,
+          branchNavigatorKeys: branchKeys,
+        ),
         branches: [
           StatefulShellBranch(
             navigatorKey: branchKeys[0],

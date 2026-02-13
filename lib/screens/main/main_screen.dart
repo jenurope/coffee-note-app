@@ -4,12 +4,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../providers/auth_provider.dart';
 
-class MainScreen extends ConsumerWidget {
-  const MainScreen({super.key, required this.navigationShell});
+class MainScreen extends ConsumerStatefulWidget {
+  const MainScreen({
+    super.key,
+    required this.navigationShell,
+    required this.branchNavigatorKeys,
+    this.loginPath = '/auth/login',
+  });
 
   final StatefulNavigationShell navigationShell;
+  final List<GlobalKey<NavigatorState>> branchNavigatorKeys;
+  final String loginPath;
 
-  final _navItems = const [
+  static const _navItems = [
     BottomNavigationBarItem(
       icon: Icon(Icons.dashboard),
       activeIcon: Icon(Icons.dashboard),
@@ -37,64 +44,118 @@ class MainScreen extends ConsumerWidget {
     ),
   ];
 
+  @override
+  ConsumerState<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends ConsumerState<MainScreen> {
+  final List<int> _tabHistory = <int>[];
+
+  StatefulNavigationShell get _navigationShell => widget.navigationShell;
+
+  int get _currentIndex => _navigationShell.currentIndex;
+
+  NavigatorState? get _currentBranchNavigator =>
+      widget.branchNavigatorKeys[_currentIndex].currentState;
+
   void _onItemTapped(int index) {
-    if (index == navigationShell.currentIndex) {
-      navigationShell.goBranch(index, initialLocation: true);
+    if (index == _currentIndex) {
+      _navigationShell.goBranch(index, initialLocation: true);
       return;
     }
 
-    navigationShell.goBranch(index);
+    _tabHistory.remove(index);
+    _tabHistory.remove(_currentIndex);
+    _tabHistory.add(_currentIndex);
+    _navigationShell.goBranch(index);
+  }
+
+  int? _takePreviousTabIndex() {
+    while (_tabHistory.isNotEmpty) {
+      final previous = _tabHistory.removeLast();
+      if (previous != _currentIndex) {
+        return previous;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _onBackPressed(BuildContext context, bool isGuest) async {
+    final branchNavigator = _currentBranchNavigator;
+    if (branchNavigator?.canPop() ?? false) {
+      branchNavigator!.pop();
+      return true;
+    }
+
+    if (isGuest) {
+      context.go(widget.loginPath);
+      return true;
+    }
+
+    if (_currentIndex != 0) {
+      final previousTab = _takePreviousTabIndex();
+      _navigationShell.goBranch(previousTab ?? 0);
+      return true;
+    }
+
+    return false;
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isGuest = ref.watch(isGuestModeProvider);
 
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isGuest)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.1),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '게스트 모드입니다. 로그인하면 모든 기능을 사용할 수 있습니다.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.primary,
+    return BackButtonListener(
+      onBackButtonPressed: () => _onBackPressed(context, isGuest),
+      child: Scaffold(
+        body: _navigationShell,
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isGuest)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 16,
+                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '게스트 모드입니다. 로그인하면 모든 기능을 사용할 수 있습니다.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      ref.read(authNotifierProvider.notifier).exitGuestMode();
-                      context.go('/auth/login');
-                    },
-                    child: const Text('로그인'),
-                  ),
-                ],
+                    TextButton(
+                      onPressed: () {
+                        ref.read(authNotifierProvider.notifier).exitGuestMode();
+                        context.go('/auth/login');
+                      },
+                      child: const Text('로그인'),
+                    ),
+                  ],
+                ),
               ),
+            BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: _onItemTapped,
+              items: MainScreen._navItems,
             ),
-          BottomNavigationBar(
-            currentIndex: navigationShell.currentIndex,
-            onTap: _onItemTapped,
-            items: _navItems,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -190,6 +190,106 @@ void main() {
 
       expect(find.text('BEAN_NEW'), findsOneWidget);
     });
+
+    testWidgets(
+      'guest back from another tab after opening bean new moves to login',
+      (WidgetTester tester) async {
+        final authController = _TestAuthController(AppAuthSnapshot.guest);
+        final router = createAppRouter(
+          authSnapshot: () => authController.snapshot,
+          refreshListenable: authController,
+          routeBuilders: _TestRouteBuilders(authController),
+        );
+
+        await tester.pumpWidget(_buildTestApp(router, isGuestMode: true));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('원두 기록'));
+        await tester.pumpAndSettle();
+        expect(find.text('BEANS_ROOT'), findsOneWidget);
+
+        await tester.tap(find.byKey(const Key('open-bean-new-button')));
+        await tester.pumpAndSettle();
+        expect(find.text('BEAN_NEW'), findsOneWidget);
+
+        await tester.tap(find.text('커뮤니티'));
+        await tester.pumpAndSettle();
+        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(find.text('LOGIN'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'authenticated back from another tab after opening bean new returns to bean new',
+      (WidgetTester tester) async {
+        final authController = _TestAuthController(
+          AppAuthSnapshot.authenticated,
+        );
+        final router = createAppRouter(
+          authSnapshot: () => authController.snapshot,
+          refreshListenable: authController,
+          routeBuilders: _TestRouteBuilders(authController),
+        );
+
+        await tester.pumpWidget(_buildTestApp(router));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('원두 기록'));
+        await tester.pumpAndSettle();
+        expect(find.text('BEANS_ROOT'), findsOneWidget);
+
+        await tester.tap(find.byKey(const Key('open-bean-new-button')));
+        await tester.pumpAndSettle();
+        expect(find.text('BEAN_NEW'), findsOneWidget);
+
+        await tester.tap(find.text('커뮤니티'));
+        await tester.pumpAndSettle();
+        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(find.text('BEAN_NEW'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'authenticated back from another tab after opening log new returns to log new',
+      (WidgetTester tester) async {
+        final authController = _TestAuthController(
+          AppAuthSnapshot.authenticated,
+        );
+        final router = createAppRouter(
+          authSnapshot: () => authController.snapshot,
+          refreshListenable: authController,
+          routeBuilders: _TestRouteBuilders(authController),
+        );
+
+        await tester.pumpWidget(_buildTestApp(router));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('커피 기록'));
+        await tester.pumpAndSettle();
+        expect(find.text('LOGS_ROOT'), findsOneWidget);
+
+        await tester.tap(find.byKey(const Key('open-log-new-button')));
+        await tester.pumpAndSettle();
+        expect(find.text('LOG_NEW'), findsOneWidget);
+
+        await tester.tap(find.text('커뮤니티'));
+        await tester.pumpAndSettle();
+        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(find.text('LOG_NEW'), findsOneWidget);
+      },
+    );
   });
 }
 
@@ -270,7 +370,7 @@ class _TestRouteBuilders extends AppRouteBuilders {
 
   @override
   Widget buildLogs(BuildContext context, GoRouterState state) {
-    return const _LabelScreen('LOGS_ROOT');
+    return const _LogsRootScreen();
   }
 
   @override
@@ -374,6 +474,30 @@ class _BeansRootScreen extends StatelessWidget {
               key: const Key('open-bean-new-button'),
               onPressed: () => context.push('/beans/new'),
               child: const Text('Open Bean New'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LogsRootScreen extends StatelessWidget {
+  const _LogsRootScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('LOGS_ROOT'),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              key: const Key('open-log-new-button'),
+              onPressed: () => context.push('/logs/new'),
+              child: const Text('Open Log New'),
             ),
           ],
         ),
