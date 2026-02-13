@@ -1,27 +1,68 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-
-import 'package:flutter_test/flutter_test.dart';
-
-import 'package:coffee_note_app/app.dart';
+import 'package:coffee_note_app/providers/auth_provider.dart';
+import 'package:coffee_note_app/router/app_router.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
-  testWidgets('App renders without crashing', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('App router renders without crashing', (
+    WidgetTester tester,
+  ) async {
+    final authState = ValueNotifier<AppAuthSnapshot>(AppAuthSnapshot.guest);
+    final router = createAppRouter(
+      authSnapshot: () => authState.value,
+      refreshListenable: authState,
+      routeBuilders: const _SmokeRouteBuilders(),
+    );
+
     await tester.pumpWidget(
-      const ProviderScope(
-        child: CoffeeNoteApp(),
+      ProviderScope(
+        overrides: [currentUserProvider.overrideWith((ref) => null)],
+        child: MaterialApp.router(routerConfig: router),
       ),
     );
 
-    // Verify that the title is present (although it might be hidden in some screens, this is a basic availability check)
-    // For now, valid pump is enough for this smoke test.
     await tester.pumpAndSettle();
+    expect(find.text('SMOKE_DASHBOARD'), findsOneWidget);
   });
+}
+
+class _SmokeRouteBuilders extends AppRouteBuilders {
+  const _SmokeRouteBuilders();
+
+  @override
+  Widget buildSplash(BuildContext context, GoRouterState state) {
+    return const Scaffold(body: Center(child: Text('SMOKE_SPLASH')));
+  }
+
+  @override
+  Widget buildDashboard(BuildContext context, GoRouterState state) {
+    return const Scaffold(body: Center(child: Text('SMOKE_DASHBOARD')));
+  }
+
+  @override
+  Widget buildBeans(BuildContext context, GoRouterState state) {
+    return const Scaffold(body: Center(child: Text('SMOKE_BEANS')));
+  }
+
+  @override
+  Widget buildLogs(BuildContext context, GoRouterState state) {
+    return const Scaffold(body: Center(child: Text('SMOKE_LOGS')));
+  }
+
+  @override
+  Widget buildCommunity(BuildContext context, GoRouterState state) {
+    return const Scaffold(body: Center(child: Text('SMOKE_COMMUNITY')));
+  }
+
+  @override
+  Widget buildProfile(BuildContext context, GoRouterState state) {
+    return const Scaffold(body: Center(child: Text('SMOKE_PROFILE')));
+  }
+
+  @override
+  Widget buildLogin(BuildContext context, GoRouterState state) {
+    return const Scaffold(body: Center(child: Text('SMOKE_LOGIN')));
+  }
 }
