@@ -171,6 +171,7 @@ class _GoogleSignInButton extends StatelessWidget {
           backgroundColor: Colors.white,
           foregroundColor: Colors.black87,
           elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: Colors.grey.shade300),
@@ -187,30 +188,21 @@ class _GoogleSignInButton extends StatelessWidget {
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Google 로고 (간단한 아이콘으로 대체)
-                  Container(
-                    width: 24,
+                  Image.asset(
+                    'assets/images/google_logo.png',
                     height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'G',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade600,
-                        ),
-                      ),
-                    ),
+                    width: 24,
                   ),
                   const SizedBox(width: 12),
                   const Text(
                     'Google로 로그인',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black54,
+                    ),
                   ),
                 ],
               ),
