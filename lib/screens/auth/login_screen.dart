@@ -63,7 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Icon(Icons.coffee, size: 80, color: theme.colorScheme.primary),
               const SizedBox(height: 16),
               Text(
-                '나만의 커피 로그',
+                '커피로그',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,

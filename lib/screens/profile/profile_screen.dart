@@ -167,7 +167,7 @@ class ProfileScreen extends ConsumerWidget {
                     child: _buildStatCard(
                       theme,
                       icon: Icons.coffee,
-                      label: '기록한 원두',
+                      label: '원두 기록',
                       value: '${data.totalBeans}',
                     ),
                   ),
@@ -244,7 +244,7 @@ class ProfileScreen extends ConsumerWidget {
                     onTap: () {
                       showAboutDialog(
                         context: context,
-                        applicationName: '나만의 커피 로그',
+                        applicationName: '커피로그',
                         applicationVersion: '1.0.0',
                         applicationIcon: Icon(
                           Icons.coffee,

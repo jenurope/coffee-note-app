@@ -22,7 +22,7 @@ class DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('나만의 커피 로그'),
+        title: const Text('커피로그'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -78,7 +78,7 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: StatCard(
-                        title: '기록한 원두',
+                        title: '원두 기록',
                         value: '${data.totalBeans}개',
                         icon: Icons.coffee,
                         onTap: () => context.go('/beans'),
@@ -156,7 +156,7 @@ class DashboardScreen extends ConsumerWidget {
               // 최근 기록 원두
               _buildSectionHeader(
                 context,
-                title: '최근 기록 원두',
+                title: '최근 원두 기록',
                 onViewAll: () => context.go('/beans'),
               ),
               const SizedBox(height: 12),
@@ -176,7 +176,7 @@ class DashboardScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const Text('아직 기록한 원두가 없습니다'),
+                            const Text('아직 원두 기록이 없습니다'),
                             if (currentUser != null && !isGuest) ...[
                               const SizedBox(height: 12),
                               TextButton(
