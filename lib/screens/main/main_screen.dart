@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -49,8 +50,6 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
-  final List<int> _tabHistory = <int>[];
-
   StatefulNavigationShell get _navigationShell => widget.navigationShell;
 
   int get _currentIndex => _navigationShell.currentIndex;
@@ -64,20 +63,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       return;
     }
 
-    _tabHistory.remove(index);
-    _tabHistory.remove(_currentIndex);
-    _tabHistory.add(_currentIndex);
     _navigationShell.goBranch(index);
-  }
-
-  int? _takePreviousTabIndex() {
-    while (_tabHistory.isNotEmpty) {
-      final previous = _tabHistory.removeLast();
-      if (previous != _currentIndex) {
-        return previous;
-      }
-    }
-    return null;
   }
 
   Future<bool> _onBackPressed(BuildContext context, bool isGuest) async {
@@ -92,13 +78,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       return true;
     }
 
-    if (_currentIndex != 0) {
-      final previousTab = _takePreviousTabIndex();
-      _navigationShell.goBranch(previousTab ?? 0);
-      return true;
-    }
-
-    return false;
+    SystemNavigator.pop();
+    return true;
   }
 
   @override

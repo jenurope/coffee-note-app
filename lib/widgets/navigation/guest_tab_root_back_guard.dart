@@ -18,10 +18,14 @@ class GuestTabRootBackGuard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isGuest = ref.watch(isGuestModeProvider);
 
+    if (!isGuest) {
+      return child;
+    }
+
     return PopScope(
-      canPop: !isGuest,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop || !isGuest) {
+        if (didPop) {
           return;
         }
         context.go(loginPath);

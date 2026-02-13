@@ -46,7 +46,7 @@ void main() {
         routeBuilders: _TestRouteBuilders(authController),
       );
 
-      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpWidget(_buildTestApp(router, isGuestMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('LOGIN'), findsOneWidget);
@@ -160,6 +160,34 @@ void main() {
       expect(find.text('LOGS_ROOT'), findsNothing);
     });
 
+    testWidgets(
+      'authenticated back at non-dashboard tab root requests app exit',
+      (WidgetTester tester) async {
+        final authController = _TestAuthController(
+          AppAuthSnapshot.authenticated,
+        );
+        final router = createAppRouter(
+          authSnapshot: () => authController.snapshot,
+          refreshListenable: authController,
+          routeBuilders: _TestRouteBuilders(authController),
+        );
+
+        await tester.pumpWidget(_buildTestApp(router));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('커뮤니티'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+
+        final didHandleBack = await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(didHandleBack, isTrue);
+        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+      },
+    );
+
     testWidgets('tab switch preserves each tab stack history', (
       WidgetTester tester,
     ) async {
@@ -224,7 +252,7 @@ void main() {
     );
 
     testWidgets(
-      'authenticated back from another tab after opening bean new returns to bean new',
+      'authenticated back from another tab after opening bean new requests app exit',
       (WidgetTester tester) async {
         final authController = _TestAuthController(
           AppAuthSnapshot.authenticated,
@@ -250,15 +278,16 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
-        await tester.binding.handlePopRoute();
+        final didHandleBack = await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
 
-        expect(find.text('BEAN_NEW'), findsOneWidget);
+        expect(didHandleBack, isTrue);
+        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'authenticated back from another tab after opening log new returns to log new',
+      'authenticated back from another tab after opening log new requests app exit',
       (WidgetTester tester) async {
         final authController = _TestAuthController(
           AppAuthSnapshot.authenticated,
@@ -284,10 +313,11 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
-        await tester.binding.handlePopRoute();
+        final didHandleBack = await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
 
-        expect(find.text('LOG_NEW'), findsOneWidget);
+        expect(didHandleBack, isTrue);
+        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
       },
     );
   });
