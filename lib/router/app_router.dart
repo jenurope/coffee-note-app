@@ -16,18 +16,29 @@ import '../screens/community/post_form_screen.dart';
 import '../screens/profile/profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final isLoggedIn = ref.watch(isLoggedInProvider);
+  final refreshNotifier = ValueNotifier<int>(0);
+
+  ref.listen(currentUserProvider, (previous, next) {
+    refreshNotifier.value++;
+  });
+  ref.listen(isGuestModeProvider, (previous, next) {
+    refreshNotifier.value++;
+  });
+  ref.onDispose(refreshNotifier.dispose);
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
+      final currentUser = ref.read(currentUserProvider);
+      final isGuest = ref.read(isGuestModeProvider);
       final isAuthRoute = state.matchedLocation.startsWith('/auth');
 
-      if (!isLoggedIn && !isAuthRoute) {
+      if (currentUser == null && !isGuest && !isAuthRoute) {
         return '/auth/login';
       }
 
-      if (isLoggedIn && isAuthRoute) {
+      if (currentUser != null && isAuthRoute) {
         return '/';
       }
 

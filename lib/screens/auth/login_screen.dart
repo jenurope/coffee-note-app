@@ -42,7 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleGuestMode() {
     ref.read(authNotifierProvider.notifier).enterGuestMode();
-    context.go('/');
+    context.push('/');
   }
 
   @override
