@@ -1,7 +1,8 @@
-import 'package:coffee_note_app/providers/auth_provider.dart';
+import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
+import 'package:coffee_note_app/cubits/auth/auth_state.dart';
 import 'package:coffee_note_app/router/app_router.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -334,24 +335,12 @@ void main() {
 }
 
 Widget _buildTestApp(GoRouter router, {bool isGuestMode = false}) {
-  return ProviderScope(
-    overrides: [
-      currentUserProvider.overrideWith((ref) => null),
-      isGuestModeProvider.overrideWith(
-        () => _TestGuestModeNotifier(isGuestMode),
-      ),
-    ],
+  return BlocProvider<AuthCubit>(
+    create: (_) => AuthCubit.test(
+      isGuestMode ? const AuthState.guest() : const AuthState.unauthenticated(),
+    ),
     child: MaterialApp.router(routerConfig: router),
   );
-}
-
-class _TestGuestModeNotifier extends GuestModeNotifier {
-  _TestGuestModeNotifier(this.initialValue);
-
-  final bool initialValue;
-
-  @override
-  bool build() => initialValue;
 }
 
 class _TestAuthController extends ChangeNotifier {

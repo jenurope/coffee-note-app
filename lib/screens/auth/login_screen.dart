@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/auth_provider.dart';
+import '../../cubits/auth/auth_cubit.dart';
+import '../../cubits/auth/auth_state.dart';
 import '../../widgets/common/common_widgets.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -22,15 +23,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+      await context.read<AuthCubit>().signInWithGoogle();
 
       if (mounted) {
-        context.go('/');
+        final state = context.read<AuthCubit>().state;
+        if (state is AuthError) {
+          setState(() {
+            _errorMessage = state.message;
+          });
+        } else {
+          context.go('/');
+        }
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = ref.read(authServiceProvider).getErrorMessage(e);
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = '로그인 중 오류가 발생했습니다.';
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -41,7 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _handleGuestMode() {
-    ref.read(authNotifierProvider.notifier).enterGuestMode();
+    context.read<AuthCubit>().enterGuestMode();
     context.push('/');
   }
 

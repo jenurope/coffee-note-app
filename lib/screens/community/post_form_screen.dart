@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/di/service_locator.dart';
+import '../../cubits/auth/auth_cubit.dart';
+import '../../cubits/auth/auth_state.dart';
+import '../../cubits/community/post_list_cubit.dart';
 import '../../models/community_post.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/data_providers.dart';
+import '../../services/community_service.dart';
 import '../../widgets/common/common_widgets.dart';
 
-class PostFormScreen extends ConsumerStatefulWidget {
+class PostFormScreen extends StatefulWidget {
   final String? postId;
 
   const PostFormScreen({super.key, this.postId});
 
   @override
-  ConsumerState<PostFormScreen> createState() => _PostFormScreenState();
+  State<PostFormScreen> createState() => _PostFormScreenState();
 }
 
-class _PostFormScreenState extends ConsumerState<PostFormScreen> {
+class _PostFormScreenState extends State<PostFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
@@ -24,6 +27,25 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
   bool _isInitialized = false;
 
   bool get isEditing => widget.postId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isEditing) {
+      _loadPost();
+    }
+  }
+
+  void _loadPost() {
+    final service = getIt<CommunityService>();
+    service.getPost(widget.postId!).then((post) {
+      if (post != null && mounted) {
+        setState(() {
+          _initializeWithPost(post);
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -43,11 +65,12 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final currentUser = ref.read(currentUserProvider);
+    final authState = context.read<AuthCubit>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
       return;
     }
 
@@ -56,7 +79,7 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
     });
 
     try {
-      final service = ref.read(communityServiceProvider);
+      final service = getIt<CommunityService>();
 
       final post = CommunityPost(
         id: widget.postId ?? '',
@@ -73,7 +96,9 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
         await service.createPost(post);
       }
 
-      ref.invalidate(communityPostsProvider);
+      if (mounted) {
+        context.read<PostListCubit>().reload();
+      }
 
       if (mounted) {
         context.pop();
@@ -85,9 +110,9 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('오류가 발생했습니다: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: $e')));
       }
     } finally {
       if (mounted) {
@@ -100,13 +125,7 @@ class _PostFormScreenState extends ConsumerState<PostFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 수정 모드일 때 기존 데이터 로드
-    if (isEditing) {
-      final postAsync = ref.watch(communityPostDetailProvider(widget.postId!));
-      postAsync.whenData((post) {
-        if (post != null) _initializeWithPost(post);
-      });
-    }
+    // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
     return Scaffold(
       appBar: AppBar(

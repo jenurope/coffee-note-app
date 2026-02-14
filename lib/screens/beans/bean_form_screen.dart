@@ -1,26 +1,32 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../../core/di/service_locator.dart';
+import '../../cubits/auth/auth_cubit.dart';
+import '../../cubits/auth/auth_state.dart';
+import '../../cubits/bean/bean_list_cubit.dart';
+import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../models/coffee_bean.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/data_providers.dart';
+
+import '../../services/coffee_bean_service.dart';
+import '../../services/image_upload_service.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/image_picker_widget.dart';
 
-class BeanFormScreen extends ConsumerStatefulWidget {
+class BeanFormScreen extends StatefulWidget {
   final String? beanId;
 
   const BeanFormScreen({super.key, this.beanId});
 
   @override
-  ConsumerState<BeanFormScreen> createState() => _BeanFormScreenState();
+  State<BeanFormScreen> createState() => _BeanFormScreenState();
 }
 
-class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
+class _BeanFormScreenState extends State<BeanFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _roasteryController = TextEditingController();
@@ -33,7 +39,26 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
   String? _roastLevel;
   bool _isLoading = false;
   bool _isInitialized = false;
-  
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.beanId != null) {
+      _loadBean();
+    }
+  }
+
+  void _loadBean() {
+    final service = getIt<CoffeeBeanService>();
+    service.getBean(widget.beanId!).then((bean) {
+      if (bean != null && mounted) {
+        setState(() {
+          _initializeWithBean(bean);
+        });
+      }
+    });
+  }
+
   // 이미지 관련 상태
   String? _existingImageUrl;
   XFile? _selectedImage;
@@ -95,9 +120,9 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
       return;
     }
 
-    final imageService = ref.read(imageUploadServiceProvider);
+    final imageService = getIt<ImageUploadService>();
     XFile? picked;
-    
+
     if (source == ImageSource.gallery) {
       picked = await imageService.pickImageFromGallery();
     } else {
@@ -121,7 +146,7 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
     });
 
     try {
-      final imageService = ref.read(imageUploadServiceProvider);
+      final imageService = getIt<ImageUploadService>();
       final imageUrl = await imageService.uploadImage(
         bucket: 'beans',
         userId: userId,
@@ -140,11 +165,12 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final currentUser = ref.read(currentUserProvider);
+    final authState = context.read<AuthCubit>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
       return;
     }
 
@@ -155,8 +181,8 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
     try {
       // 이미지 업로드
       final imageUrl = await _uploadImageIfNeeded(currentUser.id);
-      
-      final service = ref.read(coffeeBeanServiceProvider);
+
+      final service = getIt<CoffeeBeanService>();
 
       final bean = CoffeeBean(
         id: widget.beanId ?? '',
@@ -186,23 +212,23 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
         await service.createBean(bean);
       }
 
-      ref.invalidate(beansProvider);
-      ref.invalidate(recentBeansProvider);
-      ref.invalidate(dashboardStatsProvider);
+      // Cubit 간 갱신 계약 (P1)
+      if (mounted) {
+        context.read<BeanListCubit>().reload();
+        context.read<DashboardCubit>().refresh();
+      }
 
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? '원두가 수정되었습니다.' : '원두가 등록되었습니다.'),
-          ),
+          SnackBar(content: Text(isEditing ? '원두가 수정되었습니다.' : '원두가 등록되었습니다.')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('오류가 발생했습니다: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: $e')));
       }
     } finally {
       if (mounted) {
@@ -218,18 +244,10 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('yyyy년 MM월 dd일');
 
-    // 수정 모드일 때 기존 데이터 로드
-    if (isEditing) {
-      final beanAsync = ref.watch(beanDetailProvider(widget.beanId!));
-      beanAsync.whenData((bean) {
-        if (bean != null) _initializeWithBean(bean);
-      });
-    }
+    // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? '원두 수정' : '새 원두 기록'),
-      ),
+      appBar: AppBar(title: Text(isEditing ? '원두 수정' : '새 원두 기록')),
       body: LoadingOverlay(
         isLoading: _isLoading,
         child: SingleChildScrollView(
@@ -262,7 +280,7 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
                   ),
                 ],
                 const SizedBox(height: 16),
-                
+
                 // 원두 이름
                 CustomTextField(
                   label: '원두 이름 *',
@@ -327,12 +345,11 @@ class _BeanFormScreenState extends ConsumerState<BeanFormScreen> {
                           allowHalfRating: true,
                           itemCount: 5,
                           itemSize: 40,
-                          itemPadding:
-                              const EdgeInsets.symmetric(horizontal: 4),
-                          itemBuilder: (context, _) => const Icon(
-                            Icons.star,
-                            color: Colors.amber,
+                          itemPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
                           ),
+                          itemBuilder: (context, _) =>
+                              const Icon(Icons.star, color: Colors.amber),
                           onRatingUpdate: (rating) {
                             setState(() {
                               _rating = rating;
