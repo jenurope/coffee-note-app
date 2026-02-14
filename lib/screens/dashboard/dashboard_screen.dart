@@ -131,7 +131,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   title: '커피 기록',
                                   value: '$totalLogs개',
                                   icon: Icons.local_cafe,
-                                  iconColor: theme.colorScheme.secondary,
                                   onTap: () => context.go('/logs'),
                                 ),
                               ),
