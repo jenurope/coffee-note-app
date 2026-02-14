@@ -29,6 +29,25 @@ class _PostFormScreenState extends State<PostFormScreen> {
   bool get isEditing => widget.postId != null;
 
   @override
+  void initState() {
+    super.initState();
+    if (isEditing) {
+      _loadPost();
+    }
+  }
+
+  void _loadPost() {
+    final service = getIt<CommunityService>();
+    service.getPost(widget.postId!).then((post) {
+      if (post != null && mounted) {
+        setState(() {
+          _initializeWithPost(post);
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
@@ -106,17 +125,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 수정 모드일 때 기존 데이터 로드
-    if (isEditing && !_isInitialized) {
-      final service = getIt<CommunityService>();
-      service.getPost(widget.postId!).then((post) {
-        if (post != null && mounted) {
-          setState(() {
-            _initializeWithPost(post);
-          });
-        }
-      });
-    }
+    // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
     return Scaffold(
       appBar: AppBar(

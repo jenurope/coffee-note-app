@@ -9,10 +9,13 @@ import '../../services/auth_service.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  AuthCubit({AuthService? authService})
-    : _authService = authService ?? getIt<AuthService>(),
-      super(const AuthState.initial()) {
-    _init();
+  AuthCubit({AuthService? authService}) : super(const AuthState.initial()) {
+    try {
+      _authService = authService ?? getIt<AuthService>();
+      _init();
+    } catch (e) {
+      debugPrint('AuthCubit failed to resolve AuthService: $e');
+    }
   }
 
   /// 테스트 전용: AuthService 없이 초기 상태만 지정.
@@ -21,7 +24,7 @@ class AuthCubit extends Cubit<AuthState> {
     : _authService = null,
       super(initialState);
 
-  final AuthService? _authService;
+  AuthService? _authService;
   StreamSubscription<supa.AuthState>? _authSubscription;
 
   /// AuthService.authStateChanges 스트림 구독 (P0: 세션 만료/외부 로그아웃 감지)

@@ -2,25 +2,27 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
+import '../../services/auth_service.dart';
 import '../../services/coffee_bean_service.dart';
 import 'bean_filters.dart';
 import 'bean_list_state.dart';
 
 class BeanListCubit extends Cubit<BeanListState> {
-  BeanListCubit({CoffeeBeanService? service, String? userId})
+  BeanListCubit({CoffeeBeanService? service, AuthService? authService})
     : _service = service ?? getIt<CoffeeBeanService>(),
-      _userId = userId,
+      _authService = authService ?? getIt<AuthService>(),
       super(const BeanListState.initial());
 
   final CoffeeBeanService _service;
-  final String? _userId;
+  final AuthService _authService;
 
   /// 현재 필터로 목록 로드
   Future<void> load([BeanFilters filters = const BeanFilters()]) async {
     emit(BeanListState.loading(filters: filters));
     try {
+      final userId = _authService.currentUser?.id;
       final beans = await _service.getBeans(
-        userId: filters.onlyMine ? _userId : null,
+        userId: filters.onlyMine ? userId : null,
         searchQuery: filters.searchQuery,
         sortBy: filters.sortBy,
         ascending: filters.ascending,

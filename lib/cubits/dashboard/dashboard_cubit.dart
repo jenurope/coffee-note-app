@@ -12,23 +12,36 @@ class DashboardCubit extends Cubit<DashboardState> {
     AuthService? authService,
     CoffeeBeanService? beanService,
     CoffeeLogService? logService,
-  }) : _authService = authService ?? getIt<AuthService>(),
-       _beanService = beanService ?? getIt<CoffeeBeanService>(),
-       _logService = logService ?? getIt<CoffeeLogService>(),
-       super(const DashboardState.initial());
+  }) : super(const DashboardState.initial()) {
+    try {
+      _authService = authService ?? getIt<AuthService>();
+      _beanService = beanService ?? getIt<CoffeeBeanService>();
+      _logService = logService ?? getIt<CoffeeLogService>();
+    } catch (e) {
+      debugPrint('DashboardCubit failed to resolve services: $e');
+    }
+  }
 
-  final AuthService _authService;
-  final CoffeeBeanService _beanService;
-  final CoffeeLogService _logService;
+  AuthService? _authService;
+  CoffeeBeanService? _beanService;
+  CoffeeLogService? _logService;
 
   Future<void> load() async {
     emit(const DashboardState.loading());
     try {
-      final currentUser = _authService.currentUser;
+      final authService = _authService;
+      final beanService = _beanService;
+      final logService = _logService;
+
+      if (authService == null || beanService == null || logService == null) {
+        throw Exception('필수 서비스가 초기화되지 않았습니다.');
+      }
+
+      final currentUser = authService.currentUser;
 
       // 프로필 로드
       final userProfile = currentUser != null
-          ? await _authService.getProfile(currentUser.id)
+          ? await authService.getProfile(currentUser.id)
           : null;
 
       // 통계 로드
@@ -39,8 +52,8 @@ class DashboardCubit extends Cubit<DashboardState> {
       Map<String, int> coffeeTypeCount = {};
 
       if (currentUser != null) {
-        final beanStats = await _beanService.getUserBeanStats(currentUser.id);
-        final logStats = await _logService.getUserLogStats(currentUser.id);
+        final beanStats = await beanService.getUserBeanStats(currentUser.id);
+        final logStats = await logService.getUserLogStats(currentUser.id);
         totalBeans = beanStats['totalCount'] as int;
         averageBeanRating = beanStats['averageRating'] as double;
         totalLogs = logStats['totalCount'] as int;
@@ -49,13 +62,13 @@ class DashboardCubit extends Cubit<DashboardState> {
       }
 
       // 최근 기록 로드
-      final recentBeans = await _beanService.getBeans(
+      final recentBeans = await beanService.getBeans(
         userId: currentUser?.id,
         sortBy: 'created_at',
         ascending: false,
         limit: 5,
       );
-      final recentLogs = await _logService.getLogs(
+      final recentLogs = await logService.getLogs(
         userId: currentUser?.id,
         sortBy: 'created_at',
         ascending: false,

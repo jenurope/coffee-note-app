@@ -23,6 +23,15 @@ class _BeanListScreenState extends State<BeanListScreen> {
   bool _isGridView = true;
 
   @override
+  void initState() {
+    super.initState();
+    final cubit = context.read<BeanListCubit>();
+    if (cubit.state is BeanListInitial) {
+      cubit.load();
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();

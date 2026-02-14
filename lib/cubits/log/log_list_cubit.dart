@@ -2,24 +2,26 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
+import '../../services/auth_service.dart';
 import '../../services/coffee_log_service.dart';
 import 'log_filters.dart';
 import 'log_list_state.dart';
 
 class LogListCubit extends Cubit<LogListState> {
-  LogListCubit({CoffeeLogService? service, String? userId})
+  LogListCubit({CoffeeLogService? service, AuthService? authService})
     : _service = service ?? getIt<CoffeeLogService>(),
-      _userId = userId,
+      _authService = authService ?? getIt<AuthService>(),
       super(const LogListState.initial());
 
   final CoffeeLogService _service;
-  final String? _userId;
+  final AuthService _authService;
 
   Future<void> load([LogFilters filters = const LogFilters()]) async {
     emit(LogListState.loading(filters: filters));
     try {
+      final userId = _authService.currentUser?.id;
       final logs = await _service.getLogs(
-        userId: filters.onlyMine ? _userId : null,
+        userId: filters.onlyMine ? userId : null,
         searchQuery: filters.searchQuery,
         sortBy: filters.sortBy,
         ascending: filters.ascending,

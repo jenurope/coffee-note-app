@@ -9,6 +9,7 @@ import '../../core/di/service_locator.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/bean/bean_list_cubit.dart';
+import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../models/coffee_bean.dart';
 
 import '../../services/coffee_bean_service.dart';
@@ -38,6 +39,25 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
   String? _roastLevel;
   bool _isLoading = false;
   bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.beanId != null) {
+      _loadBean();
+    }
+  }
+
+  void _loadBean() {
+    final service = getIt<CoffeeBeanService>();
+    service.getBean(widget.beanId!).then((bean) {
+      if (bean != null && mounted) {
+        setState(() {
+          _initializeWithBean(bean);
+        });
+      }
+    });
+  }
 
   // 이미지 관련 상태
   String? _existingImageUrl;
@@ -195,7 +215,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
       // Cubit 간 갱신 계약 (P1)
       if (mounted) {
         context.read<BeanListCubit>().reload();
-        // DashboardCubit.refresh() — Phase 6에서 추가
+        context.read<DashboardCubit>().refresh();
       }
 
       if (mounted) {
@@ -224,17 +244,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('yyyy년 MM월 dd일');
 
-    // 수정 모드일 때 기존 데이터 로드
-    if (isEditing && !_isInitialized) {
-      final service = getIt<CoffeeBeanService>();
-      service.getBean(widget.beanId!).then((bean) {
-        if (bean != null && mounted) {
-          setState(() {
-            _initializeWithBean(bean);
-          });
-        }
-      });
-    }
+    // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
     return Scaffold(
       appBar: AppBar(title: Text(isEditing ? '원두 수정' : '새 원두 기록')),

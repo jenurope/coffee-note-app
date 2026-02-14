@@ -9,6 +9,7 @@ import '../../core/di/service_locator.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/log/log_list_cubit.dart';
+import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../models/coffee_log.dart';
 import '../../services/coffee_log_service.dart';
 import '../../services/image_upload_service.dart';
@@ -35,6 +36,25 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
   double _rating = 3.0;
   bool _isLoading = false;
   bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.logId != null) {
+      _loadLog();
+    }
+  }
+
+  void _loadLog() {
+    final service = getIt<CoffeeLogService>();
+    service.getLog(widget.logId!).then((log) {
+      if (log != null && mounted) {
+        setState(() {
+          _initializeWithLog(log);
+        });
+      }
+    });
+  }
 
   // 이미지 관련 상태
   String? _existingImageUrl;
@@ -184,7 +204,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
       // Cubit 간 갱신 계약 (P1)
       if (mounted) {
         context.read<LogListCubit>().reload();
-        // DashboardCubit.refresh() — Phase 6에서 추가
+        context.read<DashboardCubit>().refresh();
       }
 
       if (mounted) {
@@ -213,17 +233,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('yyyy년 MM월 dd일');
 
-    // 수정 모드일 때 기존 데이터 로드
-    if (isEditing && !_isInitialized) {
-      final service = getIt<CoffeeLogService>();
-      service.getLog(widget.logId!).then((log) {
-        if (log != null && mounted) {
-          setState(() {
-            _initializeWithLog(log);
-          });
-        }
-      });
-    }
+    // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
     return Scaffold(
       appBar: AppBar(title: Text(isEditing ? '기록 수정' : '새 커피 기록')),
