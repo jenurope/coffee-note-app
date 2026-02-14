@@ -37,6 +37,7 @@ class CoffeeLogDetailScreen extends StatelessWidget {
               ),
               LogDetailLoaded(log: final log) => () {
                 final isOwner = currentUserId == log.userId;
+                final hasImage = _hasValidImageUrl(log.imageUrl);
                 return Scaffold(
                   body: CustomScrollView(
                     slivers: [
@@ -44,9 +45,9 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                         expandedHeight: 250,
                         pinned: true,
                         flexibleSpace: FlexibleSpaceBar(
-                          background: log.imageUrl != null
+                          background: hasImage
                               ? CachedNetworkImage(
-                                  imageUrl: log.imageUrl!,
+                                  imageUrl: log.imageUrl!.trim(),
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
                                     color: theme.colorScheme.primary.withValues(
@@ -57,9 +58,9 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                   errorWidget: (context, url, error) =>
-                                      _buildPlaceholder(theme),
+                                      _buildPlaceholder(context, theme),
                                 )
-                              : _buildPlaceholder(theme),
+                              : _buildPlaceholder(context, theme),
                         ),
                         actions: isOwner
                             ? [
@@ -211,17 +212,41 @@ class CoffeeLogDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder(ThemeData theme) {
-    return Container(
-      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-      child: Center(
-        child: Icon(
-          Icons.local_cafe,
-          size: 80,
-          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+  Widget _buildPlaceholder(BuildContext context, ThemeData theme) {
+    final topInset = MediaQuery.paddingOf(context).top;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.92),
+            theme.colorScheme.primary.withValues(alpha: 0.78),
+          ],
         ),
       ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            top: topInset,
+            child: Center(
+              child: Icon(
+                Icons.local_cafe,
+                size: 64,
+                color: theme.colorScheme.onPrimary.withValues(alpha: 0.92),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  bool _hasValidImageUrl(String? imageUrl) {
+    final trimmed = imageUrl?.trim();
+    if (trimmed == null || trimmed.isEmpty) return false;
+    final uri = Uri.tryParse(trimmed);
+    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
   }
 
   Future<void> _showDeleteDialog(BuildContext context) async {
