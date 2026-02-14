@@ -162,6 +162,7 @@ class CoffeeLogListTile extends StatelessWidget {
     final dateFormat = DateFormat('MM/dd');
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: ListTile(
         onTap: onTap,
         leading: ClipRRect(

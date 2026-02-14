@@ -7,11 +7,7 @@ class BeanCard extends StatelessWidget {
   final CoffeeBean bean;
   final VoidCallback? onTap;
 
-  const BeanCard({
-    super.key,
-    required this.bean,
-    this.onTap,
-  });
+  const BeanCard({super.key, required this.bean, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +29,10 @@ class BeanCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        child: const Center(child: CircularProgressIndicator()),
                       ),
-                      errorWidget: (context, url, error) => _buildPlaceholder(theme),
+                      errorWidget: (context, url, error) =>
+                          _buildPlaceholder(theme),
                     )
                   : _buildPlaceholder(theme),
             ),
@@ -111,7 +106,9 @@ class BeanCard extends StatelessWidget {
                     Text(
                       bean.tastingNotes!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                         fontStyle: FontStyle.italic,
                       ),
                       maxLines: 2,
@@ -145,17 +142,14 @@ class BeanListTile extends StatelessWidget {
   final CoffeeBean bean;
   final VoidCallback? onTap;
 
-  const BeanListTile({
-    super.key,
-    required this.bean,
-    this.onTap,
-  });
+  const BeanListTile({super.key, required this.bean, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: ListTile(
         onTap: onTap,
         leading: ClipRRect(
@@ -170,16 +164,13 @@ class BeanListTile extends StatelessWidget {
                     placeholder: (context, url) => Container(
                       color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     ),
-                    errorWidget: (context, url, error) => _buildPlaceholder(theme),
+                    errorWidget: (context, url, error) =>
+                        _buildPlaceholder(theme),
                   )
                 : _buildPlaceholder(theme),
           ),
         ),
-        title: Text(
-          bean.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(bean.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           bean.roastery,
           maxLines: 1,
