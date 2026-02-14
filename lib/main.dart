@@ -44,10 +44,22 @@ void main() async {
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => AuthCubit()),
-        BlocProvider(create: (_) => BeanListCubit()),
-        BlocProvider(create: (_) => LogListCubit()),
-        BlocProvider(create: (_) => PostListCubit()),
-        BlocProvider(create: (_) => DashboardCubit()),
+        BlocProvider(
+          create: (context) =>
+              BeanListCubit(authCubit: context.read<AuthCubit>()),
+        ),
+        BlocProvider(
+          create: (context) =>
+              LogListCubit(authCubit: context.read<AuthCubit>()),
+        ),
+        BlocProvider(
+          create: (context) =>
+              PostListCubit(authCubit: context.read<AuthCubit>()),
+        ),
+        BlocProvider(
+          create: (context) =>
+              DashboardCubit(authCubit: context.read<AuthCubit>()),
+        ),
       ],
       child: const CoffeeNoteApp(),
     ),

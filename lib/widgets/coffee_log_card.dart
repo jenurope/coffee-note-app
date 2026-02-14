@@ -8,11 +8,7 @@ class CoffeeLogCard extends StatelessWidget {
   final CoffeeLog log;
   final VoidCallback? onTap;
 
-  const CoffeeLogCard({
-    super.key,
-    required this.log,
-    this.onTap,
-  });
+  const CoffeeLogCard({super.key, required this.log, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -34,12 +30,11 @@ class CoffeeLogCard extends StatelessWidget {
                       imageUrl: log.imageUrl!,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        color: theme.colorScheme.secondary.withValues(alpha: 0.1),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        child: const Center(child: CircularProgressIndicator()),
                       ),
-                      errorWidget: (context, url, error) => _buildPlaceholder(theme),
+                      errorWidget: (context, url, error) =>
+                          _buildPlaceholder(theme),
                     )
                   : _buildPlaceholder(theme),
             ),
@@ -56,13 +51,13 @@ class CoffeeLogCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       log.coffeeType,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.secondary,
+                        color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -83,17 +78,13 @@ class CoffeeLogCard extends StatelessWidget {
                   // 카페 이름
                   Row(
                     children: [
-                      Icon(
-                        Icons.storefront,
-                        size: 14,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                      const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           log.cafeName,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -111,7 +102,9 @@ class CoffeeLogCard extends StatelessWidget {
                       Text(
                         dateFormat.format(log.cafeVisitDate),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ],
@@ -123,9 +116,12 @@ class CoffeeLogCard extends StatelessWidget {
                     Text(
                       log.notes!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
+                        fontStyle: FontStyle.italic,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -140,12 +136,12 @@ class CoffeeLogCard extends StatelessWidget {
 
   Widget _buildPlaceholder(ThemeData theme) {
     return Container(
-      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+      color: theme.colorScheme.primary.withValues(alpha: 0.1),
       child: Center(
         child: Icon(
           Icons.local_cafe,
           size: 48,
-          color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+          color: theme.colorScheme.primary.withValues(alpha: 0.5),
         ),
       ),
     );
@@ -156,11 +152,7 @@ class CoffeeLogListTile extends StatelessWidget {
   final CoffeeLog log;
   final VoidCallback? onTap;
 
-  const CoffeeLogListTile({
-    super.key,
-    required this.log,
-    this.onTap,
-  });
+  const CoffeeLogListTile({super.key, required this.log, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +160,7 @@ class CoffeeLogListTile extends StatelessWidget {
     final dateFormat = DateFormat('MM/dd');
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: ListTile(
         onTap: onTap,
         leading: ClipRRect(
@@ -180,9 +173,10 @@ class CoffeeLogListTile extends StatelessWidget {
                     imageUrl: log.imageUrl!,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     ),
-                    errorWidget: (context, url, error) => _buildPlaceholder(theme),
+                    errorWidget: (context, url, error) =>
+                        _buildPlaceholder(theme),
                   )
                 : _buildPlaceholder(theme),
           ),
@@ -215,10 +209,10 @@ class CoffeeLogListTile extends StatelessWidget {
 
   Widget _buildPlaceholder(ThemeData theme) {
     return Container(
-      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+      color: theme.colorScheme.primary.withValues(alpha: 0.1),
       child: Icon(
         Icons.local_cafe,
-        color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+        color: theme.colorScheme.primary.withValues(alpha: 0.5),
       ),
     );
   }

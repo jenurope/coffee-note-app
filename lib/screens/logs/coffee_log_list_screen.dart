@@ -108,12 +108,14 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
                         };
                         return SearchFilterBar(
                           searchController: _searchController,
-                          onSearch: _search,
-                          onFilterPressed: _showFilterSheet,
+                          onSearch: isGuest ? null : _search,
+                          onFilterPressed: isGuest ? null : _showFilterSheet,
                           hintText: '커피, 카페 검색...',
+                          enabled: !isGuest,
                           hasActiveFilters:
-                              filters.minRating != null ||
-                              filters.coffeeType != null,
+                              !isGuest &&
+                              (filters.minRating != null ||
+                                  filters.coffeeType != null),
                         );
                       },
                     ),

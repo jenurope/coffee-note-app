@@ -90,12 +90,14 @@ class _BeanListScreenState extends State<BeanListScreen> {
                     padding: const EdgeInsets.all(16),
                     child: SearchFilterBar(
                       searchController: _searchController,
-                      onSearch: _search,
-                      onFilterPressed: _showFilterSheet,
+                      onSearch: isGuest ? null : _search,
+                      onFilterPressed: isGuest ? null : _showFilterSheet,
                       hintText: '원두 이름, 로스터리 검색...',
+                      enabled: !isGuest,
                       hasActiveFilters:
-                          _filters.minRating != null ||
-                          _filters.roastLevel != null,
+                          !isGuest &&
+                          (_filters.minRating != null ||
+                              _filters.roastLevel != null),
                     ),
                   ),
                   Expanded(

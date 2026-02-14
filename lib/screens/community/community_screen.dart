@@ -23,7 +23,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
   void initState() {
     super.initState();
     final cubit = context.read<PostListCubit>();
-    if (cubit.state is PostListInitial) {
+    final authState = context.read<AuthCubit>().state;
+    if (cubit.state is PostListInitial && authState is AuthAuthenticated) {
       cubit.load();
     }
   }
@@ -58,6 +59,53 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ? authState.user
             : null;
         final isGuest = authState is AuthGuest;
+
+        if (isGuest) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('커뮤니티')),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.forum_outlined,
+                      size: 80,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      '게스트 모드',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '로그인하면 커뮤니티 게시글을 보고\n작성할 수 있습니다.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    CustomButton(
+                      text: '로그인하기',
+                      onPressed: () {
+                        context.read<AuthCubit>().exitGuestMode();
+                        context.go('/auth/login');
+                      },
+                      width: double.infinity,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
 
         // 로그인 필요 안내
         if (currentUser == null && !isGuest) {

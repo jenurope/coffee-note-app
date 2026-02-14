@@ -131,7 +131,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   title: '커피 기록',
                                   value: '$totalLogs개',
                                   icon: Icons.local_cafe,
-                                  iconColor: theme.colorScheme.secondary,
                                   onTap: () => context.go('/logs'),
                                 ),
                               ),
@@ -200,9 +199,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 )
                               : SizedBox(
+                                  width: MediaQuery.sizeOf(context).width,
                                   height: 280,
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
+                                    clipBehavior: Clip.none,
                                     itemCount: recentBeans.length,
                                     itemBuilder: (context, index) {
                                       final bean = recentBeans[index];
