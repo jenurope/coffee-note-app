@@ -350,6 +350,7 @@ class SearchFilterBar extends StatelessWidget {
   final VoidCallback? onFilterPressed;
   final String? hintText;
   final bool hasActiveFilters;
+  final bool enabled;
 
   const SearchFilterBar({
     super.key,
@@ -358,6 +359,7 @@ class SearchFilterBar extends StatelessWidget {
     this.onFilterPressed,
     this.hintText,
     this.hasActiveFilters = false,
+    this.enabled = true,
   });
 
   @override
@@ -369,11 +371,12 @@ class SearchFilterBar extends StatelessWidget {
         Expanded(
           child: TextField(
             controller: searchController,
-            onSubmitted: (_) => onSearch?.call(),
+            enabled: enabled,
+            onSubmitted: enabled ? (_) => onSearch?.call() : null,
             decoration: InputDecoration(
               hintText: hintText ?? '검색...',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: searchController.text.isNotEmpty
+              suffixIcon: enabled && searchController.text.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear),
                       onPressed: () {
@@ -392,9 +395,9 @@ class SearchFilterBar extends StatelessWidget {
         if (onFilterPressed != null) ...[
           const SizedBox(width: 8),
           Badge(
-            isLabelVisible: hasActiveFilters,
+            isLabelVisible: enabled && hasActiveFilters,
             child: IconButton(
-              onPressed: onFilterPressed,
+              onPressed: enabled ? onFilterPressed : null,
               icon: const Icon(Icons.filter_list),
               style: IconButton.styleFrom(
                 backgroundColor: theme.colorScheme.surface,
