@@ -199,9 +199,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 )
                               : SizedBox(
+                                  width: MediaQuery.sizeOf(context).width,
                                   height: 280,
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
+                                    clipBehavior: Clip.none,
                                     itemCount: recentBeans.length,
                                     itemBuilder: (context, index) {
                                       final bean = recentBeans[index];
