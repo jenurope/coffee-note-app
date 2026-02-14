@@ -62,7 +62,7 @@ class CoffeeLogCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
 
                   // 커피/카페 이름
                   Text(
@@ -73,7 +73,7 @@ class CoffeeLogCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
 
                   // 카페 이름
                   Row(
@@ -92,7 +92,7 @@ class CoffeeLogCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
 
                   // 평점과 날짜
                   Row(
@@ -112,7 +112,7 @@ class CoffeeLogCard extends StatelessWidget {
 
                   // 메모
                   if (log.notes != null && log.notes!.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       log.notes!,
                       style: theme.textTheme.bodySmall?.copyWith(
