@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../providers/auth_provider.dart';
+import '../../cubits/auth/auth_cubit.dart';
+import '../../cubits/auth/auth_state.dart';
 
-class MainScreen extends ConsumerStatefulWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({
     super.key,
     required this.navigationShell,
@@ -46,10 +47,10 @@ class MainScreen extends ConsumerStatefulWidget {
   ];
 
   @override
-  ConsumerState<MainScreen> createState() => _MainScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends ConsumerState<MainScreen> {
+class _MainScreenState extends State<MainScreen> {
   late int _activeIndex;
 
   @override
@@ -107,66 +108,70 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isGuest = ref.watch(isGuestModeProvider);
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        final isGuest = authState is AuthGuest;
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          return;
-        }
-        _onBackPressed(context, isGuest);
-      },
-      child: Scaffold(
-        body: _navigationShell,
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isGuest)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 16,
-                ),
-                color: Theme.of(
-                  context,
-                ).colorScheme.primary.withValues(alpha: 0.1),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.primary,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) {
+              return;
+            }
+            _onBackPressed(context, isGuest);
+          },
+          child: Scaffold(
+            body: _navigationShell,
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isGuest)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '게스트 모드입니다. 로그인하면 모든 기능을 사용할 수 있습니다.',
-                        style: TextStyle(
-                          fontSize: 12,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info,
+                          size: 16,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '게스트 모드입니다. 로그인하면 모든 기능을 사용할 수 있습니다.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            context.read<AuthCubit>().exitGuestMode();
+                            context.go('/auth/login');
+                          },
+                          child: const Text('로그인'),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: () {
-                        ref.read(authNotifierProvider.notifier).exitGuestMode();
-                        context.go('/auth/login');
-                      },
-                      child: const Text('로그인'),
-                    ),
-                  ],
+                  ),
+                BottomNavigationBar(
+                  currentIndex: _currentIndex,
+                  onTap: _onItemTapped,
+                  items: MainScreen._navItems,
                 ),
-              ),
-            BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: _onItemTapped,
-              items: MainScreen._navItems,
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

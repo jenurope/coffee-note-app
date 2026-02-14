@@ -1,24 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../cubits/auth/auth_cubit.dart';
+import '../../cubits/auth/auth_state.dart';
+import '../../cubits/log/log_filters.dart';
+import '../../cubits/log/log_list_cubit.dart';
+import '../../cubits/log/log_list_state.dart';
 import '../../models/coffee_log.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/data_providers.dart';
 import '../../widgets/coffee_log_card.dart';
 import '../../widgets/common/common_widgets.dart';
 
-class CoffeeLogListScreen extends ConsumerStatefulWidget {
+class CoffeeLogListScreen extends StatefulWidget {
   const CoffeeLogListScreen({super.key});
 
   @override
-  ConsumerState<CoffeeLogListScreen> createState() =>
-      _CoffeeLogListScreenState();
+  State<CoffeeLogListScreen> createState() => _CoffeeLogListScreenState();
 }
 
-class _CoffeeLogListScreenState extends ConsumerState<CoffeeLogListScreen> {
+class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
   final _searchController = TextEditingController();
-  LogFilters _filters = const LogFilters();
   bool _isGridView = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final cubit = context.read<LogListCubit>();
+    if (cubit.state is LogListInitial) {
+      cubit.load();
+    }
+  }
 
   @override
   void dispose() {
@@ -27,20 +37,32 @@ class _CoffeeLogListScreenState extends ConsumerState<CoffeeLogListScreen> {
   }
 
   void _search() {
-    setState(() {
-      _filters = _filters.copyWith(searchQuery: _searchController.text);
-    });
+    final cubit = context.read<LogListCubit>();
+    final currentFilters = switch (cubit.state) {
+      LogListLoaded(filters: final f) => f,
+      LogListLoading(filters: final f) => f,
+      LogListError(filters: final f) => f,
+      _ => const LogFilters(),
+    };
+    cubit.updateFilters(
+      currentFilters.copyWith(searchQuery: _searchController.text),
+    );
   }
 
   void _showFilterSheet() {
+    final cubit = context.read<LogListCubit>();
+    final currentFilters = switch (cubit.state) {
+      LogListLoaded(filters: final f) => f,
+      LogListLoading(filters: final f) => f,
+      LogListError(filters: final f) => f,
+      _ => const LogFilters(),
+    };
     showModalBottomSheet(
       context: context,
       builder: (context) => _FilterSheet(
-        currentFilters: _filters,
+        currentFilters: currentFilters,
         onApply: (filters) {
-          setState(() {
-            _filters = filters;
-          });
+          cubit.updateFilters(filters);
           Navigator.pop(context);
         },
       ),
@@ -49,132 +71,146 @@ class _CoffeeLogListScreenState extends ConsumerState<CoffeeLogListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final currentUser = ref.watch(currentUserProvider);
-    final isGuest = ref.watch(isGuestModeProvider);
-    final logsAsync = ref.watch(coffeeLogsProvider(_filters));
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        final currentUser = authState is AuthAuthenticated
+            ? authState.user
+            : null;
+        final isGuest = authState is AuthGuest;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('커피 기록'),
-        actions: [
-          IconButton(
-            icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
-            onPressed: () {
-              setState(() {
-                _isGridView = !_isGridView;
-              });
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // 검색 및 필터 바
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: SearchFilterBar(
-              searchController: _searchController,
-              onSearch: _search,
-              onFilterPressed: _showFilterSheet,
-              hintText: '커피, 카페 검색...',
-              hasActiveFilters:
-                  _filters.minRating != null || _filters.coffeeType != null,
-            ),
-          ),
-
-          // 커피 로그 목록
-          Expanded(
-            child: logsAsync.when(
-              data: (logs) {
-                if (logs.isEmpty) {
-                  return EmptyState(
-                    icon: Icons.local_cafe_outlined,
-                    title: '등록된 커피 기록이 없습니다',
-                    subtitle: currentUser != null && !isGuest
-                        ? '오늘 마신 커피를 기록해보세요!'
-                        : '로그인하면 커피를 기록할 수 있습니다.',
-                    buttonText:
-                        currentUser != null && !isGuest ? '커피 기록하기' : null,
-                    onButtonPressed: currentUser != null && !isGuest
-                        ? () => context.push('/logs/new')
-                        : null,
-                  );
-                }
-
-                if (_isGridView) {
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      ref.invalidate(coffeeLogsProvider(_filters));
+        return BlocBuilder<LogListCubit, LogListState>(
+          builder: (context, logState) {
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('커피 기록'),
+                actions: [
+                  IconButton(
+                    icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
+                    onPressed: () {
+                      setState(() {
+                        _isGridView = !_isGridView;
+                      });
                     },
-                    child: GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.7,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: logs.length,
-                      itemBuilder: (context, index) {
-                        final log = logs[index];
-                        return CoffeeLogCard(
-                          log: log,
-                          onTap: () => context.push('/logs/${log.id}'),
-                        );
-                      },
-                    ),
-                  );
-                } else {
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      ref.invalidate(coffeeLogsProvider(_filters));
-                    },
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: logs.length,
-                      itemBuilder: (context, index) {
-                        final log = logs[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: CoffeeLogListTile(
-                            log: log,
-                            onTap: () => context.push('/logs/${log.id}'),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48),
-                    const SizedBox(height: 16),
-                    Text('오류가 발생했습니다\n$error'),
-                    const SizedBox(height: 16),
-                    CustomButton(
-                      text: '다시 시도',
-                      onPressed: () =>
-                          ref.invalidate(coffeeLogsProvider(_filters)),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: currentUser != null && !isGuest
-          ? FloatingActionButton(
-              onPressed: () => context.push('/logs/new'),
-              child: const Icon(Icons.add),
-            )
-          : null,
+              body: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Builder(
+                      builder: (context) {
+                        final filters = switch (logState) {
+                          LogListLoaded(filters: final f) => f,
+                          LogListLoading(filters: final f) => f,
+                          LogListError(filters: final f) => f,
+                          _ => const LogFilters(),
+                        };
+                        return SearchFilterBar(
+                          searchController: _searchController,
+                          onSearch: _search,
+                          onFilterPressed: _showFilterSheet,
+                          hintText: '커피, 카페 검색...',
+                          hasActiveFilters:
+                              filters.minRating != null ||
+                              filters.coffeeType != null,
+                        );
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: switch (logState) {
+                      LogListInitial() || LogListLoading() => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      LogListLoaded(logs: final logs) =>
+                        logs.isEmpty
+                            ? EmptyState(
+                                icon: Icons.local_cafe_outlined,
+                                title: '등록된 커피 기록이 없습니다',
+                                subtitle: currentUser != null && !isGuest
+                                    ? '오늘 마신 커피를 기록해보세요!'
+                                    : '로그인하면 커피를 기록할 수 있습니다.',
+                                buttonText: currentUser != null && !isGuest
+                                    ? '커피 기록하기'
+                                    : null,
+                                onButtonPressed: currentUser != null && !isGuest
+                                    ? () => context.push('/logs/new')
+                                    : null,
+                              )
+                            : _isGridView
+                            ? RefreshIndicator(
+                                onRefresh: () =>
+                                    context.read<LogListCubit>().reload(),
+                                child: GridView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        childAspectRatio: 0.7,
+                                        crossAxisSpacing: 12,
+                                        mainAxisSpacing: 12,
+                                      ),
+                                  itemCount: logs.length,
+                                  itemBuilder: (context, index) {
+                                    final log = logs[index];
+                                    return CoffeeLogCard(
+                                      log: log,
+                                      onTap: () =>
+                                          context.push('/logs/${log.id}'),
+                                    );
+                                  },
+                                ),
+                              )
+                            : RefreshIndicator(
+                                onRefresh: () =>
+                                    context.read<LogListCubit>().reload(),
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: logs.length,
+                                  itemBuilder: (context, index) {
+                                    final log = logs[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: CoffeeLogListTile(
+                                        log: log,
+                                        onTap: () =>
+                                            context.push('/logs/${log.id}'),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                      LogListError(message: final message) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48),
+                            const SizedBox(height: 16),
+                            Text('오류가 발생했습니다\n$message'),
+                            const SizedBox(height: 16),
+                            CustomButton(
+                              text: '다시 시도',
+                              onPressed: () =>
+                                  context.read<LogListCubit>().reload(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    },
+                  ),
+                ],
+              ),
+              floatingActionButton: currentUser != null && !isGuest
+                  ? FloatingActionButton(
+                      onPressed: () => context.push('/logs/new'),
+                      child: const Icon(Icons.add),
+                    )
+                  : null,
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -183,10 +219,7 @@ class _FilterSheet extends StatefulWidget {
   final LogFilters currentFilters;
   final void Function(LogFilters) onApply;
 
-  const _FilterSheet({
-    required this.currentFilters,
-    required this.onApply,
-  });
+  const _FilterSheet({required this.currentFilters, required this.onApply});
 
   @override
   State<_FilterSheet> createState() => _FilterSheetState();
@@ -295,11 +328,13 @@ class _FilterSheetState extends State<_FilterSheet> {
           CustomButton(
             text: '적용하기',
             onPressed: () {
-              widget.onApply(widget.currentFilters.copyWith(
-                minRating: _minRating,
-                coffeeType: _coffeeType,
-                sortBy: _sortBy,
-              ));
+              widget.onApply(
+                widget.currentFilters.copyWith(
+                  minRating: _minRating,
+                  coffeeType: _coffeeType,
+                  sortBy: _sortBy,
+                ),
+              );
             },
           ),
         ],

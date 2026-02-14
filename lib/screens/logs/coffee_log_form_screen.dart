@@ -1,26 +1,30 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../../core/di/service_locator.dart';
+import '../../cubits/auth/auth_cubit.dart';
+import '../../cubits/auth/auth_state.dart';
+import '../../cubits/log/log_list_cubit.dart';
 import '../../models/coffee_log.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/data_providers.dart';
+import '../../services/coffee_log_service.dart';
+import '../../services/image_upload_service.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/image_picker_widget.dart';
 
-class CoffeeLogFormScreen extends ConsumerStatefulWidget {
+class CoffeeLogFormScreen extends StatefulWidget {
   final String? logId;
 
   const CoffeeLogFormScreen({super.key, this.logId});
 
   @override
-  ConsumerState<CoffeeLogFormScreen> createState() => _CoffeeLogFormScreenState();
+  State<CoffeeLogFormScreen> createState() => _CoffeeLogFormScreenState();
 }
 
-class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
+class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _coffeeNameController = TextEditingController();
   final _cafeNameController = TextEditingController();
@@ -89,9 +93,9 @@ class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
       return;
     }
 
-    final imageService = ref.read(imageUploadServiceProvider);
+    final imageService = getIt<ImageUploadService>();
     XFile? picked;
-    
+
     if (source == ImageSource.gallery) {
       picked = await imageService.pickImageFromGallery();
     } else {
@@ -115,7 +119,7 @@ class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
     });
 
     try {
-      final imageService = ref.read(imageUploadServiceProvider);
+      final imageService = getIt<ImageUploadService>();
       final imageUrl = await imageService.uploadImage(
         bucket: 'logs',
         userId: userId,
@@ -134,11 +138,12 @@ class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final currentUser = ref.read(currentUserProvider);
+    final authState = context.read<AuthCubit>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
       return;
     }
 
@@ -149,8 +154,8 @@ class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
     try {
       // 이미지 업로드
       final imageUrl = await _uploadImageIfNeeded(currentUser.id);
-      
-      final service = ref.read(coffeeLogServiceProvider);
+
+      final service = getIt<CoffeeLogService>();
 
       final log = CoffeeLog(
         id: widget.logId ?? '',
@@ -176,23 +181,23 @@ class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
         await service.createLog(log);
       }
 
-      ref.invalidate(coffeeLogsProvider);
-      ref.invalidate(recentLogsProvider);
-      ref.invalidate(dashboardStatsProvider);
+      // Cubit 간 갱신 계약 (P1)
+      if (mounted) {
+        context.read<LogListCubit>().reload();
+        // DashboardCubit.refresh() — Phase 6에서 추가
+      }
 
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? '기록이 수정되었습니다.' : '기록이 등록되었습니다.'),
-          ),
+          SnackBar(content: Text(isEditing ? '기록이 수정되었습니다.' : '기록이 등록되었습니다.')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('오류가 발생했습니다: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: $e')));
       }
     } finally {
       if (mounted) {
@@ -209,17 +214,19 @@ class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
     final dateFormat = DateFormat('yyyy년 MM월 dd일');
 
     // 수정 모드일 때 기존 데이터 로드
-    if (isEditing) {
-      final logAsync = ref.watch(coffeeLogDetailProvider(widget.logId!));
-      logAsync.whenData((log) {
-        if (log != null) _initializeWithLog(log);
+    if (isEditing && !_isInitialized) {
+      final service = getIt<CoffeeLogService>();
+      service.getLog(widget.logId!).then((log) {
+        if (log != null && mounted) {
+          setState(() {
+            _initializeWithLog(log);
+          });
+        }
       });
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? '기록 수정' : '새 커피 기록'),
-      ),
+      appBar: AppBar(title: Text(isEditing ? '기록 수정' : '새 커피 기록')),
       body: LoadingOverlay(
         isLoading: _isLoading,
         child: SingleChildScrollView(
@@ -264,9 +271,16 @@ class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                                  Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
                                   SizedBox(width: 8),
-                                  Text('사진 변경', style: TextStyle(color: Colors.white)),
+                                  Text(
+                                    '사진 변경',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                 ],
                               ),
                             ),
@@ -364,12 +378,11 @@ class _CoffeeLogFormScreenState extends ConsumerState<CoffeeLogFormScreen> {
                           allowHalfRating: true,
                           itemCount: 5,
                           itemSize: 40,
-                          itemPadding:
-                              const EdgeInsets.symmetric(horizontal: 4),
-                          itemBuilder: (context, _) => const Icon(
-                            Icons.star,
-                            color: Colors.amber,
+                          itemPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
                           ),
+                          itemBuilder: (context, _) =>
+                              const Icon(Icons.star, color: Colors.amber),
                           onRatingUpdate: (rating) {
                             setState(() {
                               _rating = rating;

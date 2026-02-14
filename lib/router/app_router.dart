@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../cubits/auth/auth_cubit.dart';
+import '../cubits/auth/auth_state.dart';
+import '../cubits/bean/bean_detail_cubit.dart';
+import '../cubits/community/post_detail_cubit.dart';
+import '../cubits/log/log_detail_cubit.dart';
 
-import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/beans/bean_detail_screen.dart';
 import '../screens/beans/bean_form_screen.dart';
@@ -71,7 +75,10 @@ class AppRouteBuilders {
     GoRouterState state, {
     required String beanId,
   }) {
-    return BeanDetailScreen(beanId: beanId);
+    return BlocProvider(
+      create: (_) => BeanDetailCubit()..load(beanId),
+      child: BeanDetailScreen(beanId: beanId),
+    );
   }
 
   Widget buildBeanForm(
@@ -91,7 +98,10 @@ class AppRouteBuilders {
     GoRouterState state, {
     required String logId,
   }) {
-    return CoffeeLogDetailScreen(logId: logId);
+    return BlocProvider(
+      create: (_) => LogDetailCubit()..load(logId),
+      child: CoffeeLogDetailScreen(logId: logId),
+    );
   }
 
   Widget buildLogForm(
@@ -111,7 +121,10 @@ class AppRouteBuilders {
     GoRouterState state, {
     required String postId,
   }) {
-    return PostDetailScreen(postId: postId);
+    return BlocProvider(
+      create: (_) => PostDetailCubit()..load(postId),
+      child: PostDetailScreen(postId: postId),
+    );
   }
 
   Widget buildPostForm(
@@ -395,37 +408,23 @@ String _requiredPathParameter(GoRouterState state, String key) {
   return value;
 }
 
-final routerProvider = Provider<GoRouter>((ref) {
-  final refreshNotifier = ValueNotifier<int>(0);
-
-  void refreshRouter() {
-    refreshNotifier.value++;
-  }
-
-  ref.listen(authStateProvider, (previous, next) {
-    refreshRouter();
-  });
-  ref.listen(isGuestModeProvider, (previous, next) {
-    refreshRouter();
-  });
-  ref.onDispose(refreshNotifier.dispose);
+/// AuthCubit 기반 라우터 생성 함수.
+/// AuthCubit의 상태 변화를 listen하여 GoRouter를 자동 refresh.
+GoRouter createRouterFromCubit(AuthCubit authCubit) {
+  final refreshNotifier = _AuthCubitRefreshNotifier(authCubit);
 
   AppAuthSnapshot readAuthSnapshot() {
-    final authState = ref.read(authStateProvider);
-    final isGuest = ref.read(isGuestModeProvider);
+    final state = authCubit.state;
 
-    if (authState.isLoading && !authState.hasValue) {
+    if (state is AuthInitial) {
       return AppAuthSnapshot.resolving;
     }
 
-    final currentUser = authState.whenOrNull(
-      data: (state) => state.session?.user,
-    );
-    if (currentUser != null) {
+    if (state is AuthAuthenticated) {
       return AppAuthSnapshot.authenticated;
     }
 
-    if (isGuest) {
+    if (state is AuthGuest) {
       return AppAuthSnapshot.guest;
     }
 
@@ -436,4 +435,21 @@ final routerProvider = Provider<GoRouter>((ref) {
     authSnapshot: readAuthSnapshot,
     refreshListenable: refreshNotifier,
   );
-});
+}
+
+/// AuthCubit의 상태 변화를 ChangeNotifier(Listenable)로 변환.
+class _AuthCubitRefreshNotifier extends ChangeNotifier {
+  _AuthCubitRefreshNotifier(AuthCubit cubit) {
+    _subscription = cubit.stream.listen((_) {
+      notifyListeners();
+    });
+  }
+
+  late final dynamic _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
