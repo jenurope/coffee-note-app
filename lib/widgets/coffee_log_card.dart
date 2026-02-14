@@ -30,9 +30,7 @@ class CoffeeLogCard extends StatelessWidget {
                       imageUrl: log.imageUrl!,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        color: theme.colorScheme.secondary.withValues(
-                          alpha: 0.1,
-                        ),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         child: const Center(child: CircularProgressIndicator()),
                       ),
                       errorWidget: (context, url, error) =>
@@ -53,13 +51,13 @@ class CoffeeLogCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       log.coffeeType,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.secondary,
+                        color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -138,12 +136,12 @@ class CoffeeLogCard extends StatelessWidget {
 
   Widget _buildPlaceholder(ThemeData theme) {
     return Container(
-      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+      color: theme.colorScheme.primary.withValues(alpha: 0.1),
       child: Center(
         child: Icon(
           Icons.local_cafe,
           size: 48,
-          color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+          color: theme.colorScheme.primary.withValues(alpha: 0.5),
         ),
       ),
     );
@@ -175,7 +173,7 @@ class CoffeeLogListTile extends StatelessWidget {
                     imageUrl: log.imageUrl!,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     ),
                     errorWidget: (context, url, error) =>
                         _buildPlaceholder(theme),
@@ -211,10 +209,10 @@ class CoffeeLogListTile extends StatelessWidget {
 
   Widget _buildPlaceholder(ThemeData theme) {
     return Container(
-      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+      color: theme.colorScheme.primary.withValues(alpha: 0.1),
       child: Icon(
         Icons.local_cafe,
-        color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+        color: theme.colorScheme.primary.withValues(alpha: 0.5),
       ),
     );
   }

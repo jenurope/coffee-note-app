@@ -286,15 +286,14 @@ class BeanDetailScreen extends StatelessWidget {
                                           leading: Container(
                                             padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
-                                              color: theme.colorScheme.secondary
+                                              color: theme.colorScheme.primary
                                                   .withValues(alpha: 0.1),
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                             ),
                                             child: Icon(
                                               Icons.coffee_maker,
-                                              color:
-                                                  theme.colorScheme.secondary,
+                                              color: theme.colorScheme.primary,
                                             ),
                                           ),
                                           title: Text(brew.brewMethod ?? '추출'),
