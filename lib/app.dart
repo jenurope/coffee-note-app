@@ -3,6 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'config/theme.dart';
 import 'cubits/auth/auth_cubit.dart';
+import 'cubits/auth/auth_state.dart';
+import 'cubits/bean/bean_list_cubit.dart';
+import 'cubits/community/post_list_cubit.dart';
+import 'cubits/dashboard/dashboard_cubit.dart';
+import 'cubits/log/log_list_cubit.dart';
 import 'router/app_router.dart';
 
 class CoffeeNoteApp extends StatefulWidget {
@@ -30,13 +35,29 @@ class _CoffeeNoteAppState extends State<CoffeeNoteApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: '커피로그',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      routerConfig: _router,
+    return BlocListener<AuthCubit, AuthState>(
+      listenWhen: (previous, current) {
+        final typeChanged = previous.runtimeType != current.runtimeType;
+        if (typeChanged) return true;
+        if (previous is AuthAuthenticated && current is AuthAuthenticated) {
+          return previous.user.id != current.user.id;
+        }
+        return false;
+      },
+      listener: (context, authState) {
+        context.read<BeanListCubit>().onAuthStateChanged(authState);
+        context.read<LogListCubit>().onAuthStateChanged(authState);
+        context.read<PostListCubit>().onAuthStateChanged(authState);
+        context.read<DashboardCubit>().onAuthStateChanged(authState);
+      },
+      child: MaterialApp.router(
+        title: '커피로그',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        routerConfig: _router,
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../services/coffee_bean_service.dart';
 import '../../services/coffee_log_service.dart';
 import '../../services/community_service.dart';
+import '../../services/guest_sample_service.dart';
 import '../../services/image_upload_service.dart';
 
 final getIt = GetIt.instance;
@@ -39,6 +40,9 @@ void setupServiceLocator() {
 
   // Community
   getIt.registerLazySingleton<CommunityService>(() => CommunityService(client));
+
+  // Guest sample data
+  getIt.registerLazySingleton<GuestSampleService>(() => GuestSampleService());
 
   // Image Upload
   getIt.registerLazySingleton<ImageUploadService>(

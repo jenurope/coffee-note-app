@@ -75,8 +75,9 @@ class AppRouteBuilders {
     GoRouterState state, {
     required String beanId,
   }) {
+    final authCubit = context.read<AuthCubit>();
     return BlocProvider(
-      create: (_) => BeanDetailCubit()..load(beanId),
+      create: (_) => BeanDetailCubit(authCubit: authCubit)..load(beanId),
       child: BeanDetailScreen(beanId: beanId),
     );
   }
@@ -98,8 +99,9 @@ class AppRouteBuilders {
     GoRouterState state, {
     required String logId,
   }) {
+    final authCubit = context.read<AuthCubit>();
     return BlocProvider(
-      create: (_) => LogDetailCubit()..load(logId),
+      create: (_) => LogDetailCubit(authCubit: authCubit)..load(logId),
       child: CoffeeLogDetailScreen(logId: logId),
     );
   }
@@ -121,8 +123,9 @@ class AppRouteBuilders {
     GoRouterState state, {
     required String postId,
   }) {
+    final authCubit = context.read<AuthCubit>();
     return BlocProvider(
-      create: (_) => PostDetailCubit()..load(postId),
+      create: (_) => PostDetailCubit(authCubit: authCubit)..load(postId),
       child: PostDetailScreen(postId: postId),
     );
   }
