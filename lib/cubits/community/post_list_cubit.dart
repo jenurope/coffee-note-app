@@ -5,40 +5,22 @@ import '../../core/di/service_locator.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
 import '../../services/community_service.dart';
-import '../../services/guest_sample_service.dart';
 import 'post_filters.dart';
 import 'post_list_state.dart';
 
 class PostListCubit extends Cubit<PostListState> {
-  PostListCubit({
-    CommunityService? service,
-    AuthCubit? authCubit,
-    GuestSampleService? sampleService,
-  }) : _service = service ?? getIt<CommunityService>(),
-       _authCubit = authCubit,
-       _sampleService = sampleService ?? getIt<GuestSampleService>(),
-       super(const PostListState.initial());
+  PostListCubit({CommunityService? service, AuthCubit? authCubit})
+    : _service = service ?? getIt<CommunityService>(),
+      _authCubit = authCubit,
+      super(const PostListState.initial());
 
   final CommunityService _service;
   final AuthCubit? _authCubit;
-  final GuestSampleService _sampleService;
 
   Future<void> load([PostFilters filters = const PostFilters()]) async {
     emit(PostListState.loading(filters: filters));
     try {
       final authState = _authCubit?.state;
-      if (authState is AuthGuest) {
-        final posts = await _sampleService.getPosts(
-          searchQuery: filters.searchQuery,
-          sortBy: filters.sortBy,
-          ascending: filters.ascending,
-          limit: filters.limit,
-          offset: filters.offset,
-        );
-        emit(PostListState.loaded(posts: posts, filters: filters));
-        return;
-      }
-
       if (authState is AuthAuthenticated) {
         final posts = await _service.getPosts(
           searchQuery: filters.searchQuery,

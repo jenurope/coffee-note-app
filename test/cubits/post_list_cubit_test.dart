@@ -5,7 +5,6 @@ import 'package:coffee_note_app/cubits/community/post_list_state.dart';
 import 'package:coffee_note_app/models/community_post.dart';
 import 'package:coffee_note_app/models/user_profile.dart';
 import 'package:coffee_note_app/services/community_service.dart';
-import 'package:coffee_note_app/services/guest_sample_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User;
@@ -15,26 +14,23 @@ class _MockCommunityService extends Mock implements CommunityService {}
 void main() {
   group('PostListCubit', () {
     late _MockCommunityService communityService;
-    late GuestSampleService sampleService;
 
     setUp(() {
       communityService = _MockCommunityService();
-      sampleService = GuestSampleService();
     });
 
-    test('게스트 모드에서는 로컬 샘플 게시글을 로드한다', () async {
+    test('게스트 모드에서는 빈 목록을 반환하고 서버를 호출하지 않는다', () async {
       final authCubit = AuthCubit.test(const AuthState.guest());
       final cubit = PostListCubit(
         service: communityService,
         authCubit: authCubit,
-        sampleService: sampleService,
       );
 
       await cubit.load();
 
       final state = cubit.state;
       expect(state, isA<PostListLoaded>());
-      expect((state as PostListLoaded).posts, isNotEmpty);
+      expect((state as PostListLoaded).posts, isEmpty);
       verifyZeroInteractions(communityService);
     });
 
@@ -43,7 +39,6 @@ void main() {
       final cubit = PostListCubit(
         service: communityService,
         authCubit: authCubit,
-        sampleService: sampleService,
       );
 
       await cubit.load();
@@ -87,7 +82,6 @@ void main() {
       final cubit = PostListCubit(
         service: communityService,
         authCubit: authCubit,
-        sampleService: sampleService,
       );
 
       await cubit.load();

@@ -4,39 +4,16 @@ import '../models/bean_detail.dart';
 import '../models/brew_detail.dart';
 import '../models/coffee_bean.dart';
 import '../models/coffee_log.dart';
-import '../models/community_post.dart';
 import '../models/guest_dashboard_snapshot.dart';
 import '../models/user_profile.dart';
 
 class GuestSampleService {
-  GuestSampleService()
-    : _beans = _buildBeans(),
-      _logs = _buildLogs(),
-      _postDetails = _buildPostDetails() {
-    _postDetailsById = {for (final post in _postDetails) post.id: post};
-    _postSummaries = _postDetails
-        .map(
-          (post) => CommunityPost(
-            id: post.id,
-            userId: post.userId,
-            title: post.title,
-            content: post.content,
-            createdAt: post.createdAt,
-            updatedAt: post.updatedAt,
-            author: post.author,
-            commentCount: post.comments?.length ?? 0,
-          ),
-        )
-        .toList(growable: false);
-  }
+  GuestSampleService() : _beans = _buildBeans(), _logs = _buildLogs();
 
   static const String guestUserId = 'guest-user';
 
   final List<CoffeeBean> _beans;
   final List<CoffeeLog> _logs;
-  final List<CommunityPost> _postDetails;
-  late final Map<String, CommunityPost> _postDetailsById;
-  late final List<CommunityPost> _postSummaries;
 
   Future<List<CoffeeBean>> getBeans({
     String? searchQuery,
@@ -119,38 +96,6 @@ class GuestSampleService {
 
   Future<CoffeeLog?> getLog(String id) async {
     return _firstWhereOrNull(_logs, (log) => log.id == id);
-  }
-
-  Future<List<CommunityPost>> getPosts({
-    String? searchQuery,
-    String? sortBy,
-    bool ascending = false,
-    int? limit,
-    int? offset,
-  }) async {
-    final normalized = _normalizeQuery(searchQuery);
-    final filtered = _postSummaries
-        .where((post) {
-          if (normalized == null) return true;
-          return post.title.toLowerCase().contains(normalized) ||
-              post.content.toLowerCase().contains(normalized);
-        })
-        .toList(growable: false);
-
-    filtered.sort((a, b) {
-      final orderColumn = sortBy ?? 'created_at';
-      final comparison = switch (orderColumn) {
-        'title' => _compareText(a.title, b.title),
-        _ => a.createdAt.compareTo(b.createdAt),
-      };
-      return ascending ? comparison : -comparison;
-    });
-
-    return _applyPagination(filtered, limit: limit, offset: offset);
-  }
-
-  Future<CommunityPost?> getPost(String id) async {
-    return _postDetailsById[id];
   }
 
   Future<GuestDashboardSnapshot> getDashboardSnapshot() async {
@@ -365,61 +310,6 @@ class GuestSampleService {
       ),
     ];
   }
-
-  static List<CommunityPost> _buildPostDetails() {
-    final now = DateTime(2026, 2, 14, 9);
-    return <CommunityPost>[
-      CommunityPost(
-        id: 'sample-post-1',
-        userId: _profiles.minji.id,
-        title: '핸드드립 추출 시간은 어느 정도로 맞추시나요?',
-        content: '원두마다 다르긴 한데 보통 2분 30초 전후로 맞추고 있습니다. 다들 어떤 기준으로 맞추는지 궁금해요.',
-        createdAt: now.subtract(const Duration(days: 3)),
-        updatedAt: now.subtract(const Duration(days: 3)),
-        author: _profiles.minji,
-        comments: <CommunityComment>[
-          CommunityComment(
-            id: 'sample-comment-1',
-            postId: 'sample-post-1',
-            userId: _profiles.guest.id,
-            content: '저는 15g 기준 2분 40초 정도로 맞추고 있어요!',
-            createdAt: now.subtract(const Duration(days: 3, hours: 1)),
-            updatedAt: now.subtract(const Duration(days: 3, hours: 1)),
-            author: _profiles.guest,
-          ),
-          CommunityComment(
-            id: 'sample-comment-2',
-            postId: 'sample-post-1',
-            userId: _profiles.juno.id,
-            content: '분쇄도를 먼저 고정한 뒤 시간으로 미세 조정하는 편입니다.',
-            createdAt: now.subtract(const Duration(days: 2, hours: 20)),
-            updatedAt: now.subtract(const Duration(days: 2, hours: 20)),
-            author: _profiles.juno,
-          ),
-        ],
-      ),
-      CommunityPost(
-        id: 'sample-post-2',
-        userId: _profiles.juno.id,
-        title: '최근 마신 케냐 원두 추천 받아요',
-        content: '블랙커런트 계열의 선명한 산미를 좋아합니다. 최근 인상 깊었던 케냐 원두 있으신가요?',
-        createdAt: now.subtract(const Duration(days: 1, hours: 6)),
-        updatedAt: now.subtract(const Duration(days: 1, hours: 6)),
-        author: _profiles.juno,
-        comments: <CommunityComment>[
-          CommunityComment(
-            id: 'sample-comment-3',
-            postId: 'sample-post-2',
-            userId: _profiles.minji.id,
-            content: 'AA 등급 워시드 추천해요. 드립에서 향이 꽤 잘 올라옵니다.',
-            createdAt: now.subtract(const Duration(days: 1, hours: 3)),
-            updatedAt: now.subtract(const Duration(days: 1, hours: 3)),
-            author: _profiles.minji,
-          ),
-        ],
-      ),
-    ];
-  }
 }
 
 class _SampleProfiles {
@@ -429,22 +319,6 @@ class _SampleProfiles {
     email: 'guest@local.sample',
     createdAt: DateTime(2026, 1, 1),
     updatedAt: DateTime(2026, 1, 1),
-  );
-
-  final UserProfile minji = UserProfile(
-    id: 'sample-user-minji',
-    nickname: '민지',
-    email: 'minji@local.sample',
-    createdAt: DateTime(2026, 1, 2),
-    updatedAt: DateTime(2026, 1, 2),
-  );
-
-  final UserProfile juno = UserProfile(
-    id: 'sample-user-juno',
-    nickname: '주노',
-    email: 'juno@local.sample',
-    createdAt: DateTime(2026, 1, 3),
-    updatedAt: DateTime(2026, 1, 3),
   );
 }
 
