@@ -141,25 +141,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                           // 빠른 액션 버튼
                           if (currentUser != null && !isGuest) ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CustomButton(
-                                    text: '원두 기록하기',
-                                    icon: Icons.add,
-                                    onPressed: () => context.push('/beans/new'),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: CustomButton(
+                                      text: '원두 기록하기',
+                                      icon: Icons.add,
+                                      onPressed: () =>
+                                          context.push('/beans/new'),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: CustomButton(
-                                    text: '커피 기록하기',
-                                    icon: Icons.add,
-                                    isOutlined: true,
-                                    onPressed: () => context.push('/logs/new'),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: CustomButton(
+                                      text: '커피 기록하기',
+                                      icon: Icons.add,
+                                      isOutlined: true,
+                                      onPressed: () =>
+                                          context.push('/logs/new'),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 24),
                           ],
