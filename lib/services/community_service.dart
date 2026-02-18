@@ -18,7 +18,13 @@ class CommunityService {
     try {
       var query = _client.from('community_posts').select('''
         *,
-        profiles!community_posts_user_id_fkey(id, nickname, avatar_url)
+        profiles!community_posts_user_id_fkey(
+          id,
+          nickname,
+          email,
+          created_at,
+          updated_at
+        )
       ''');
 
       // 검색어 필터
@@ -56,14 +62,30 @@ class CommunityService {
   // 게시글 상세 조회 (댓글 포함)
   Future<CommunityPost?> getPost(String id) async {
     try {
-      final response = await _client.from('community_posts').select('''
+      final response = await _client
+          .from('community_posts')
+          .select('''
         *,
-        profiles!community_posts_user_id_fkey(id, nickname, avatar_url),
+        profiles!community_posts_user_id_fkey(
+          id,
+          nickname,
+          email,
+          created_at,
+          updated_at
+        ),
         community_comments(
           *,
-          profiles!community_comments_user_id_fkey(id, nickname, avatar_url)
+          profiles!community_comments_user_id_fkey(
+            id,
+            nickname,
+            email,
+            created_at,
+            updated_at
+          )
         )
-      ''').eq('id', id).maybeSingle();
+      ''')
+          .eq('id', id)
+          .maybeSingle();
 
       if (response != null) {
         return CommunityPost.fromJson(response);
