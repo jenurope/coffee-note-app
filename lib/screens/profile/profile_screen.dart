@@ -1,14 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/dashboard/dashboard_state.dart';
 import '../../widgets/common/common_widgets.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late final Future<String> _versionFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _versionFuture = _loadVersion();
+  }
+
+  Future<String> _loadVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    return packageInfo.version;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,12 +101,6 @@ class ProfileScreen extends StatelessWidget {
             final userProfile = dashState is DashboardLoaded
                 ? dashState.userProfile
                 : null;
-            final totalBeans = dashState is DashboardLoaded
-                ? dashState.totalBeans
-                : 0;
-            final totalLogs = dashState is DashboardLoaded
-                ? dashState.totalLogs
-                : 0;
 
             return Scaffold(
               appBar: AppBar(
@@ -148,56 +161,26 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    // 통계
-                    if (dashState is DashboardLoaded)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatCard(
-                              theme,
-                              icon: Icons.coffee,
-                              label: '원두 기록',
-                              value: '$totalBeans',
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildStatCard(
-                              theme,
-                              icon: Icons.local_cafe,
-                              label: '커피 기록',
-                              value: '$totalLogs',
-                            ),
-                          ),
-                        ],
-                      ),
-
                     const SizedBox(height: 24),
 
                     // 메뉴
                     Card(
+                      clipBehavior: Clip.antiAlias,
                       child: Column(
                         children: [
                           _buildMenuTile(
                             context,
-                            icon: Icons.coffee,
-                            title: '내 원두 기록',
-                            onTap: () => context.go('/beans'),
-                          ),
-                          const Divider(height: 1),
-                          _buildMenuTile(
-                            context,
-                            icon: Icons.local_cafe,
-                            title: '내 커피 기록',
-                            onTap: () => context.go('/logs'),
-                          ),
-                          const Divider(height: 1),
-                          _buildMenuTile(
-                            context,
-                            icon: Icons.forum,
                             title: '내 게시글',
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('준비 중입니다.')),
+                              );
+                            },
+                          ),
+                          const Divider(height: 1),
+                          _buildMenuTile(
+                            context,
+                            title: '내 댓글',
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('준비 중입니다.')),
@@ -212,37 +195,22 @@ class ProfileScreen extends StatelessWidget {
 
                     // 기타 메뉴
                     Card(
+                      clipBehavior: Clip.antiAlias,
                       child: Column(
                         children: [
                           _buildMenuTile(
                             context,
-                            icon: Icons.help,
-                            title: '도움말',
+                            title: '문의/제보하기',
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('준비 중입니다.')),
+                                const SnackBar(
+                                  content: Text('문의/제보 기능은 준비 중입니다.'),
+                                ),
                               );
                             },
                           ),
                           const Divider(height: 1),
-                          _buildMenuTile(
-                            context,
-                            icon: Icons.info,
-                            title: '앱 정보',
-                            onTap: () {
-                              showAboutDialog(
-                                context: context,
-                                applicationName: '커피로그',
-                                applicationVersion: '1.0.0',
-                                applicationIcon: Icon(
-                                  Icons.coffee,
-                                  size: 48,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                children: [const Text('당신의 커피 여정을 기록하세요.')],
-                              );
-                            },
-                          ),
+                          _buildAppInfoTile(theme),
                         ],
                       ),
                     ),
@@ -295,49 +263,36 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(
-    ThemeData theme, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(icon, color: theme.colorScheme.primary),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildMenuTile(
     BuildContext context, {
-    required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon),
       title: Text(title),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildAppInfoTile(ThemeData theme) {
+    return FutureBuilder<String>(
+      future: _versionFuture,
+      builder: (context, snapshot) {
+        final versionText = snapshot.hasData
+            ? '버전 ${snapshot.data}'
+            : '버전 확인 중...';
+
+        return ListTile(
+          title: const Text('앱 정보'),
+          trailing: Text(
+            versionText,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+        );
+      },
     );
   }
 }
