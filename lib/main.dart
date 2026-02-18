@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter/services.dart';
 import 'core/bloc/app_bloc_observer.dart';
@@ -76,6 +77,8 @@ class _InitializationErrorApp extends StatelessWidget {
     return MaterialApp(
       title: '커피로그',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('ko'), Locale('en')],
       home: Scaffold(
         body: SafeArea(
           child: Center(

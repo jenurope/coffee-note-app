@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'config/theme.dart';
 import 'cubits/auth/auth_cubit.dart';
@@ -56,6 +57,8 @@ class _CoffeeNoteAppState extends State<CoffeeNoteApp> {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const [Locale('ko'), Locale('en')],
         routerConfig: _router,
       ),
     );

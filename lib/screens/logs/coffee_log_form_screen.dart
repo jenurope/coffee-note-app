@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import '../../core/di/service_locator.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
@@ -85,11 +84,13 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
   }
 
   Future<void> _selectDate() async {
+    final locale = Localizations.localeOf(context);
     final picked = await showDatePicker(
       context: context,
       initialDate: _visitDate,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
+      locale: locale,
     );
     if (picked != null) {
       setState(() {
@@ -231,7 +232,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('yyyy년 MM월 dd일');
+    final localizations = MaterialLocalizations.of(context);
 
     // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
@@ -368,7 +369,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(dateFormat.format(_visitDate)),
+                    child: Text(localizations.formatMediumDate(_visitDate)),
                   ),
                 ),
                 const SizedBox(height: 16),
