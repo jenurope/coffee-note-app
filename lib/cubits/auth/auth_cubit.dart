@@ -32,11 +32,7 @@ class AuthCubit extends Cubit<AuthState> {
     final service = _authService;
     if (service == null) return;
 
-    // 현재 사용자가 이미 있는 경우 즉시 반영
-    final currentUser = service.currentUser;
-    if (currentUser != null) {
-      emit(AuthState.authenticated(user: currentUser));
-    }
+    _hydrateAuthState(service);
 
     _authSubscription = service.authStateChanges.listen(
       (authState) {
@@ -55,6 +51,24 @@ class AuthCubit extends Cubit<AuthState> {
         debugPrint('Auth stream error: $error');
       },
     );
+  }
+
+  Future<void> _hydrateAuthState(AuthService service) async {
+    try {
+      final validatedUser = await service.getValidatedCurrentUser();
+      if (state is AuthGuest) return;
+
+      if (validatedUser != null) {
+        emit(AuthState.authenticated(user: validatedUser));
+      } else {
+        emit(const AuthState.unauthenticated());
+      }
+    } catch (e) {
+      debugPrint('Auth bootstrap error: $e');
+      if (state is! AuthGuest) {
+        emit(const AuthState.unauthenticated());
+      }
+    }
   }
 
   /// Google 로그인

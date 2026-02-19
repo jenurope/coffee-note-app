@@ -25,6 +25,35 @@ class AuthService {
   // 로그인 상태 스트림
   Stream<AuthState> get authStateChanges => _auth.onAuthStateChange;
 
+  // 앱 시작 시 로컬 세션을 서버 기준으로 검증
+  Future<User?> getValidatedCurrentUser() async {
+    final localUser = _auth.currentUser;
+    if (localUser == null) return null;
+
+    try {
+      final response = await _auth.getUser();
+      final remoteUser = response.user;
+      if (remoteUser != null) {
+        return remoteUser;
+      }
+
+      await _clearLocalSession();
+      return null;
+    } on AuthException catch (e) {
+      if (_shouldForceSignOutForValidationError(e.message)) {
+        await _clearLocalSession();
+        return null;
+      }
+
+      // 네트워크 등 일시 오류 시에는 로컬 세션을 유지
+      debugPrint('Validate current user skipped: ${e.message}');
+      return localUser;
+    } catch (e) {
+      debugPrint('Validate current user unexpected error: $e');
+      return localUser;
+    }
+  }
+
   // 구글 로그인
   Future<AuthResponse> signInWithGoogle() async {
     try {
@@ -154,5 +183,26 @@ class AuthService {
     }
 
     return '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
+  }
+
+  Future<void> _clearLocalSession() async {
+    try {
+      await _auth.signOut(scope: SignOutScope.local);
+    } catch (e) {
+      debugPrint('Clear local session error: $e');
+    }
+  }
+
+  bool _shouldForceSignOutForValidationError(String message) {
+    final normalized = message.toLowerCase();
+    const patterns = <String>[
+      'user not found',
+      'does not exist',
+      'invalid claim',
+      'invalid refresh token',
+      'refresh token not found',
+      'session not found',
+    ];
+    return patterns.any(normalized.contains);
   }
 }
