@@ -509,21 +509,29 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                         ),
                         const SizedBox(height: 10),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              context.l10n.roastLight,
-                              style: theme.textTheme.labelMedium,
-                            ),
-                            Text(
-                              context.l10n.roastMedium,
-                              style: theme.textTheme.labelMedium,
-                            ),
-                            Text(
-                              context.l10n.roastDark,
-                              style: theme.textTheme.labelMedium,
-                            ),
-                          ],
+                          children: List.generate(
+                            CoffeeBean.roastLevels.length,
+                            (index) {
+                              final String? label = switch (index) {
+                                0 => context.l10n.roastLight,
+                                2 => context.l10n.roastMedium,
+                                4 => context.l10n.roastDark,
+                                _ => null,
+                              };
+
+                              return Expanded(
+                                child: Center(
+                                  child: label == null
+                                      ? const SizedBox.shrink()
+                                      : Text(
+                                          label,
+                                          style: theme.textTheme.labelMedium,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),
