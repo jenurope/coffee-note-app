@@ -68,6 +68,23 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
   bool get isEditing => widget.beanId != null;
 
+  int _roastIndexFromPosition(double dx, double width) {
+    if (width <= 0) return 0;
+
+    final ratio = (dx / width).clamp(0.0, 0.999999).toDouble();
+    return (ratio * CoffeeBean.roastLevels.length).floor();
+  }
+
+  void _updateRoastLevelFromPosition(double dx, double width) {
+    final nextLevel =
+        CoffeeBean.roastLevels[_roastIndexFromPosition(dx, width)];
+    if (_roastLevel == nextLevel) return;
+
+    setState(() {
+      _roastLevel = nextLevel;
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -401,73 +418,111 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
                     child: Column(
                       children: [
-                        Container(
-                          height: 52,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFFC4A676),
-                                const Color(0xFFA97445),
-                                const Color(0xFF7A4A27),
-                                const Color(0xFF4F2B17),
-                                const Color(0xFF2D160C),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: CoffeeBean.roastLevels.asMap().entries.map((entry) {
-                              final level = entry.value;
-                              final isSelected = _roastLevel == level;
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final trackWidth = constraints.maxWidth;
 
-                              return Expanded(
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(14),
-                                  onTap: () {
-                                    setState(() {
-                                      _roastLevel = level;
-                                    });
-                                  },
-                                  child: Center(
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 180),
-                                      height: isSelected ? 26 : 14,
-                                      width: isSelected ? 26 : 14,
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? Colors.white
-                                            : Colors.white.withOpacity(0.35),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? const Color(0xFF2D160C)
-                                              : Colors.white.withOpacity(0.6),
-                                          width: 2,
-                                        ),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(0.25),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 3),
-                                                ),
-                                              ]
-                                            : null,
-                                      ),
-                                    ),
+                            return Listener(
+                              behavior: HitTestBehavior.opaque,
+                              onPointerDown: (event) {
+                                _updateRoastLevelFromPosition(
+                                  event.localPosition.dx,
+                                  trackWidth,
+                                );
+                              },
+                              onPointerMove: (event) {
+                                _updateRoastLevelFromPosition(
+                                  event.localPosition.dx,
+                                  trackWidth,
+                                );
+                              },
+                              child: Container(
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFFC4A676),
+                                      const Color(0xFFA97445),
+                                      const Color(0xFF7A4A27),
+                                      const Color(0xFF4F2B17),
+                                      const Color(0xFF2D160C),
+                                    ],
                                   ),
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
-                              );
-                            }).toList(),
-                          ),
+                                child: Row(
+                                  children: CoffeeBean.roastLevels
+                                      .asMap()
+                                      .entries
+                                      .map((entry) {
+                                        final level = entry.value;
+                                        final isSelected = _roastLevel == level;
+
+                                        return Expanded(
+                                          child: Center(
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 180,
+                                              ),
+                                              height: isSelected ? 26 : 14,
+                                              width: isSelected ? 26 : 14,
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : Colors.white.withValues(
+                                                        alpha: 0.35,
+                                                      ),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: isSelected
+                                                      ? const Color(0xFF2D160C)
+                                                      : Colors.white.withValues(
+                                                          alpha: 0.6,
+                                                        ),
+                                                  width: 2,
+                                                ),
+                                                boxShadow: isSelected
+                                                    ? [
+                                                        BoxShadow(
+                                                          color: Colors.black
+                                                              .withValues(
+                                                                alpha: 0.25,
+                                                              ),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(
+                                                            0,
+                                                            3,
+                                                          ),
+                                                        ),
+                                                      ]
+                                                    : null,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      })
+                                      .toList(),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(context.l10n.roastLight, style: theme.textTheme.labelMedium),
-                            Text(context.l10n.roastMedium, style: theme.textTheme.labelMedium),
-                            Text(context.l10n.roastDark, style: theme.textTheme.labelMedium),
+                            Text(
+                              context.l10n.roastLight,
+                              style: theme.textTheme.labelMedium,
+                            ),
+                            Text(
+                              context.l10n.roastMedium,
+                              style: theme.textTheme.labelMedium,
+                            ),
+                            Text(
+                              context.l10n.roastDark,
+                              style: theme.textTheme.labelMedium,
+                            ),
                           ],
                         ),
                       ],
