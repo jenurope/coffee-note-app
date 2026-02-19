@@ -188,10 +188,29 @@ class AuthService {
     required String? avatarUrl,
   }) async {
     try {
+      final normalizedNickname = nickname.trim();
+      final now = DateTime.now().toIso8601String();
+      final existing = await _client
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (existing == null) {
+        await _client.from('profiles').insert({
+          'id': userId,
+          'email': _auth.currentUser?.email ?? '',
+          'nickname': normalizedNickname,
+          'avatar_url': avatarUrl,
+          'updated_at': now,
+        });
+        return;
+      }
+
       final updates = <String, dynamic>{
-        'nickname': nickname.trim(),
+        'nickname': normalizedNickname,
         'avatar_url': avatarUrl,
-        'updated_at': DateTime.now().toIso8601String(),
+        'updated_at': now,
       };
 
       await _client.from('profiles').update(updates).eq('id', userId);
