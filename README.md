@@ -17,7 +17,7 @@
 ./run.sh <device-id>
 ```
 
-`run.sh`는 내부적으로 `--dart-define-from-file=dart_define.json` 옵션을 사용하여 Supabase URL과 Anon Key를 전달합니다.
+`run.sh`는 내부적으로 `--dart-define-from-file=dart_define.json` 옵션을 사용하여 Supabase URL과 Publishable Key(환경변수명: `SUPABASE_PUBLISHABLE_KEY`)를 전달합니다.
 
 ### 환경변수 설정
 
@@ -26,11 +26,20 @@
 ```json
 {
   "SUPABASE_URL": "https://your-project.supabase.co",
-  "SUPABASE_ANON_KEY": "your-anon-key"
+  "SUPABASE_PUBLISHABLE_KEY": "your-publishable-key"
 }
 ```
 
 > `dart_define.json`은 `.gitignore`에 포함되어 있으므로 별도로 생성해야 합니다.
+
+### Supabase 인증 마이그레이션 (개발환경 원샷)
+
+1. Supabase `Project Settings > API Keys`에서 Publishable/Secret Key 체계를 사용하도록 정리합니다.
+2. 앱 환경변수 `SUPABASE_PUBLISHABLE_KEY` 값이 Publishable Key(`sb_publishable_...`)인지 확인합니다.
+3. `Project Settings > JWT > Signing Keys`에서 Standby Key를 만든 뒤 Rotate를 수행합니다.
+4. 전환 확인 후 `Legacy API key`와 `Legacy JWT secret`을 비활성화합니다.
+5. `/.well-known/jwks.json`의 `keys`가 비어있지 않은지 확인합니다.
+6. 앱 로그인 후 `getClaims` 검증 로그에서 알고리즘이 `HS256`이 아닌지 확인합니다.
 
 ## 기술 스택
 

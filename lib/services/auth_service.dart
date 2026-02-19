@@ -25,31 +25,64 @@ class AuthService {
   // 로그인 상태 스트림
   Stream<AuthState> get authStateChanges => _auth.onAuthStateChange;
 
-  // 앱 시작 시 로컬 세션을 서버 기준으로 검증
+  // 앱 시작 시 로컬 세션을 클레임 기반으로 검증
   Future<User?> getValidatedCurrentUser() async {
     final localUser = _auth.currentUser;
     if (localUser == null) return null;
 
     try {
-      final response = await _auth.getUser();
-      final remoteUser = response.user;
-      if (remoteUser != null) {
-        return remoteUser;
+      final claimsResponse = await _auth.getClaims();
+      final claimsSub = claimsResponse.claims.sub;
+
+      if (claimsSub == null || claimsSub.isEmpty) {
+        debugPrint('Validate current user failed: claims.sub is empty');
+        await _clearLocalSession();
+        return null;
       }
 
-      await _clearLocalSession();
-      return null;
+      if (claimsSub != localUser.id) {
+        debugPrint(
+          'Validate current user failed: claims.sub mismatch '
+          '(claims: $claimsSub, local: ${localUser.id})',
+        );
+        await _clearLocalSession();
+        return null;
+      }
+
+      final algorithm = claimsResponse.header.alg;
+      final kid = claimsResponse.header.kid;
+      final likelyServerFallback = algorithm.startsWith('HS') || kid == null;
+
+      if (likelyServerFallback) {
+        debugPrint(
+          'Validate current user via getClaims fallback(server): '
+          'alg=$algorithm, kid=$kid',
+        );
+      } else {
+        debugPrint(
+          'Validate current user via getClaims local verification success: '
+          'alg=$algorithm, kid=$kid',
+        );
+      }
+
+      return localUser;
     } on AuthException catch (e) {
       if (_shouldForceSignOutForValidationError(e.message)) {
+        debugPrint(
+          'Validate current user via getClaims failed and session cleared: '
+          '${e.message}',
+        );
         await _clearLocalSession();
         return null;
       }
 
       // 네트워크 등 일시 오류 시에는 로컬 세션을 유지
-      debugPrint('Validate current user skipped: ${e.message}');
+      debugPrint(
+        'Validate current user via getClaims skipped (transient): ${e.message}',
+      );
       return localUser;
     } catch (e) {
-      debugPrint('Validate current user unexpected error: $e');
+      debugPrint('Validate current user via getClaims unexpected error: $e');
       return localUser;
     }
   }
@@ -199,9 +232,14 @@ class AuthService {
       'user not found',
       'does not exist',
       'invalid claim',
+      'invalid jwt',
+      'jwt expired',
+      'token expired',
+      'invalid signature',
       'invalid refresh token',
       'refresh token not found',
       'session not found',
+      'auth session missing',
     ];
     return patterns.any(normalized.contains);
   }
