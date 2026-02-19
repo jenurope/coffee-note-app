@@ -38,7 +38,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
   DateTime _purchaseDate = DateTime.now();
   double _rating = 3.0;
-  String? _roastLevel;
+  String? _roastLevel = RoastLevelCatalog.medium;
   bool _isLoading = false;
   bool _isInitialized = false;
 
@@ -67,6 +67,23 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
   bool _isUploadingImage = false;
 
   bool get isEditing => widget.beanId != null;
+
+  int _roastIndexFromPosition(double dx, double width) {
+    if (width <= 0) return 0;
+
+    final ratio = (dx / width).clamp(0.0, 0.999999).toDouble();
+    return (ratio * CoffeeBean.roastLevels.length).floor();
+  }
+
+  void _updateRoastLevelFromPosition(double dx, double width) {
+    final nextLevel =
+        CoffeeBean.roastLevels[_roastIndexFromPosition(dx, width)];
+    if (_roastLevel == nextLevel) return;
+
+    setState(() {
+      _roastLevel = nextLevel;
+    });
+  }
 
   @override
   void dispose() {
@@ -396,19 +413,129 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                 // 로스팅 레벨
                 Text(context.l10n.roastLevel, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: CoffeeBean.roastLevels.map((level) {
-                    return ChoiceChip(
-                      label: Text(RoastLevelCatalog.label(context.l10n, level)),
-                      selected: _roastLevel == level,
-                      onSelected: (selected) {
-                        setState(() {
-                          _roastLevel = selected ? level : null;
-                        });
-                      },
-                    );
-                  }).toList(),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                    child: Column(
+                      children: [
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final trackWidth = constraints.maxWidth;
+
+                            return Listener(
+                              behavior: HitTestBehavior.opaque,
+                              onPointerDown: (event) {
+                                _updateRoastLevelFromPosition(
+                                  event.localPosition.dx,
+                                  trackWidth,
+                                );
+                              },
+                              onPointerMove: (event) {
+                                _updateRoastLevelFromPosition(
+                                  event.localPosition.dx,
+                                  trackWidth,
+                                );
+                              },
+                              child: Container(
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFFC4A676),
+                                      const Color(0xFFA97445),
+                                      const Color(0xFF7A4A27),
+                                      const Color(0xFF4F2B17),
+                                      const Color(0xFF2D160C),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Row(
+                                  children: CoffeeBean.roastLevels
+                                      .asMap()
+                                      .entries
+                                      .map((entry) {
+                                        final level = entry.value;
+                                        final isSelected = _roastLevel == level;
+
+                                        return Expanded(
+                                          child: Center(
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 180,
+                                              ),
+                                              height: isSelected ? 26 : 14,
+                                              width: isSelected ? 26 : 14,
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : Colors.white.withValues(
+                                                        alpha: 0.35,
+                                                      ),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: isSelected
+                                                      ? const Color(0xFF2D160C)
+                                                      : Colors.white.withValues(
+                                                          alpha: 0.6,
+                                                        ),
+                                                  width: 2,
+                                                ),
+                                                boxShadow: isSelected
+                                                    ? [
+                                                        BoxShadow(
+                                                          color: Colors.black
+                                                              .withValues(
+                                                                alpha: 0.25,
+                                                              ),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(
+                                                            0,
+                                                            3,
+                                                          ),
+                                                        ),
+                                                      ]
+                                                    : null,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      })
+                                      .toList(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: List.generate(
+                            CoffeeBean.roastLevels.length,
+                            (index) {
+                              final String? label = switch (index) {
+                                0 => context.l10n.roastLight,
+                                2 => context.l10n.roastMedium,
+                                4 => context.l10n.roastDark,
+                                _ => null,
+                              };
+
+                              return Expanded(
+                                child: Center(
+                                  child: label == null
+                                      ? const SizedBox.shrink()
+                                      : Text(
+                                          label,
+                                          style: theme.textTheme.labelMedium,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
