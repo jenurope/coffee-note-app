@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../l10n/l10n.dart';
 
 /// 이미지 소스 선택 바텀시트
 class ImagePickerBottomSheet extends StatelessWidget {
@@ -39,10 +40,10 @@ class ImagePickerBottomSheet extends StatelessWidget {
                 ),
               ),
               Text(
-                '사진 선택',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                context.l10n.photoSelectTitle,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               Row(
@@ -51,20 +52,20 @@ class ImagePickerBottomSheet extends StatelessWidget {
                   _buildOption(
                     context,
                     icon: Icons.photo_library,
-                    label: '갤러리',
+                    label: context.l10n.gallery,
                     onTap: () => Navigator.pop(context, ImageSource.gallery),
                   ),
                   _buildOption(
                     context,
                     icon: Icons.camera_alt,
-                    label: '카메라',
+                    label: context.l10n.camera,
                     onTap: () => Navigator.pop(context, ImageSource.camera),
                   ),
                   if (showDelete)
                     _buildOption(
                       context,
                       icon: Icons.delete,
-                      label: '삭제',
+                      label: context.l10n.photoDelete,
                       onTap: () => Navigator.pop(context, null),
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -102,11 +103,7 @@ class ImagePickerBottomSheet extends StatelessWidget {
                 color: effectiveColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(
-                icon,
-                size: 32,
-                color: effectiveColor,
-              ),
+              child: Icon(icon, size: 32, color: effectiveColor),
             ),
             const SizedBox(height: 8),
             Text(
@@ -141,12 +138,12 @@ class ImagePickerBottomSheet extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('갤러리에서 선택'),
+              title: Text(context.l10n.pickFromGallery),
               onTap: onGalleryTap,
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('카메라로 촬영'),
+              title: Text(context.l10n.takeFromCamera),
               onTap: onCameraTap,
             ),
             if (onDeleteTap != null)
@@ -156,7 +153,7 @@ class ImagePickerBottomSheet extends StatelessWidget {
                   color: Theme.of(context).colorScheme.error,
                 ),
                 title: Text(
-                  '사진 삭제',
+                  context.l10n.photoDeleteMenu,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
                 onTap: onDeleteTap,
@@ -214,7 +211,8 @@ class ImagePickerWidget extends StatelessWidget {
                       Image.asset(
                         localImagePath!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildPlaceholder(theme),
+                        errorBuilder: (_, error, stackTrace) =>
+                            _buildPlaceholder(context, theme),
                       )
                     else if (imageUrl != null)
                       Image.network(
@@ -226,12 +224,13 @@ class ImagePickerWidget extends StatelessWidget {
                             child: CircularProgressIndicator(
                               value: loadingProgress.expectedTotalBytes != null
                                   ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
+                                        loadingProgress.expectedTotalBytes!
                                   : null,
                             ),
                           );
                         },
-                        errorBuilder: (_, __, ___) => _buildPlaceholder(theme),
+                        errorBuilder: (_, error, stackTrace) =>
+                            _buildPlaceholder(context, theme),
                       ),
                     // 변경 오버레이
                     Positioned(
@@ -253,18 +252,18 @@ class ImagePickerWidget extends StatelessWidget {
                             ],
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.camera_alt,
                               color: Colors.white,
                               size: 20,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
-                              '사진 변경',
-                              style: TextStyle(
+                              context.l10n.photoChange,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -275,13 +274,13 @@ class ImagePickerWidget extends StatelessWidget {
                     ),
                   ],
                 )
-              : _buildPlaceholder(theme),
+              : _buildPlaceholder(context, theme),
         ),
       ),
     );
   }
 
-  Widget _buildPlaceholder(ThemeData theme) {
+  Widget _buildPlaceholder(BuildContext context, ThemeData theme) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -292,7 +291,7 @@ class ImagePickerWidget extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '사진 추가',
+          context.l10n.photoAdd,
           style: TextStyle(
             color: theme.colorScheme.primary.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,

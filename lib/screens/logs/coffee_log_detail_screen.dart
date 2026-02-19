@@ -10,6 +10,8 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/log/log_detail_cubit.dart';
 import '../../cubits/log/log_detail_state.dart';
 import '../../cubits/log/log_list_cubit.dart';
+import '../../domain/catalogs/coffee_type_catalog.dart';
+import '../../l10n/l10n.dart';
 import '../../services/coffee_log_service.dart';
 import '../../widgets/common/common_widgets.dart';
 
@@ -21,7 +23,9 @@ class CoffeeLogDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('yyyy년 MM월 dd일');
+    final localeTag = Localizations.localeOf(context).toString();
+    final dateFormat = DateFormat.yMMMd(localeTag);
+    final l10n = context.l10n;
 
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
@@ -84,7 +88,9 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Chip(
-                                label: Text(log.coffeeType),
+                                label: Text(
+                                  CoffeeTypeCatalog.label(l10n, log.coffeeType),
+                                ),
                                 backgroundColor: theme.colorScheme.primary
                                     .withValues(alpha: 0.1),
                                 labelStyle: TextStyle(
@@ -94,7 +100,11 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                log.coffeeName ?? log.coffeeType,
+                                log.coffeeName ??
+                                    CoffeeTypeCatalog.label(
+                                      l10n,
+                                      log.coffeeType,
+                                    ),
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -145,7 +155,7 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 12),
                                       Text(
-                                        '방문일',
+                                        l10n.visitDate,
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
                                               color: theme.colorScheme.onSurface
@@ -168,7 +178,7 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                                   log.notes!.isNotEmpty) ...[
                                 const SizedBox(height: 24),
                                 Text(
-                                  '메모',
+                                  l10n.memo,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -201,7 +211,11 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.error_outline, size: 48),
                       const SizedBox(height: 16),
-                      Text('오류가 발생했습니다\n$message'),
+                      Text(
+                        l10n.errorOccurredWithMessage(
+                          UserErrorMessage.localize(l10n, message),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -254,19 +268,19 @@ class CoffeeLogDetailScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('기록 삭제'),
-        content: const Text('이 커피 기록을 삭제하시겠습니까?'),
+        title: Text(context.l10n.logDeleteTitle),
+        content: Text(context.l10n.logDeleteConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('삭제'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -280,16 +294,16 @@ class CoffeeLogDetailScreen extends StatelessWidget {
           context.go('/logs');
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('기록이 삭제되었습니다.')));
+          ).showSnackBar(SnackBar(content: Text(context.l10n.logDeleted)));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                UserErrorMessage.from(
-                  e,
-                  fallback: '기록 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                UserErrorMessage.localize(
+                  context.l10n,
+                  UserErrorMessage.from(e, fallbackKey: 'logDeleteFailed'),
                 ),
               ),
             ),

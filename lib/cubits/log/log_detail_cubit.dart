@@ -32,13 +32,13 @@ class LogDetailCubit extends Cubit<LogDetailState> {
         if (log != null) {
           emit(LogDetailState.loaded(log: log));
         } else {
-          emit(const LogDetailState.error(message: '샘플 기록을 찾을 수 없습니다.'));
+          emit(const LogDetailState.error(message: 'errSampleLogNotFound'));
         }
         return;
       }
 
       if (authState != null && authState is! AuthAuthenticated) {
-        emit(const LogDetailState.error(message: '로그인이 필요합니다.'));
+        emit(const LogDetailState.error(message: 'requiredLogin'));
         return;
       }
 
@@ -46,16 +46,13 @@ class LogDetailCubit extends Cubit<LogDetailState> {
       if (log != null) {
         emit(LogDetailState.loaded(log: log));
       } else {
-        emit(const LogDetailState.error(message: '기록을 찾을 수 없습니다.'));
+        emit(const LogDetailState.error(message: 'errLogNotFound'));
       }
     } catch (e) {
       debugPrint('LogDetailCubit.load error: $e');
       emit(
         LogDetailState.error(
-          message: UserErrorMessage.from(
-            e,
-            fallback: '기록 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
-          ),
+          message: UserErrorMessage.from(e, fallbackKey: 'errLoadLogDetail'),
         ),
       );
     }

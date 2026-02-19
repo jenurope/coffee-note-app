@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // New Sophisticated Coffee Palette
-  static const Color primaryEspresso = Color(0xFF5D4037); // Lighter Espresso (Soft & Rich)
+  static const Color primaryEspresso = Color(
+    0xFF5D4037,
+  ); // Lighter Espresso (Soft & Rich)
   static const Color secondaryLatte = Color(0xFFD7CCC8); // Soft, warm neutral
   static const Color accentCrema = Color(0xFFBCAAA4); // Muted, elegant accent
-  static const Color backgroundPorcelain = Color(0xFFFAFAFA); // Clean, crisp off-white
+  static const Color backgroundPorcelain = Color(
+    0xFFFAFAFA,
+  ); // Clean, crisp off-white
   static const Color backgroundDark = Color(0xFF121212); // Deep matte black
-  
+
   static const Color surfaceWhite = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF1E1E1E);
-  
+
   static const Color textDark = Color(0xFF2C2C2C);
   static const Color textLight = Color(0xFFF5F5F5);
 
@@ -23,7 +27,6 @@ class AppTheme {
       secondary: secondaryLatte,
       tertiary: accentCrema,
       surface: surfaceWhite,
-      background: backgroundPorcelain,
       onPrimary: Colors.white,
       onSecondary: textDark,
       onSurface: textDark,
@@ -46,7 +49,10 @@ class AppTheme {
       elevation: 0, // Flatter look
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: secondaryLatte.withValues(alpha: 0.5), width: 1),
+        side: BorderSide(
+          color: secondaryLatte.withValues(alpha: 0.5),
+          width: 1,
+        ),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -73,13 +79,8 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -87,21 +88,14 @@ class AppTheme {
         foregroundColor: primaryEspresso,
         side: const BorderSide(color: primaryEspresso),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: primaryEspresso,
-        textStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -142,7 +136,6 @@ class AppTheme {
       secondary: accentCrema,
       tertiary: primaryEspresso,
       surface: surfaceDark,
-      background: backgroundDark,
       onPrimary: textDark,
       onSecondary: textDark,
       onSurface: textLight,
@@ -192,13 +185,8 @@ class AppTheme {
         foregroundColor: textDark, // Dark text on light button
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -206,21 +194,14 @@ class AppTheme {
         foregroundColor: secondaryLatte,
         side: const BorderSide(color: secondaryLatte),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: secondaryLatte,
-        textStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(

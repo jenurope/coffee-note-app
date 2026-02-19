@@ -9,6 +9,8 @@ import 'package:coffee_note_app/models/user_profile.dart';
 import 'package:coffee_note_app/screens/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coffee_note_app/l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User;
@@ -122,7 +124,7 @@ void main() {
       );
 
       expect(find.text('게스트 모드'), findsOneWidget);
-      expect(find.text('로그인하기'), findsOneWidget);
+      expect(find.text('로그인'), findsOneWidget);
     });
   });
 }
@@ -138,7 +140,17 @@ Future<void> _pumpProfileScreen(
         BlocProvider<AuthCubit>.value(value: authCubit),
         BlocProvider<DashboardCubit>.value(value: dashboardCubit),
       ],
-      child: const MaterialApp(home: ProfileScreen()),
+      child: const MaterialApp(
+        locale: Locale('ko'),
+        localizationsDelegates: [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+        home: ProfileScreen(),
+      ),
     ),
   );
   await tester.pumpAndSettle();

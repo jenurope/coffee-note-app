@@ -1,5 +1,6 @@
 import 'bean_detail.dart';
 import 'brew_detail.dart';
+import '../domain/catalogs/roast_level_catalog.dart';
 
 class CoffeeBean {
   final String id;
@@ -55,13 +56,13 @@ class CoffeeBean {
       updatedAt: DateTime.parse(json['updated_at'] as String),
       beanDetails: json['bean_details'] != null
           ? (json['bean_details'] as List)
-              .map((e) => BeanDetail.fromJson(e as Map<String, dynamic>))
-              .toList()
+                .map((e) => BeanDetail.fromJson(e as Map<String, dynamic>))
+                .toList()
           : null,
       brewDetails: json['brew_details'] != null
           ? (json['brew_details'] as List)
-              .map((e) => BrewDetail.fromJson(e as Map<String, dynamic>))
-              .toList()
+                .map((e) => BrewDetail.fromJson(e as Map<String, dynamic>))
+                .toList()
           : null,
     );
   }
@@ -135,11 +136,5 @@ class CoffeeBean {
     );
   }
 
-  static const List<String> roastLevels = [
-    '라이트',
-    '미디엄 라이트',
-    '미디엄',
-    '미디엄 다크',
-    '다크',
-  ];
+  static const List<String> roastLevels = RoastLevelCatalog.codes;
 }

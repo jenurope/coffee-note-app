@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
+import '../../l10n/l10n.dart';
 import '../../widgets/common/common_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -38,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = '로그인 중 오류가 발생했습니다.';
+          _errorMessage = 'errLoginFailed';
         });
       }
     } finally {
@@ -73,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Icon(Icons.coffee, size: 80, color: theme.colorScheme.primary),
               const SizedBox(height: 16),
               Text(
-                '커피로그',
+                context.l10n.appTitle,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
@@ -82,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '당신의 커피 여정을 기록하세요',
+                context.l10n.loginTagline,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -105,7 +107,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _errorMessage!,
+                          UserErrorMessage.localize(
+                            context.l10n,
+                            _errorMessage!,
+                          ),
                           style: TextStyle(color: theme.colorScheme.error),
                         ),
                       ),
@@ -130,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      '또는',
+                      context.l10n.orLabel,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.5,
@@ -146,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // 게스트 모드
               CustomButton(
-                text: '게스트로 둘러보기',
+                text: context.l10n.browseAsGuest,
                 onPressed: _handleGuestMode,
                 isOutlined: true,
                 icon: Icons.person,
@@ -206,8 +211,8 @@ class _GoogleSignInButton extends StatelessWidget {
                     width: 24,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Google로 로그인',
+                  Text(
+                    context.l10n.loginWithGoogle,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,

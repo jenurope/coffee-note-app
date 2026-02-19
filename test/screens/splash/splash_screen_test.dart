@@ -1,5 +1,7 @@
 import 'package:coffee_note_app/screens/splash/splash_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:coffee_note_app/l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -7,6 +9,14 @@ void main() {
     testWidgets('라이트 모드에서 배경/아이콘/로딩 색상이 올바르다', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode: ThemeMode.light,
@@ -32,6 +42,14 @@ void main() {
     testWidgets('다크 모드에서 배경 색상이 올바르다', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
           themeMode: ThemeMode.dark,

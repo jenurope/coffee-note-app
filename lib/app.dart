@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'config/theme.dart';
@@ -52,13 +53,31 @@ class _CoffeeNoteAppState extends State<CoffeeNoteApp> {
         context.read<DashboardCubit>().onAuthStateChanged(authState);
       },
       child: MaterialApp.router(
-        title: '커피로그',
+        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        supportedLocales: const [Locale('ko'), Locale('en')],
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+        localeResolutionCallback: (locale, supportedLocales) {
+          if (locale == null) {
+            return const Locale('en');
+          }
+
+          for (final supportedLocale in supportedLocales) {
+            if (supportedLocale.languageCode == locale.languageCode) {
+              return supportedLocale;
+            }
+          }
+
+          return const Locale('en');
+        },
         routerConfig: _router,
       ),
     );

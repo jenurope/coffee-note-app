@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/l10n.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -23,7 +24,7 @@ class SplashScreen extends StatelessWidget {
             const Icon(Icons.coffee, size: 64, color: foregroundColor),
             const SizedBox(height: 16),
             Text(
-              '커피로그',
+              context.l10n.appTitle,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: foregroundColor,

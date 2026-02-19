@@ -63,10 +63,7 @@ class BeanListCubit extends Cubit<BeanListState> {
       debugPrint('BeanListCubit.load error: $e');
       emit(
         BeanListState.error(
-          message: UserErrorMessage.from(
-            e,
-            fallback: '원두 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
-          ),
+          message: UserErrorMessage.from(e, fallbackKey: 'errLoadBeans'),
           filters: filters,
         ),
       );

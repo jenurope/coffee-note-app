@@ -3,6 +3,8 @@ import 'package:coffee_note_app/cubits/auth/auth_state.dart';
 import 'package:coffee_note_app/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coffee_note_app/l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -107,7 +109,7 @@ void main() {
 
         expect(find.text('DASHBOARD'), findsOneWidget);
 
-        await tester.tap(find.text('원두 기록'));
+        await _tapBottomTab(tester, _TabTarget.beans);
         await tester.pumpAndSettle();
 
         expect(find.text('BEANS_ROOT'), findsOneWidget);
@@ -144,12 +146,12 @@ void main() {
 
       expect(find.text('DASHBOARD'), findsOneWidget);
 
-      await tester.tap(find.text('커피 기록'));
+      await _tapBottomTab(tester, _TabTarget.logs);
       await tester.pumpAndSettle();
 
       expect(find.text('LOGS_ROOT'), findsOneWidget);
 
-      await tester.tap(find.text('커뮤니티'));
+      await _tapBottomTab(tester, _TabTarget.community);
       await tester.pumpAndSettle();
 
       expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
@@ -176,7 +178,7 @@ void main() {
         await tester.pumpWidget(_buildTestApp(router));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('커뮤니티'));
+        await _tapBottomTab(tester, _TabTarget.community);
         await tester.pumpAndSettle();
 
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
@@ -202,7 +204,7 @@ void main() {
       await tester.pumpWidget(_buildTestApp(router, isGuestMode: true));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('원두 기록'));
+      await _tapBottomTab(tester, _TabTarget.beans);
       await tester.pumpAndSettle();
       expect(find.text('BEANS_ROOT'), findsOneWidget);
 
@@ -210,11 +212,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('BEAN_NEW'), findsOneWidget);
 
-      await tester.tap(find.text('커피 기록'));
+      await _tapBottomTab(tester, _TabTarget.logs);
       await tester.pumpAndSettle();
       expect(find.text('LOGS_ROOT'), findsOneWidget);
 
-      await tester.tap(find.text('원두 기록'));
+      await _tapBottomTab(tester, _TabTarget.beans);
       await tester.pumpAndSettle();
 
       expect(find.text('BEAN_NEW'), findsOneWidget);
@@ -233,7 +235,7 @@ void main() {
         await tester.pumpWidget(_buildTestApp(router, isGuestMode: true));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('원두 기록'));
+        await _tapBottomTab(tester, _TabTarget.beans);
         await tester.pumpAndSettle();
         expect(find.text('BEANS_ROOT'), findsOneWidget);
 
@@ -241,7 +243,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('BEAN_NEW'), findsOneWidget);
 
-        await tester.tap(find.text('커뮤니티'));
+        await _tapBottomTab(tester, _TabTarget.community);
         await tester.pumpAndSettle();
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
@@ -267,7 +269,7 @@ void main() {
         await tester.pumpWidget(_buildTestApp(router));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('원두 기록'));
+        await _tapBottomTab(tester, _TabTarget.beans);
         await tester.pumpAndSettle();
         expect(find.text('BEANS_ROOT'), findsOneWidget);
 
@@ -275,7 +277,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('BEAN_NEW'), findsOneWidget);
 
-        await tester.tap(find.text('커뮤니티'));
+        await _tapBottomTab(tester, _TabTarget.community);
         await tester.pumpAndSettle();
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
@@ -286,7 +288,7 @@ void main() {
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
         // The first back should not consume hidden tab stack entries.
-        await tester.tap(find.text('원두 기록'));
+        await _tapBottomTab(tester, _TabTarget.beans);
         await tester.pumpAndSettle();
         expect(find.text('BEAN_NEW'), findsOneWidget);
       },
@@ -307,7 +309,7 @@ void main() {
         await tester.pumpWidget(_buildTestApp(router));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('커피 기록'));
+        await _tapBottomTab(tester, _TabTarget.logs);
         await tester.pumpAndSettle();
         expect(find.text('LOGS_ROOT'), findsOneWidget);
 
@@ -315,7 +317,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('LOG_NEW'), findsOneWidget);
 
-        await tester.tap(find.text('커뮤니티'));
+        await _tapBottomTab(tester, _TabTarget.community);
         await tester.pumpAndSettle();
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
@@ -326,7 +328,7 @@ void main() {
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
         // The first back should not consume hidden tab stack entries.
-        await tester.tap(find.text('커피 기록'));
+        await _tapBottomTab(tester, _TabTarget.logs);
         await tester.pumpAndSettle();
         expect(find.text('LOG_NEW'), findsOneWidget);
       },
@@ -339,8 +341,33 @@ Widget _buildTestApp(GoRouter router, {bool isGuestMode = false}) {
     create: (_) => AuthCubit.test(
       isGuestMode ? const AuthState.guest() : const AuthState.unauthenticated(),
     ),
-    child: MaterialApp.router(routerConfig: router),
+    child: MaterialApp.router(
+      routerConfig: router,
+      locale: const Locale('ko'),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+    ),
   );
+}
+
+Future<void> _tapBottomTab(WidgetTester tester, _TabTarget target) async {
+  final iconFinder = find.byIcon(target.icon);
+  expect(iconFinder, findsOneWidget);
+  await tester.tap(iconFinder);
+}
+
+enum _TabTarget {
+  beans(Icons.coffee),
+  logs(Icons.local_cafe),
+  community(Icons.forum);
+
+  const _TabTarget(this.icon);
+  final IconData icon;
 }
 
 class _TestAuthController extends ChangeNotifier {

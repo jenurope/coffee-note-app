@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 class ImageUploadService {
   final SupabaseClient _client;
   final _imagePicker = ImagePicker();
@@ -54,15 +53,17 @@ class ImageUploadService {
       final fileName = '$userId/$timestamp.$extension';
 
       final bytes = await file.readAsBytes();
-      
-      await _client.storage.from(bucket).uploadBinary(
-        fileName,
-        bytes,
-        fileOptions: FileOptions(
-          contentType: 'image/$extension',
-          upsert: true,
-        ),
-      );
+
+      await _client.storage
+          .from(bucket)
+          .uploadBinary(
+            fileName,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: 'image/$extension',
+              upsert: true,
+            ),
+          );
 
       // 공개 URL 반환
       final publicUrl = _client.storage.from(bucket).getPublicUrl(fileName);
@@ -82,13 +83,13 @@ class ImageUploadService {
       // URL에서 파일 경로 추출
       final uri = Uri.parse(imageUrl);
       final pathSegments = uri.pathSegments;
-      
+
       // storage/v1/object/public/bucket/path 형식에서 path 추출
       final bucketIndex = pathSegments.indexOf(bucket);
       if (bucketIndex == -1) return false;
-      
+
       final filePath = pathSegments.sublist(bucketIndex + 1).join('/');
-      
+
       await _client.storage.from(bucket).remove([filePath]);
       return true;
     } catch (e) {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import '../domain/catalogs/coffee_type_catalog.dart';
+import '../l10n/l10n.dart';
 import '../models/coffee_log.dart';
 import 'common/common_widgets.dart';
 
@@ -13,7 +15,9 @@ class CoffeeLogCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('yyyy.MM.dd');
+    final dateFormat = DateFormat.yMd(
+      Localizations.localeOf(context).toString(),
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -55,7 +59,7 @@ class CoffeeLogCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      log.coffeeType,
+                      CoffeeTypeCatalog.label(context.l10n, log.coffeeType),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -66,7 +70,8 @@ class CoffeeLogCard extends StatelessWidget {
 
                   // 커피/카페 이름
                   Text(
-                    log.coffeeName ?? log.coffeeType,
+                    log.coffeeName ??
+                        CoffeeTypeCatalog.label(context.l10n, log.coffeeType),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -157,7 +162,9 @@ class CoffeeLogListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('MM/dd');
+    final dateFormat = DateFormat.Md(
+      Localizations.localeOf(context).toString(),
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -182,7 +189,8 @@ class CoffeeLogListTile extends StatelessWidget {
           ),
         ),
         title: Text(
-          log.coffeeName ?? log.coffeeType,
+          log.coffeeName ??
+              CoffeeTypeCatalog.label(context.l10n, log.coffeeType),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

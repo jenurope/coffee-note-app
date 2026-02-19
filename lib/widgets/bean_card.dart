@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../domain/catalogs/roast_level_catalog.dart';
+import '../l10n/l10n.dart';
 import '../models/coffee_bean.dart';
 import 'common/common_widgets.dart';
 
@@ -54,7 +56,7 @@ class BeanCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        bean.roastLevel!,
+                        RoastLevelCatalog.label(context.l10n, bean.roastLevel!),
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
@@ -184,7 +186,7 @@ class BeanListTile extends StatelessWidget {
             if (bean.roastLevel != null) ...[
               const SizedBox(height: 4),
               Text(
-                bean.roastLevel!,
+                RoastLevelCatalog.label(context.l10n, bean.roastLevel!),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.primary,
                 ),

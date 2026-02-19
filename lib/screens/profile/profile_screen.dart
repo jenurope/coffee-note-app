@@ -6,6 +6,7 @@ import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/dashboard/dashboard_state.dart';
+import '../../l10n/l10n.dart';
 import '../../widgets/common/common_widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
@@ -43,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // 게스트 모드일 때
         if (isGuest) {
           return Scaffold(
-            appBar: AppBar(title: const Text('프로필')),
+            appBar: AppBar(title: Text(l10n.profileScreenTitle)),
             body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -57,14 +59,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      '게스트 모드',
+                      l10n.guestMode,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '로그인하면 더 많은 기능을 사용할 수 있습니다',
+                      l10n.guestProfileSubtitle,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.6,
@@ -74,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 32),
                     CustomButton(
-                      text: '로그인하기',
+                      text: l10n.loginNow,
                       onPressed: () {
                         context.read<AuthCubit>().exitGuestMode();
                         context.go('/auth/login');
@@ -91,7 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // 로그인하지 않은 경우
         if (currentUser == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('프로필')),
+            appBar: AppBar(title: Text(l10n.profileScreenTitle)),
             body: const Center(child: CircularProgressIndicator()),
           );
         }
@@ -104,13 +106,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             return Scaffold(
               appBar: AppBar(
-                title: const Text('프로필'),
+                title: Text(l10n.profileScreenTitle),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.settings),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('설정 기능은 준비 중입니다.')),
+                        SnackBar(content: Text(l10n.settingsPreparing)),
                       );
                     },
                   ),
@@ -143,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              userProfile?.nickname ?? '사용자',
+                              userProfile?.nickname ?? l10n.userDefault,
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -170,20 +172,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _buildMenuTile(
                             context,
-                            title: '내 게시글',
+                            title: l10n.myPosts,
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('준비 중입니다.')),
+                                SnackBar(content: Text(l10n.preparing)),
                               );
                             },
                           ),
                           const Divider(height: 1),
                           _buildMenuTile(
                             context,
-                            title: '내 댓글',
+                            title: l10n.myComments,
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('준비 중입니다.')),
+                                SnackBar(content: Text(l10n.preparing)),
                               );
                             },
                           ),
@@ -200,11 +202,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _buildMenuTile(
                             context,
-                            title: '문의/제보하기',
+                            title: l10n.contactReport,
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('문의/제보 기능은 준비 중입니다.'),
+                                SnackBar(
+                                  content: Text(l10n.contactReportPreparing),
                                 ),
                               );
                             },
@@ -219,21 +221,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     // 로그아웃 버튼
                     CustomButton(
-                      text: '로그아웃',
+                      text: l10n.logout,
                       onPressed: () async {
                         final confirmed = await showDialog<bool>(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('로그아웃'),
-                            content: const Text('로그아웃 하시겠습니까?'),
+                            title: Text(l10n.logoutConfirmTitle),
+                            content: Text(l10n.logoutConfirmContent),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
-                                child: const Text('취소'),
+                                child: Text(l10n.cancel),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('로그아웃'),
+                                child: Text(l10n.logout),
                               ),
                             ],
                           ),
@@ -280,11 +282,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       future: _versionFuture,
       builder: (context, snapshot) {
         final versionText = snapshot.hasData
-            ? '버전 ${snapshot.data}'
-            : '버전 확인 중...';
+            ? context.l10n.versionLabel(snapshot.data!)
+            : context.l10n.versionChecking;
 
         return ListTile(
-          title: const Text('앱 정보'),
+          title: Text(context.l10n.appInfo),
           trailing: Text(
             versionText,
             style: theme.textTheme.bodyMedium?.copyWith(

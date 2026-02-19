@@ -10,6 +10,10 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/bean/bean_detail_cubit.dart';
 import '../../cubits/bean/bean_detail_state.dart';
 import '../../cubits/bean/bean_list_cubit.dart';
+import '../../domain/catalogs/brew_method_catalog.dart';
+import '../../domain/catalogs/grind_size_catalog.dart';
+import '../../domain/catalogs/roast_level_catalog.dart';
+import '../../l10n/l10n.dart';
 import '../../services/coffee_bean_service.dart';
 import '../../widgets/common/common_widgets.dart';
 
@@ -21,7 +25,10 @@ class BeanDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('yyyy년 MM월 dd일');
+    final localeTag = Localizations.localeOf(context).toString();
+    final dateFormat = DateFormat.yMMMd(localeTag);
+    final numberFormat = NumberFormat.decimalPattern(localeTag);
+    final l10n = context.l10n;
 
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
@@ -85,7 +92,12 @@ class BeanDetailScreen extends StatelessWidget {
                             children: [
                               if (bean.roastLevel != null)
                                 Chip(
-                                  label: Text(bean.roastLevel!),
+                                  label: Text(
+                                    RoastLevelCatalog.label(
+                                      l10n,
+                                      bean.roastLevel!,
+                                    ),
+                                  ),
                                   backgroundColor: theme.colorScheme.primary
                                       .withValues(alpha: 0.1),
                                   labelStyle: TextStyle(
@@ -127,22 +139,21 @@ class BeanDetailScreen extends StatelessWidget {
                                 _buildInfoRow(
                                   theme,
                                   icon: Icons.calendar_today,
-                                  label: '구매일',
+                                  label: l10n.beanInfoPurchaseDate,
                                   value: dateFormat.format(bean.purchaseDate),
                                 ),
                                 if (bean.price != null)
                                   _buildInfoRow(
                                     theme,
                                     icon: Icons.attach_money,
-                                    label: '가격',
-                                    value:
-                                        '${NumberFormat('#,###').format(bean.price)}원',
+                                    label: l10n.beanInfoPrice,
+                                    value: numberFormat.format(bean.price),
                                   ),
                                 if (bean.purchaseLocation != null)
                                   _buildInfoRow(
                                     theme,
                                     icon: Icons.store,
-                                    label: '구매처',
+                                    label: l10n.beanInfoPurchaseLocation,
                                     value: bean.purchaseLocation!,
                                   ),
                               ]),
@@ -150,7 +161,7 @@ class BeanDetailScreen extends StatelessWidget {
                                   bean.tastingNotes!.isNotEmpty) ...[
                                 const SizedBox(height: 24),
                                 Text(
-                                  '테이스팅 노트',
+                                  l10n.tastingNotes,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -170,7 +181,7 @@ class BeanDetailScreen extends StatelessWidget {
                                   bean.beanDetails!.isNotEmpty) ...[
                                 const SizedBox(height: 24),
                                 Text(
-                                  '원두 상세',
+                                  l10n.beanDetailsSection,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -234,7 +245,9 @@ class BeanDetailScreen extends StatelessWidget {
                                                 if (detail.variety != null)
                                                   Chip(
                                                     label: Text(
-                                                      '품종: ${detail.variety}',
+                                                      l10n.varietyLabel(
+                                                        detail.variety!,
+                                                      ),
                                                     ),
                                                     visualDensity:
                                                         VisualDensity.compact,
@@ -242,7 +255,9 @@ class BeanDetailScreen extends StatelessWidget {
                                                 if (detail.process != null)
                                                   Chip(
                                                     label: Text(
-                                                      '가공: ${detail.process}',
+                                                      l10n.processLabel(
+                                                        detail.process!,
+                                                      ),
                                                     ),
                                                     visualDensity:
                                                         VisualDensity.compact,
@@ -264,14 +279,16 @@ class BeanDetailScreen extends StatelessWidget {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      '추출 기록',
+                                      l10n.brewHistory,
                                       style: theme.textTheme.titleMedium
                                           ?.copyWith(
                                             fontWeight: FontWeight.bold,
                                           ),
                                     ),
                                     Text(
-                                      '${bean.brewDetails!.length}건',
+                                      l10n.recordsCount(
+                                        bean.brewDetails!.length,
+                                      ),
                                       style: theme.textTheme.bodyMedium
                                           ?.copyWith(
                                             color: theme.colorScheme.primary,
@@ -298,13 +315,25 @@ class BeanDetailScreen extends StatelessWidget {
                                               color: theme.colorScheme.primary,
                                             ),
                                           ),
-                                          title: Text(brew.brewMethod ?? '추출'),
+                                          title: Text(
+                                            brew.brewMethod == null
+                                                ? l10n.brewDefaultTitle
+                                                : BrewMethodCatalog.label(
+                                                    l10n,
+                                                    brew.brewMethod!,
+                                                  ),
+                                          ),
                                           subtitle: Text(
                                             dateFormat.format(brew.brewDate),
                                           ),
                                           trailing: brew.grindSize != null
                                               ? Chip(
-                                                  label: Text(brew.grindSize!),
+                                                  label: Text(
+                                                    GrindSizeCatalog.label(
+                                                      l10n,
+                                                      brew.grindSize!,
+                                                    ),
+                                                  ),
                                                   visualDensity:
                                                       VisualDensity.compact,
                                                 )
@@ -330,7 +359,11 @@ class BeanDetailScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.error_outline, size: 48),
                       const SizedBox(height: 16),
-                      Text('오류가 발생했습니다\n$message'),
+                      Text(
+                        l10n.errorOccurredWithMessage(
+                          UserErrorMessage.localize(l10n, message),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -422,19 +455,19 @@ class BeanDetailScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('원두 삭제'),
-        content: const Text('이 원두를 삭제하시겠습니까?\n관련된 추출 기록도 함께 삭제됩니다.'),
+        title: Text(context.l10n.beanDeleteTitle),
+        content: Text(context.l10n.beanDeleteConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('삭제'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -448,16 +481,16 @@ class BeanDetailScreen extends StatelessWidget {
           context.go('/beans');
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('원두가 삭제되었습니다.')));
+          ).showSnackBar(SnackBar(content: Text(context.l10n.beanDeleted)));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                UserErrorMessage.from(
-                  e,
-                  fallback: '원두 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                UserErrorMessage.localize(
+                  context.l10n,
+                  UserErrorMessage.from(e, fallbackKey: 'beanDeleteFailed'),
                 ),
               ),
             ),

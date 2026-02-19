@@ -22,7 +22,7 @@ class PostDetailCubit extends Cubit<PostDetailState> {
     try {
       final authState = _authCubit?.state;
       if (authState != null && authState is! AuthAuthenticated) {
-        emit(const PostDetailState.error(message: '로그인이 필요합니다.'));
+        emit(const PostDetailState.error(message: 'requiredLogin'));
         return;
       }
 
@@ -30,16 +30,13 @@ class PostDetailCubit extends Cubit<PostDetailState> {
       if (post != null) {
         emit(PostDetailState.loaded(post: post));
       } else {
-        emit(const PostDetailState.error(message: '게시글을 찾을 수 없습니다.'));
+        emit(const PostDetailState.error(message: 'errPostNotFound'));
       }
     } catch (e) {
       debugPrint('PostDetailCubit.load error: $e');
       emit(
         PostDetailState.error(
-          message: UserErrorMessage.from(
-            e,
-            fallback: '게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
-          ),
+          message: UserErrorMessage.from(e, fallbackKey: 'errLoadPostDetail'),
         ),
       );
     }

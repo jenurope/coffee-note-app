@@ -10,6 +10,8 @@ import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/bean/bean_list_cubit.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
+import '../../domain/catalogs/roast_level_catalog.dart';
+import '../../l10n/l10n.dart';
 import '../../models/coffee_bean.dart';
 
 import '../../services/coffee_bean_service.dart';
@@ -172,7 +174,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     if (currentUser == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.requiredLogin)));
       return;
     }
 
@@ -223,18 +225,21 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isEditing ? '원두가 수정되었습니다.' : '원두가 등록되었습니다.')),
+          SnackBar(
+            content: Text(
+              isEditing ? context.l10n.beanUpdated : context.l10n.beanCreated,
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        final action = isEditing ? '수정' : '등록';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              UserErrorMessage.from(
-                e,
-                fallback: '원두 $action 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+              UserErrorMessage.localize(
+                context.l10n,
+                UserErrorMessage.from(e, fallbackKey: 'beanSaveFailed'),
               ),
             ),
           ),
@@ -257,7 +262,13 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? '원두 수정' : '새 원두 기록')),
+      appBar: AppBar(
+        title: Text(
+          isEditing
+              ? context.l10n.beanFormEditTitle
+              : context.l10n.beanFormNewTitle,
+        ),
+      ),
       body: LoadingOverlay(
         isLoading: _isLoading,
         child: SingleChildScrollView(
@@ -268,7 +279,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 이미지 선택
-                Text('원두 사진', style: theme.textTheme.bodyLarge),
+                Text(context.l10n.beanPhoto, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 8),
                 ImagePickerWidget(
                   imageUrl: _existingImageUrl,
@@ -293,14 +304,14 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
                 // 원두 이름
                 CustomTextField(
-                  label: '원두 이름 *',
-                  hint: '예: 에티오피아 예가체프',
+                  label: context.l10n.beanNameLabel,
+                  hint: context.l10n.beanNameHint,
                   controller: _nameController,
                   prefixIcon: Icons.coffee,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return '원두 이름을 입력해주세요';
+                      return context.l10n.beanNameRequired;
                     }
                     return null;
                   },
@@ -309,14 +320,14 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
                 // 로스터리
                 CustomTextField(
-                  label: '로스터리 *',
-                  hint: '예: 커피리브레',
+                  label: context.l10n.roasteryLabel,
+                  hint: context.l10n.roasteryHint,
                   controller: _roasteryController,
                   prefixIcon: Icons.store,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return '로스터리를 입력해주세요';
+                      return context.l10n.roasteryRequired;
                     }
                     return null;
                   },
@@ -324,7 +335,10 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                 const SizedBox(height: 16),
 
                 // 구매일
-                Text('구매일 *', style: theme.textTheme.bodyLarge),
+                Text(
+                  context.l10n.purchaseDate,
+                  style: theme.textTheme.bodyLarge,
+                ),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: _selectDate,
@@ -341,7 +355,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                 const SizedBox(height: 16),
 
                 // 평점
-                Text('평점 *', style: theme.textTheme.bodyLarge),
+                Text(context.l10n.rating, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 8),
                 Card(
                   child: Padding(
@@ -380,13 +394,13 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                 const SizedBox(height: 16),
 
                 // 로스팅 레벨
-                Text('로스팅 레벨', style: theme.textTheme.bodyLarge),
+                Text(context.l10n.roastLevel, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: CoffeeBean.roastLevels.map((level) {
                     return ChoiceChip(
-                      label: Text(level),
+                      label: Text(RoastLevelCatalog.label(context.l10n, level)),
                       selected: _roastLevel == level,
                       onSelected: (selected) {
                         setState(() {
@@ -400,8 +414,8 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
                 // 가격
                 CustomTextField(
-                  label: '가격',
-                  hint: '원',
+                  label: context.l10n.price,
+                  hint: context.l10n.priceHint,
                   controller: _priceController,
                   keyboardType: TextInputType.number,
                   prefixIcon: Icons.attach_money,
@@ -411,8 +425,8 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
                 // 구매처
                 CustomTextField(
-                  label: '구매처',
-                  hint: '예: 공식 홈페이지',
+                  label: context.l10n.purchaseLocation,
+                  hint: context.l10n.purchaseLocationHint,
                   controller: _purchaseLocationController,
                   prefixIcon: Icons.shopping_bag,
                   textInputAction: TextInputAction.next,
@@ -421,8 +435,8 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
                 // 테이스팅 노트
                 CustomTextField(
-                  label: '테이스팅 노트',
-                  hint: '이 원두의 맛을 설명해주세요...',
+                  label: context.l10n.tastingNotes,
+                  hint: context.l10n.tastingNotesHint,
                   controller: _tastingNotesController,
                   maxLines: 4,
                   textInputAction: TextInputAction.done,
@@ -432,7 +446,9 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
                 // 저장 버튼
                 CustomButton(
-                  text: isEditing ? '수정하기' : '등록하기',
+                  text: isEditing
+                      ? context.l10n.saveAsEdit
+                      : context.l10n.saveAsNew,
                   onPressed: _handleSubmit,
                   isLoading: _isLoading || _isUploadingImage,
                 ),
