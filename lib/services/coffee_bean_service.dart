@@ -52,7 +52,7 @@ class CoffeeBeanService {
 
       // 정렬 및 페이지네이션을 위한 최종 쿼리 빌드
       final orderColumn = sortBy ?? 'created_at';
-      
+
       dynamic response;
       if (limit != null && offset != null) {
         response = await query
@@ -78,11 +78,15 @@ class CoffeeBeanService {
   // 원두 상세 조회
   Future<CoffeeBean?> getBean(String id) async {
     try {
-      final response = await _client.from('coffee_beans').select('''
+      final response = await _client
+          .from('coffee_beans')
+          .select('''
         *,
         bean_details(*),
         brew_details(*)
-      ''').eq('id', id).maybeSingle();
+      ''')
+          .eq('id', id)
+          .maybeSingle();
 
       if (response != null) {
         return CoffeeBean.fromJson(response);
@@ -203,14 +207,11 @@ class CoffeeBeanService {
 
       final count = (beans as List).length;
       final avgRating = count > 0
-          ? beans.fold<double>(0, (sum, b) => sum + (b['rating'] as num))
-                  / count
+          ? beans.fold<double>(0, (sum, b) => sum + (b['rating'] as num)) /
+                count
           : 0.0;
 
-      return {
-        'totalCount': count,
-        'averageRating': avgRating,
-      };
+      return {'totalCount': count, 'averageRating': avgRating};
     } catch (e) {
       debugPrint('Get user bean stats error: $e');
       return {'totalCount': 0, 'averageRating': 0.0};

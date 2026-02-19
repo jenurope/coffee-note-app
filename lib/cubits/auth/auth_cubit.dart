@@ -20,9 +20,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   /// 테스트 전용: AuthService 없이 초기 상태만 지정.
   @visibleForTesting
-  AuthCubit.test(AuthState initialState)
-    : _authService = null,
-      super(initialState);
+  AuthCubit.test(super.initialState) : _authService = null;
 
   AuthService? _authService;
   StreamSubscription<supa.AuthState>? _authSubscription;

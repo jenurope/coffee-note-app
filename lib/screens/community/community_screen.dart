@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/community/post_filters.dart';
 import '../../cubits/community/post_list_cubit.dart';
 import '../../cubits/community/post_list_state.dart';
+import '../../l10n/l10n.dart';
 import '../../widgets/common/common_widgets.dart';
 
 class CommunityScreen extends StatefulWidget {
@@ -51,7 +53,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('MM/dd HH:mm');
+    final l10n = context.l10n;
+    final dateFormat = DateFormat.Md(
+      Localizations.localeOf(context).toString(),
+    ).add_Hm();
 
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
@@ -62,7 +67,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
         if (isGuest) {
           return Scaffold(
-            appBar: AppBar(title: const Text('커뮤니티')),
+            appBar: AppBar(title: Text(l10n.communityScreenTitle)),
             body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -76,14 +81,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      '게스트 모드',
+                      l10n.guestMode,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '로그인하면 커뮤니티 게시글을 보고\n작성할 수 있습니다.',
+                      l10n.communityGuestSubtitle,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.6,
@@ -93,7 +98,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                     const SizedBox(height: 32),
                     CustomButton(
-                      text: '로그인하기',
+                      text: l10n.loginNow,
                       onPressed: () {
                         context.read<AuthCubit>().exitGuestMode();
                         context.go('/auth/login');
@@ -110,7 +115,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         // 로그인 필요 안내
         if (currentUser == null && !isGuest) {
           return Scaffold(
-            appBar: AppBar(title: const Text('커뮤니티')),
+            appBar: AppBar(title: Text(l10n.communityScreenTitle)),
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -122,14 +127,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    '커뮤니티',
+                    l10n.communityScreenTitle,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '다른 커피 애호가들과\n이야기를 나눠보세요',
+                    l10n.communityWelcomeSubtitle,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
@@ -137,7 +142,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   ),
                   const SizedBox(height: 24),
                   CustomButton(
-                    text: '로그인하기',
+                    text: l10n.loginNow,
                     onPressed: () => context.go('/auth/login'),
                   ),
                 ],
@@ -149,7 +154,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         return BlocBuilder<PostListCubit, PostListState>(
           builder: (context, postState) {
             return Scaffold(
-              appBar: AppBar(title: const Text('커뮤니티')),
+              appBar: AppBar(title: Text(l10n.communityScreenTitle)),
               body: Column(
                 children: [
                   Padding(
@@ -158,7 +163,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       controller: _searchController,
                       onSubmitted: (_) => _search(),
                       decoration: InputDecoration(
-                        hintText: '게시글 검색...',
+                        hintText: l10n.postSearchHint,
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
@@ -181,10 +186,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         posts.isEmpty
                             ? EmptyState(
                                 icon: Icons.forum_outlined,
-                                title: '게시글이 없습니다',
-                                subtitle: '첫 번째 게시글을 작성해보세요!',
+                                title: l10n.postsEmptyTitle,
+                                subtitle: l10n.postsEmptySubtitle,
                                 buttonText: currentUser != null
-                                    ? '글 작성하기'
+                                    ? l10n.writePost
                                     : null,
                                 onButtonPressed: currentUser != null
                                     ? () => context.push('/community/new')
@@ -242,7 +247,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                   Expanded(
                                                     child: Text(
                                                       post.author?.nickname ??
-                                                          '익명',
+                                                          l10n.guestNickname,
                                                       style: theme
                                                           .textTheme
                                                           .bodyMedium
@@ -314,7 +319,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                     ),
                                                     const SizedBox(width: 4),
                                                     Text(
-                                                      '댓글 ${post.commentCount}',
+                                                      l10n.commentsCount(
+                                                        post.commentCount!,
+                                                      ),
                                                       style: theme
                                                           .textTheme
                                                           .bodySmall
@@ -341,10 +348,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           children: [
                             const Icon(Icons.error_outline, size: 48),
                             const SizedBox(height: 16),
-                            Text('오류가 발생했습니다\n$message'),
+                            Text(
+                              l10n.errorOccurredWithMessage(
+                                UserErrorMessage.localize(l10n, message),
+                              ),
+                            ),
                             const SizedBox(height: 16),
                             CustomButton(
-                              text: '다시 시도',
+                              text: l10n.retry,
                               onPressed: () =>
                                   context.read<PostListCubit>().reload(),
                             ),

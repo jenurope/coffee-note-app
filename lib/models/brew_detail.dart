@@ -1,3 +1,6 @@
+import '../domain/catalogs/brew_method_catalog.dart';
+import '../domain/catalogs/grind_size_catalog.dart';
+
 class BrewDetail {
   final String id;
   final String coffeeBeanId;
@@ -92,25 +95,7 @@ class BrewDetail {
     );
   }
 
-  static const List<String> brewMethods = [
-    '에스프레소',
-    '핸드드립',
-    '프렌치프레스',
-    '모카포트',
-    '에어로프레스',
-    '콜드브루',
-    '사이폰',
-    '터키쉬',
-    '기타',
-  ];
+  static const List<String> brewMethods = BrewMethodCatalog.codes;
 
-  static const List<String> grindSizes = [
-    '극세',
-    '세',
-    '중세',
-    '중',
-    '중굵',
-    '굵',
-    '극굵',
-  ];
+  static const List<String> grindSizes = GrindSizeCatalog.codes;
 }

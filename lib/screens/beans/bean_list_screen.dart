@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/bean/bean_filters.dart';
 import '../../cubits/bean/bean_list_cubit.dart';
 import '../../cubits/bean/bean_list_state.dart';
+import '../../domain/catalogs/roast_level_catalog.dart';
+import '../../l10n/l10n.dart';
 import '../../models/coffee_bean.dart';
 import '../../widgets/bean_card.dart';
 import '../../widgets/common/common_widgets.dart';
@@ -72,7 +75,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
           builder: (context, beanState) {
             return Scaffold(
               appBar: AppBar(
-                title: const Text('원두 기록'),
+                title: Text(context.l10n.beansScreenTitle),
                 actions: [
                   IconButton(
                     icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
@@ -92,7 +95,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
                       searchController: _searchController,
                       onSearch: isGuest ? null : _search,
                       onFilterPressed: isGuest ? null : _showFilterSheet,
-                      hintText: '원두 이름, 로스터리 검색...',
+                      hintText: context.l10n.beansSearchHint,
                       enabled: !isGuest,
                       hasActiveFilters:
                           !isGuest &&
@@ -130,11 +133,13 @@ class _BeanListScreenState extends State<BeanListScreen> {
         beans.isEmpty
             ? EmptyState(
                 icon: Icons.coffee_outlined,
-                title: '등록된 원두가 없습니다',
+                title: context.l10n.beansEmptyTitle,
                 subtitle: isAuthenticated && !isGuest
-                    ? '첫 원두를 기록해보세요!'
-                    : '로그인하면 원두를 기록할 수 있습니다.',
-                buttonText: isAuthenticated && !isGuest ? '원두 기록하기' : null,
+                    ? context.l10n.beansEmptySubtitleAuth
+                    : context.l10n.beansEmptySubtitleGuest,
+                buttonText: isAuthenticated && !isGuest
+                    ? context.l10n.beansRecordButton
+                    : null,
                 onButtonPressed: isAuthenticated && !isGuest
                     ? () => context.push('/beans/new')
                     : null,
@@ -146,10 +151,14 @@ class _BeanListScreenState extends State<BeanListScreen> {
           children: [
             const Icon(Icons.error_outline, size: 48),
             const SizedBox(height: 16),
-            Text('오류가 발생했습니다\n$message'),
+            Text(
+              context.l10n.errorOccurredWithMessage(
+                UserErrorMessage.localize(context.l10n, message),
+              ),
+            ),
             const SizedBox(height: 16),
             CustomButton(
-              text: '다시 시도',
+              text: context.l10n.retry,
               onPressed: () => context.read<BeanListCubit>().reload(),
             ),
           ],
@@ -227,6 +236,7 @@ class _FilterSheetState extends State<_FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
 
     return Container(
@@ -239,7 +249,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '필터',
+                l10n.filter,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -252,32 +262,32 @@ class _FilterSheetState extends State<_FilterSheet> {
                     _sortBy = null;
                   });
                 },
-                child: const Text('초기화'),
+                child: Text(l10n.reset),
               ),
             ],
           ),
           const SizedBox(height: 16),
 
-          Text('정렬', style: theme.textTheme.titleSmall),
+          Text(l10n.sort, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
-              _buildSortChip('최신순', 'created_at'),
-              _buildSortChip('평점순', 'rating'),
-              _buildSortChip('이름순', 'name'),
+              _buildSortChip(l10n.sortNewest, 'created_at'),
+              _buildSortChip(l10n.sortByRating, 'rating'),
+              _buildSortChip(l10n.sortByName, 'name'),
             ],
           ),
 
           const SizedBox(height: 16),
 
-          Text('로스팅 레벨', style: theme.textTheme.titleSmall),
+          Text(l10n.roastLevel, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: CoffeeBean.roastLevels.map((level) {
               return FilterChip(
-                label: Text(level),
+                label: Text(RoastLevelCatalog.label(l10n, level)),
                 selected: _roastLevel == level,
                 onSelected: (selected) {
                   setState(() {
@@ -290,13 +300,13 @@ class _FilterSheetState extends State<_FilterSheet> {
 
           const SizedBox(height: 16),
 
-          Text('최소 평점', style: theme.textTheme.titleSmall),
+          Text(l10n.minRating, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [3.0, 4.0, 4.5].map((rating) {
               return FilterChip(
-                label: Text('$rating점 이상'),
+                label: Text(l10n.ratingAtLeast(rating)),
                 selected: _minRating == rating,
                 onSelected: (selected) {
                   setState(() {
@@ -310,7 +320,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           const SizedBox(height: 24),
 
           CustomButton(
-            text: '적용하기',
+            text: l10n.apply,
             onPressed: () {
               widget.onApply(
                 widget.currentFilters.copyWith(

@@ -9,6 +9,7 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/community/post_detail_cubit.dart';
 import '../../cubits/community/post_detail_state.dart';
 import '../../cubits/community/post_list_cubit.dart';
+import '../../l10n/l10n.dart';
 import '../../models/community_post.dart';
 import '../../services/community_service.dart';
 
@@ -39,7 +40,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (currentUser == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.requiredLogin)));
       return;
     }
 
@@ -65,16 +66,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         context.read<PostDetailCubit>().load(widget.postId);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('댓글이 등록되었습니다.')));
+        ).showSnackBar(SnackBar(content: Text(context.l10n.commentCreated)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              UserErrorMessage.from(
-                e,
-                fallback: '댓글 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+              UserErrorMessage.localize(
+                context.l10n,
+                UserErrorMessage.from(e, fallbackKey: 'commentCreateFailed'),
               ),
             ),
           ),
@@ -92,7 +93,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('yyyy.MM.dd HH:mm');
+    final l10n = context.l10n;
+    final dateFormat = DateFormat.yMd(
+      Localizations.localeOf(context).toString(),
+    ).add_Hm();
 
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
@@ -112,7 +116,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 final isOwner = currentUser?.id == post.userId;
                 return Scaffold(
                   appBar: AppBar(
-                    title: const Text('게시글'),
+                    title: Text(l10n.postScreenTitle),
                     actions: isOwner
                         ? [
                             IconButton(
@@ -160,7 +164,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          post.author?.nickname ?? '익명',
+                                          post.author?.nickname ??
+                                              l10n.guestNickname,
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
                                                 fontWeight: FontWeight.w500,
@@ -203,7 +208,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    '댓글 ${post.comments?.length ?? 0}',
+                                    l10n.commentsCount(
+                                      post.comments?.length ?? 0,
+                                    ),
                                     style: theme.textTheme.titleMedium
                                         ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
@@ -224,7 +231,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(24),
                                     child: Text(
-                                      '아직 댓글이 없습니다.\n첫 번째 댓글을 남겨보세요!',
+                                      l10n.commentNone,
                                       style: theme.textTheme.bodyMedium
                                           ?.copyWith(
                                             color: theme.colorScheme.onSurface
@@ -257,13 +264,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 Expanded(
                                   child: TextField(
                                     controller: _commentController,
-                                    decoration: const InputDecoration(
-                                      hintText: '댓글을 입력하세요...',
-                                      border: OutlineInputBorder(),
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 12,
-                                      ),
+                                    decoration: InputDecoration(
+                                      hintText: l10n.commentHint,
+                                      border: const OutlineInputBorder(),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 12,
+                                          ),
                                     ),
                                     maxLines: null,
                                   ),
@@ -299,7 +307,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     children: [
                       const Icon(Icons.error_outline, size: 48),
                       const SizedBox(height: 16),
-                      Text('오류가 발생했습니다\n$message'),
+                      Text(
+                        l10n.errorOccurredWithMessage(
+                          UserErrorMessage.localize(l10n, message),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -317,7 +329,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     bool isOwner,
   ) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('MM/dd HH:mm');
+    final l10n = context.l10n;
+    final dateFormat = DateFormat.Md(
+      Localizations.localeOf(context).toString(),
+    ).add_Hm();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -345,7 +360,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  comment.author?.nickname ?? '익명',
+                  comment.author?.nickname ?? l10n.guestNickname,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -360,7 +375,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 if (isOwner)
                   PopupMenuButton<String>(
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'delete', child: Text('삭제')),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(context.l10n.delete),
+                      ),
                     ],
                     onSelected: (value) async {
                       if (value == 'delete') {
@@ -376,10 +394,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  UserErrorMessage.from(
-                                    e,
-                                    fallback:
-                                        '댓글 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                                  UserErrorMessage.localize(
+                                    context.l10n,
+                                    UserErrorMessage.from(
+                                      e,
+                                      fallbackKey: 'commentDeleteFailed',
+                                    ),
                                   ),
                                 ),
                               ),
@@ -403,19 +423,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('게시글 삭제'),
-        content: const Text('이 게시글을 삭제하시겠습니까?\n댓글도 함께 삭제됩니다.'),
+        title: Text(context.l10n.postDeleteTitle),
+        content: Text(context.l10n.postDeleteConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('삭제'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -429,16 +449,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           context.go('/community');
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('게시글이 삭제되었습니다.')));
+          ).showSnackBar(SnackBar(content: Text(context.l10n.postDeleted)));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                UserErrorMessage.from(
-                  e,
-                  fallback: '게시글 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                UserErrorMessage.localize(
+                  context.l10n,
+                  UserErrorMessage.from(e, fallbackKey: 'postDeleteFailed'),
                 ),
               ),
             ),

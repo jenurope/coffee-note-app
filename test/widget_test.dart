@@ -3,6 +3,8 @@ import 'package:coffee_note_app/cubits/auth/auth_state.dart';
 import 'package:coffee_note_app/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coffee_note_app/l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,7 +22,17 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<AuthCubit>(
         create: (_) => AuthCubit.test(const AuthState.guest()),
-        child: MaterialApp.router(routerConfig: router),
+        child: MaterialApp.router(
+          routerConfig: router,
+          locale: const Locale('ko'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+        ),
       ),
     );
 

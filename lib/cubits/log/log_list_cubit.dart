@@ -62,10 +62,7 @@ class LogListCubit extends Cubit<LogListState> {
       debugPrint('LogListCubit.load error: $e');
       emit(
         LogListState.error(
-          message: UserErrorMessage.from(
-            e,
-            fallback: '기록 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
-          ),
+          message: UserErrorMessage.from(e, fallbackKey: 'errLoadLogs'),
           filters: filters,
         ),
       );

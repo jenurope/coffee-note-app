@@ -32,13 +32,13 @@ class BeanDetailCubit extends Cubit<BeanDetailState> {
         if (bean != null) {
           emit(BeanDetailState.loaded(bean: bean));
         } else {
-          emit(const BeanDetailState.error(message: '샘플 원두를 찾을 수 없습니다.'));
+          emit(const BeanDetailState.error(message: 'errSampleBeanNotFound'));
         }
         return;
       }
 
       if (authState != null && authState is! AuthAuthenticated) {
-        emit(const BeanDetailState.error(message: '로그인이 필요합니다.'));
+        emit(const BeanDetailState.error(message: 'requiredLogin'));
         return;
       }
 
@@ -46,16 +46,13 @@ class BeanDetailCubit extends Cubit<BeanDetailState> {
       if (bean != null) {
         emit(BeanDetailState.loaded(bean: bean));
       } else {
-        emit(const BeanDetailState.error(message: '원두를 찾을 수 없습니다.'));
+        emit(const BeanDetailState.error(message: 'errBeanNotFound'));
       }
     } catch (e) {
       debugPrint('BeanDetailCubit.load error: $e');
       emit(
         BeanDetailState.error(
-          message: UserErrorMessage.from(
-            e,
-            fallback: '원두 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
-          ),
+          message: UserErrorMessage.from(e, fallbackKey: 'errLoadBeanDetail'),
         ),
       );
     }

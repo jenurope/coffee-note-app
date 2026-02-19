@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/l10n.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -374,7 +375,7 @@ class SearchFilterBar extends StatelessWidget {
             enabled: enabled,
             onSubmitted: enabled ? (_) => onSearch?.call() : null,
             decoration: InputDecoration(
-              hintText: hintText ?? '검색...',
+              hintText: hintText ?? context.l10n.searchDefaultHint,
               prefixIcon: const Icon(Icons.search),
               suffixIcon: enabled && searchController.text.isNotEmpty
                   ? IconButton(

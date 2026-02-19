@@ -6,6 +6,7 @@ import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/community/post_list_cubit.dart';
+import '../../l10n/l10n.dart';
 import '../../models/community_post.dart';
 import '../../services/community_service.dart';
 import '../../widgets/common/common_widgets.dart';
@@ -71,7 +72,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
     if (currentUser == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.requiredLogin)));
       return;
     }
 
@@ -105,19 +106,20 @@ class _PostFormScreenState extends State<PostFormScreen> {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEditing ? '게시글이 수정되었습니다.' : '게시글이 등록되었습니다.'),
+            content: Text(
+              isEditing ? context.l10n.postUpdated : context.l10n.postCreated,
+            ),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        final action = isEditing ? '수정' : '등록';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              UserErrorMessage.from(
-                e,
-                fallback: '게시글 $action 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+              UserErrorMessage.localize(
+                context.l10n,
+                UserErrorMessage.from(e, fallbackKey: 'postSaveFailed'),
               ),
             ),
           ),
@@ -138,7 +140,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? '게시글 수정' : '새 게시글'),
+        title: Text(
+          isEditing
+              ? context.l10n.postFormEditTitle
+              : context.l10n.postFormNewTitle,
+        ),
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _handleSubmit,
@@ -148,7 +154,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(isEditing ? '수정' : '등록'),
+                : Text(isEditing ? context.l10n.update : context.l10n.register),
           ),
         ],
       ),
@@ -163,16 +169,16 @@ class _PostFormScreenState extends State<PostFormScreen> {
               children: [
                 // 제목
                 CustomTextField(
-                  label: '제목',
-                  hint: '제목을 입력하세요',
+                  label: context.l10n.postTitle,
+                  hint: context.l10n.postTitleHint,
                   controller: _titleController,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return '제목을 입력해주세요';
+                      return context.l10n.postTitleRequired;
                     }
                     if (value.trim().length < 2) {
-                      return '제목은 2자 이상이어야 합니다';
+                      return context.l10n.postTitleMinLength;
                     }
                     return null;
                   },
@@ -181,17 +187,17 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
                 // 내용
                 CustomTextField(
-                  label: '내용',
-                  hint: '커피에 대한 이야기를 나눠보세요...',
+                  label: context.l10n.postContent,
+                  hint: context.l10n.postContentHint,
                   controller: _contentController,
                   maxLines: 15,
                   textInputAction: TextInputAction.newline,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return '내용을 입력해주세요';
+                      return context.l10n.postContentRequired;
                     }
                     if (value.trim().length < 10) {
-                      return '내용은 10자 이상이어야 합니다';
+                      return context.l10n.postContentMinLength;
                     }
                     return null;
                   },

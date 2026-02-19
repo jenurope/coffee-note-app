@@ -10,6 +10,8 @@ import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/log/log_list_cubit.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
+import '../../domain/catalogs/coffee_type_catalog.dart';
+import '../../l10n/l10n.dart';
 import '../../models/coffee_log.dart';
 import '../../services/coffee_log_service.dart';
 import '../../services/image_upload_service.dart';
@@ -165,7 +167,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
     if (currentUser == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.requiredLogin)));
       return;
     }
 
@@ -212,18 +214,21 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isEditing ? '기록이 수정되었습니다.' : '기록이 등록되었습니다.')),
+          SnackBar(
+            content: Text(
+              isEditing ? context.l10n.logUpdated : context.l10n.logCreated,
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        final action = isEditing ? '수정' : '등록';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              UserErrorMessage.from(
-                e,
-                fallback: '기록 $action 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+              UserErrorMessage.localize(
+                context.l10n,
+                UserErrorMessage.from(e, fallbackKey: 'logSaveFailed'),
               ),
             ),
           ),
@@ -246,7 +251,13 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
     // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? '기록 수정' : '새 커피 기록')),
+      appBar: AppBar(
+        title: Text(
+          isEditing
+              ? context.l10n.logFormEditTitle
+              : context.l10n.logFormNewTitle,
+        ),
+      ),
       body: LoadingOverlay(
         isLoading: _isLoading,
         child: SingleChildScrollView(
@@ -257,7 +268,10 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 이미지 선택
-                Text('커피 사진', style: theme.textTheme.bodyLarge),
+                Text(
+                  context.l10n.coffeePhoto,
+                  style: theme.textTheme.bodyLarge,
+                ),
                 const SizedBox(height: 8),
                 if (_selectedImage != null)
                   ClipRRect(
@@ -288,7 +302,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                                   ],
                                 ),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
@@ -298,7 +312,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                                   ),
                                   SizedBox(width: 8),
                                   Text(
-                                    '사진 변경',
+                                    context.l10n.photoChange,
                                     style: TextStyle(color: Colors.white),
                                   ),
                                 ],
@@ -319,14 +333,14 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                 const SizedBox(height: 16),
 
                 // 커피 종류
-                Text('커피 종류 *', style: theme.textTheme.bodyLarge),
+                Text(context.l10n.coffeeType, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: CoffeeLog.coffeeTypes.map((type) {
                     return ChoiceChip(
-                      label: Text(type),
+                      label: Text(CoffeeTypeCatalog.label(context.l10n, type)),
                       selected: _coffeeType == type,
                       onSelected: (selected) {
                         if (selected) {
@@ -342,8 +356,8 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
 
                 // 커피 이름
                 CustomTextField(
-                  label: '커피 이름',
-                  hint: '예: 시그니처 라떼',
+                  label: context.l10n.coffeeName,
+                  hint: context.l10n.coffeeNameHint,
                   controller: _coffeeNameController,
                   prefixIcon: Icons.local_cafe,
                   textInputAction: TextInputAction.next,
@@ -352,14 +366,14 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
 
                 // 카페 이름
                 CustomTextField(
-                  label: '카페 이름 *',
-                  hint: '예: 블루보틀 성수점',
+                  label: context.l10n.cafeName,
+                  hint: context.l10n.cafeNameHint,
                   controller: _cafeNameController,
                   prefixIcon: Icons.storefront,
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return '카페 이름을 입력해주세요';
+                      return context.l10n.cafeNameRequired;
                     }
                     return null;
                   },
@@ -367,7 +381,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                 const SizedBox(height: 16),
 
                 // 방문일
-                Text('방문일 *', style: theme.textTheme.bodyLarge),
+                Text(context.l10n.visitDate, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: _selectDate,
@@ -384,7 +398,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                 const SizedBox(height: 16),
 
                 // 평점
-                Text('평점 *', style: theme.textTheme.bodyLarge),
+                Text(context.l10n.rating, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 8),
                 Card(
                   child: Padding(
@@ -424,8 +438,8 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
 
                 // 메모
                 CustomTextField(
-                  label: '메모',
-                  hint: '커피에 대한 감상을 적어주세요...',
+                  label: context.l10n.memo,
+                  hint: context.l10n.memoHint,
                   controller: _notesController,
                   maxLines: 4,
                   textInputAction: TextInputAction.done,
@@ -435,7 +449,9 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
 
                 // 저장 버튼
                 CustomButton(
-                  text: isEditing ? '수정하기' : '등록하기',
+                  text: isEditing
+                      ? context.l10n.saveAsEdit
+                      : context.l10n.saveAsNew,
                   onPressed: _handleSubmit,
                   isLoading: _isLoading || _isUploadingImage,
                 ),

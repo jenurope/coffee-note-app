@@ -72,8 +72,11 @@ class CoffeeLogService {
   // 커피 로그 상세 조회
   Future<CoffeeLog?> getLog(String id) async {
     try {
-      final response =
-          await _client.from('coffee_logs').select().eq('id', id).maybeSingle();
+      final response = await _client
+          .from('coffee_logs')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
 
       if (response != null) {
         return CoffeeLog.fromJson(response);
@@ -141,8 +144,7 @@ class CoffeeLogService {
 
       final count = (logs as List).length;
       final avgRating = count > 0
-          ? logs.fold<double>(0, (sum, l) => sum + (l['rating'] as num))
-                  / count
+          ? logs.fold<double>(0, (sum, l) => sum + (l['rating'] as num)) / count
           : 0.0;
 
       // 커피 타입별 카운트

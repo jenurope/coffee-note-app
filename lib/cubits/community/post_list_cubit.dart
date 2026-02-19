@@ -39,10 +39,7 @@ class PostListCubit extends Cubit<PostListState> {
       debugPrint('PostListCubit.load error: $e');
       emit(
         PostListState.error(
-          message: UserErrorMessage.from(
-            e,
-            fallback: '게시글 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
-          ),
+          message: UserErrorMessage.from(e, fallbackKey: 'errLoadPosts'),
           filters: filters,
         ),
       );

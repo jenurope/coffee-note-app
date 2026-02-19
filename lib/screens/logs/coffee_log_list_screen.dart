@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/log/log_filters.dart';
 import '../../cubits/log/log_list_cubit.dart';
 import '../../cubits/log/log_list_state.dart';
+import '../../domain/catalogs/coffee_type_catalog.dart';
+import '../../l10n/l10n.dart';
 import '../../models/coffee_log.dart';
 import '../../widgets/coffee_log_card.dart';
 import '../../widgets/common/common_widgets.dart';
@@ -82,7 +85,7 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
           builder: (context, logState) {
             return Scaffold(
               appBar: AppBar(
-                title: const Text('커피 기록'),
+                title: Text(context.l10n.logsScreenTitle),
                 actions: [
                   IconButton(
                     icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
@@ -110,7 +113,7 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
                           searchController: _searchController,
                           onSearch: isGuest ? null : _search,
                           onFilterPressed: isGuest ? null : _showFilterSheet,
-                          hintText: '커피, 카페 검색...',
+                          hintText: context.l10n.logsSearchHint,
                           enabled: !isGuest,
                           hasActiveFilters:
                               !isGuest &&
@@ -129,12 +132,12 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
                         logs.isEmpty
                             ? EmptyState(
                                 icon: Icons.local_cafe_outlined,
-                                title: '등록된 커피 기록이 없습니다',
+                                title: context.l10n.logsEmptyTitle,
                                 subtitle: currentUser != null && !isGuest
-                                    ? '오늘 마신 커피를 기록해보세요!'
-                                    : '로그인하면 커피를 기록할 수 있습니다.',
+                                    ? context.l10n.logsEmptySubtitleAuth
+                                    : context.l10n.logsEmptySubtitleGuest,
                                 buttonText: currentUser != null && !isGuest
-                                    ? '커피 기록하기'
+                                    ? context.l10n.logsRecordButton
                                     : null,
                                 onButtonPressed: currentUser != null && !isGuest
                                     ? () => context.push('/logs/new')
@@ -189,10 +192,17 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
                           children: [
                             const Icon(Icons.error_outline, size: 48),
                             const SizedBox(height: 16),
-                            Text('오류가 발생했습니다\n$message'),
+                            Text(
+                              context.l10n.errorOccurredWithMessage(
+                                UserErrorMessage.localize(
+                                  context.l10n,
+                                  message,
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 16),
                             CustomButton(
-                              text: '다시 시도',
+                              text: context.l10n.retry,
                               onPressed: () =>
                                   context.read<LogListCubit>().reload(),
                             ),
@@ -242,6 +252,7 @@ class _FilterSheetState extends State<_FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
 
     return Container(
@@ -254,7 +265,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '필터',
+                l10n.filter,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -267,34 +278,34 @@ class _FilterSheetState extends State<_FilterSheet> {
                     _sortBy = null;
                   });
                 },
-                child: const Text('초기화'),
+                child: Text(l10n.reset),
               ),
             ],
           ),
           const SizedBox(height: 16),
 
           // 정렬
-          Text('정렬', style: theme.textTheme.titleSmall),
+          Text(l10n.sort, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
-              _buildSortChip('최신순', 'cafe_visit_date'),
-              _buildSortChip('평점순', 'rating'),
+              _buildSortChip(l10n.sortNewest, 'cafe_visit_date'),
+              _buildSortChip(l10n.sortByRating, 'rating'),
             ],
           ),
 
           const SizedBox(height: 16),
 
           // 커피 종류
-          Text('커피 종류', style: theme.textTheme.titleSmall),
+          Text(l10n.coffeeType, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: CoffeeLog.coffeeTypes.map((type) {
               return FilterChip(
-                label: Text(type),
+                label: Text(CoffeeTypeCatalog.label(l10n, type)),
                 selected: _coffeeType == type,
                 onSelected: (selected) {
                   setState(() {
@@ -308,13 +319,13 @@ class _FilterSheetState extends State<_FilterSheet> {
           const SizedBox(height: 16),
 
           // 최소 평점
-          Text('최소 평점', style: theme.textTheme.titleSmall),
+          Text(l10n.minRating, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [3.0, 4.0, 4.5].map((rating) {
               return FilterChip(
-                label: Text('$rating점 이상'),
+                label: Text(l10n.ratingAtLeast(rating)),
                 selected: _minRating == rating,
                 onSelected: (selected) {
                   setState(() {
@@ -328,7 +339,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           const SizedBox(height: 24),
 
           CustomButton(
-            text: '적용하기',
+            text: l10n.apply,
             onPressed: () {
               widget.onApply(
                 widget.currentFilters.copyWith(

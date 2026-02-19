@@ -21,10 +21,7 @@ class SupabaseConfig {
       );
     }
 
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-    );
+    await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   }
 
   static SupabaseClient get client => Supabase.instance.client;

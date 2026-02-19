@@ -1,3 +1,5 @@
+import '../domain/catalogs/coffee_type_catalog.dart';
+
 class CoffeeLog {
   final String id;
   final String userId;
@@ -98,16 +100,5 @@ class CoffeeLog {
     );
   }
 
-  static const List<String> coffeeTypes = [
-    '에스프레소',
-    '아메리카노',
-    '라떼',
-    '카푸치노',
-    '모카',
-    '마끼아또',
-    '플랫화이트',
-    '콜드브루',
-    '아포가토',
-    '기타',
-  ];
+  static const List<String> coffeeTypes = CoffeeTypeCatalog.codes;
 }

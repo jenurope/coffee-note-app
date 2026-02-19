@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/dashboard/dashboard_state.dart';
+import '../../l10n/l10n.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/bean_card.dart';
 import '../../widgets/coffee_log_card.dart';
@@ -39,15 +41,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         return BlocBuilder<DashboardCubit, DashboardState>(
           builder: (context, dashState) {
+            final l10n = context.l10n;
             return Scaffold(
               appBar: AppBar(
-                title: const Text('커피로그'),
+                title: Text(l10n.appTitle),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.notifications),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('알림 기능은 준비 중입니다.')),
+                        SnackBar(content: Text(l10n.notificationsPreparing)),
                       );
                     },
                   ),
@@ -70,10 +73,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               const Icon(Icons.error_outline, size: 48),
                               const SizedBox(height: 16),
-                              Text('오류가 발생했습니다\n$message'),
+                              Text(
+                                l10n.errorOccurredWithMessage(
+                                  UserErrorMessage.localize(l10n, message),
+                                ),
+                              ),
                               const SizedBox(height: 16),
                               CustomButton(
-                                text: '다시 시도',
+                                text: l10n.retry,
                                 onPressed: () =>
                                     context.read<DashboardCubit>().refresh(),
                               ),
@@ -97,14 +104,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           // 인사말
                           Text(
-                            '안녕하세요, ${userProfile?.nickname ?? (isGuest ? '게스트' : '커피러버')}님! ☕',
+                            l10n.helloUser(
+                              userProfile?.nickname ??
+                                  (isGuest
+                                      ? l10n.guestNickname
+                                      : l10n.defaultCoffeeLover),
+                            ),
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '오늘도 향긋한 커피 한 잔 어떠세요?',
+                            l10n.dashboardSubtitle,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.6,
@@ -119,8 +131,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               Expanded(
                                 child: StatCard(
-                                  title: '원두 기록',
-                                  value: '$totalBeans개',
+                                  title: l10n.beanRecords,
+                                  value: l10n.countBeans(totalBeans),
                                   icon: Icons.coffee,
                                   onTap: () => context.go('/beans'),
                                 ),
@@ -128,8 +140,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: StatCard(
-                                  title: '커피 기록',
-                                  value: '$totalLogs개',
+                                  title: l10n.coffeeRecords,
+                                  value: l10n.countLogs(totalLogs),
                                   icon: Icons.local_cafe,
                                   onTap: () => context.go('/logs'),
                                 ),
@@ -149,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 children: [
                                   Expanded(
                                     child: CustomButton(
-                                      text: '원두 기록하기',
+                                      text: l10n.recordBean,
                                       icon: Icons.add,
                                       onPressed: () =>
                                           context.push('/beans/new'),
@@ -158,7 +170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: CustomButton(
-                                      text: '커피 기록하기',
+                                      text: l10n.recordCoffee,
                                       icon: Icons.add,
                                       isOutlined: true,
                                       onPressed: () =>
@@ -174,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           // 최근 원두 기록
                           _buildSectionHeader(
                             context,
-                            title: '최근 원두 기록',
+                            title: l10n.recentBeanRecords,
                             onViewAll: () => context.go('/beans'),
                           ),
                           const SizedBox(height: 12),
@@ -191,14 +203,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                               .withValues(alpha: 0.5),
                                         ),
                                         const SizedBox(height: 12),
-                                        const Text('아직 원두 기록이 없습니다'),
+                                        Text(l10n.noBeanRecordsYet),
                                         if (currentUser != null &&
                                             !isGuest) ...[
                                           const SizedBox(height: 12),
                                           TextButton(
                                             onPressed: () =>
                                                 context.push('/beans/new'),
-                                            child: const Text('첫 원두 기록하기'),
+                                            child: Text(l10n.firstBeanRecord),
                                           ),
                                         ],
                                       ],
@@ -236,7 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           // 최근 커피 기록
                           _buildSectionHeader(
                             context,
-                            title: '최근 커피 기록',
+                            title: l10n.recentCoffeeRecords,
                             onViewAll: () => context.go('/logs'),
                           ),
                           const SizedBox(height: 12),
@@ -253,14 +265,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                               .withValues(alpha: 0.5),
                                         ),
                                         const SizedBox(height: 12),
-                                        const Text('아직 커피 기록이 없습니다'),
+                                        Text(l10n.noCoffeeRecordsYet),
                                         if (currentUser != null &&
                                             !isGuest) ...[
                                           const SizedBox(height: 12),
                                           TextButton(
                                             onPressed: () =>
                                                 context.push('/logs/new'),
-                                            child: const Text('첫 커피 기록하기'),
+                                            child: Text(l10n.firstCoffeeRecord),
                                           ),
                                         ],
                                       ],
@@ -314,12 +326,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (onViewAll != null)
           TextButton(
             onPressed: onViewAll,
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('더보기'),
-                SizedBox(width: 4),
-                Icon(Icons.chevron_right, size: 14),
+                Text(context.l10n.viewMore),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right, size: 14),
               ],
             ),
           ),

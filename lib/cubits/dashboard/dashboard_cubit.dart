@@ -49,7 +49,7 @@ class DashboardCubit extends Cubit<DashboardState> {
           beanService == null ||
           logService == null ||
           sampleService == null) {
-        throw Exception('필수 서비스가 초기화되지 않았습니다.');
+        throw Exception('errServiceNotInitialized');
       }
 
       final authState = authCubit?.state;
@@ -120,10 +120,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       debugPrint('DashboardCubit.load error: $e');
       emit(
         DashboardState.error(
-          message: UserErrorMessage.from(
-            e,
-            fallback: '대시보드 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
-          ),
+          message: UserErrorMessage.from(e, fallbackKey: 'errLoadDashboard'),
         ),
       );
     }

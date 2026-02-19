@@ -1,5 +1,12 @@
 import 'dart:math' as math;
+import 'dart:ui' show Locale, PlatformDispatcher;
 
+import 'package:coffee_note_app/l10n/app_localizations.dart';
+
+import '../domain/catalogs/brew_method_catalog.dart';
+import '../domain/catalogs/coffee_type_catalog.dart';
+import '../domain/catalogs/grind_size_catalog.dart';
+import '../domain/catalogs/roast_level_catalog.dart';
 import '../models/bean_detail.dart';
 import '../models/brew_detail.dart';
 import '../models/coffee_bean.dart';
@@ -8,12 +15,16 @@ import '../models/guest_dashboard_snapshot.dart';
 import '../models/user_profile.dart';
 
 class GuestSampleService {
-  GuestSampleService() : _beans = _buildBeans(), _logs = _buildLogs();
+  GuestSampleService({String? languageCode})
+    : _l10nFuture = AppLocalizations.delegate.load(
+        Locale(_resolveLanguageCode(languageCode)),
+      );
 
   static const String guestUserId = 'guest-user';
 
-  final List<CoffeeBean> _beans;
-  final List<CoffeeLog> _logs;
+  final Future<AppLocalizations> _l10nFuture;
+  List<CoffeeBean>? _beans;
+  List<CoffeeLog>? _logs;
 
   Future<List<CoffeeBean>> getBeans({
     String? searchQuery,
@@ -24,8 +35,11 @@ class GuestSampleService {
     int? limit,
     int? offset,
   }) async {
+    await _ensureInitialized();
+    final beans = _beans!;
+
     final normalized = _normalizeQuery(searchQuery);
-    final filtered = _beans
+    final filtered = beans
         .where((bean) {
           final matchesQuery =
               normalized == null ||
@@ -54,7 +68,8 @@ class GuestSampleService {
   }
 
   Future<CoffeeBean?> getBean(String id) async {
-    return _firstWhereOrNull(_beans, (bean) => bean.id == id);
+    await _ensureInitialized();
+    return _firstWhereOrNull(_beans!, (bean) => bean.id == id);
   }
 
   Future<List<CoffeeLog>> getLogs({
@@ -66,8 +81,11 @@ class GuestSampleService {
     int? limit,
     int? offset,
   }) async {
+    await _ensureInitialized();
+    final logs = _logs!;
+
     final normalized = _normalizeQuery(searchQuery);
-    final filtered = _logs
+    final filtered = logs
         .where((log) {
           final matchesQuery =
               normalized == null ||
@@ -95,24 +113,29 @@ class GuestSampleService {
   }
 
   Future<CoffeeLog?> getLog(String id) async {
-    return _firstWhereOrNull(_logs, (log) => log.id == id);
+    await _ensureInitialized();
+    return _firstWhereOrNull(_logs!, (log) => log.id == id);
   }
 
   Future<GuestDashboardSnapshot> getDashboardSnapshot() async {
+    await _ensureInitialized();
+    final beans = _beans!;
+    final logs = _logs!;
+    final l10n = await _l10nFuture;
+
     final coffeeTypeCount = <String, int>{};
-    for (final log in _logs) {
+    for (final log in logs) {
       coffeeTypeCount[log.coffeeType] =
           (coffeeTypeCount[log.coffeeType] ?? 0) + 1;
     }
 
-    final averageBeanRating = _beans.isEmpty
+    final averageBeanRating = beans.isEmpty
         ? 0.0
-        : _beans.fold<double>(0.0, (sum, bean) => sum + bean.rating) /
-              _beans.length;
-    final averageLogRating = _logs.isEmpty
+        : beans.fold<double>(0.0, (sum, bean) => sum + bean.rating) /
+              beans.length;
+    final averageLogRating = logs.isEmpty
         ? 0.0
-        : _logs.fold<double>(0.0, (sum, log) => sum + log.rating) /
-              _logs.length;
+        : logs.fold<double>(0.0, (sum, log) => sum + log.rating) / logs.length;
 
     final recentBeans = await getBeans(
       sortBy: 'created_at',
@@ -126,15 +149,31 @@ class GuestSampleService {
     );
 
     return GuestDashboardSnapshot(
-      totalBeans: _beans.length,
+      totalBeans: beans.length,
       averageBeanRating: averageBeanRating,
-      totalLogs: _logs.length,
+      totalLogs: logs.length,
       averageLogRating: averageLogRating,
       coffeeTypeCount: coffeeTypeCount,
       recentBeans: recentBeans,
       recentLogs: recentLogs,
-      userProfile: _profiles.guest,
+      userProfile: UserProfile(
+        id: guestUserId,
+        nickname: l10n.guestNickname,
+        email: 'guest@local.sample',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
     );
+  }
+
+  Future<void> _ensureInitialized() async {
+    if (_beans != null && _logs != null) {
+      return;
+    }
+
+    final l10n = await _l10nFuture;
+    _beans = _buildBeans(l10n);
+    _logs = _buildLogs(l10n);
   }
 
   List<T> _applyPagination<T>(
@@ -168,20 +207,20 @@ class GuestSampleService {
     return null;
   }
 
-  static List<CoffeeBean> _buildBeans() {
+  List<CoffeeBean> _buildBeans(AppLocalizations l10n) {
     final now = DateTime(2026, 2, 14, 9);
     return <CoffeeBean>[
       CoffeeBean(
         id: 'sample-bean-ethiopia-1',
         userId: guestUserId,
-        name: '예가체프 G1',
-        roastery: '샘플 로스터리',
+        name: l10n.sampleBeanName1,
+        roastery: l10n.sampleRoasteryA,
         purchaseDate: DateTime(2026, 1, 22),
         rating: 4.6,
-        tastingNotes: '꽃향, 자스민, 복숭아',
-        roastLevel: '라이트',
+        tastingNotes: l10n.sampleBeanNote1,
+        roastLevel: RoastLevelCatalog.light,
         price: 19000,
-        purchaseLocation: '온라인 스토어',
+        purchaseLocation: l10n.sampleStoreOnline,
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 20)),
         updatedAt: now.subtract(const Duration(days: 18)),
@@ -189,9 +228,9 @@ class GuestSampleService {
           BeanDetail(
             id: 'sample-bean-detail-1',
             coffeeBeanId: 'sample-bean-ethiopia-1',
-            origin: '에티오피아',
+            origin: l10n.sampleOriginEthiopia,
             variety: 'Heirloom',
-            process: '워시드',
+            process: l10n.sampleProcessWashed,
             ratio: 100,
             createdAt: now.subtract(const Duration(days: 20)),
           ),
@@ -201,12 +240,12 @@ class GuestSampleService {
             id: 'sample-brew-detail-1',
             coffeeBeanId: 'sample-bean-ethiopia-1',
             brewDate: DateTime(2026, 2, 3),
-            brewMethod: '핸드드립',
-            grindSize: '중',
+            brewMethod: BrewMethodCatalog.pourOver,
+            grindSize: GrindSizeCatalog.medium,
             brewTime: '2:45',
             waterTemperature: 92,
-            pairedFood: '레몬 파운드 케이크',
-            brewNotes: '클린컵이 좋고 단맛이 길게 남음.',
+            pairedFood: l10n.sampleFood1,
+            brewNotes: l10n.sampleBrewNote1,
             createdAt: now.subtract(const Duration(days: 11)),
           ),
         ],
@@ -214,14 +253,14 @@ class GuestSampleService {
       CoffeeBean(
         id: 'sample-bean-colombia-1',
         userId: guestUserId,
-        name: '콜롬비아 우일라',
-        roastery: '샘플 커피랩',
+        name: l10n.sampleBeanName2,
+        roastery: l10n.sampleRoasteryB,
         purchaseDate: DateTime(2026, 1, 30),
         rating: 4.3,
-        tastingNotes: '카라멜, 오렌지, 밀크초콜릿',
-        roastLevel: '미디엄',
+        tastingNotes: l10n.sampleBeanNote2,
+        roastLevel: RoastLevelCatalog.medium,
         price: 17500,
-        purchaseLocation: '성수 오프라인 매장',
+        purchaseLocation: l10n.sampleStoreOffline,
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 15)),
         updatedAt: now.subtract(const Duration(days: 14)),
@@ -229,9 +268,9 @@ class GuestSampleService {
           BeanDetail(
             id: 'sample-bean-detail-2',
             coffeeBeanId: 'sample-bean-colombia-1',
-            origin: '콜롬비아',
+            origin: l10n.sampleOriginColombia,
             variety: 'Caturra',
-            process: '허니',
+            process: l10n.sampleProcessHoney,
             ratio: 100,
             createdAt: now.subtract(const Duration(days: 15)),
           ),
@@ -240,14 +279,14 @@ class GuestSampleService {
       CoffeeBean(
         id: 'sample-bean-kenya-1',
         userId: guestUserId,
-        name: '케냐 AA',
-        roastery: '샘플 로스터리',
+        name: l10n.sampleBeanName3,
+        roastery: l10n.sampleRoasteryA,
         purchaseDate: DateTime(2026, 2, 5),
         rating: 4.8,
-        tastingNotes: '블랙커런트, 자몽, 브라운슈가',
-        roastLevel: '미디엄 라이트',
+        tastingNotes: l10n.sampleBeanNote3,
+        roastLevel: RoastLevelCatalog.mediumLight,
         price: 22000,
-        purchaseLocation: '정기 구독',
+        purchaseLocation: l10n.sampleStoreSubscription,
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 8)),
         updatedAt: now.subtract(const Duration(days: 7)),
@@ -255,9 +294,9 @@ class GuestSampleService {
           BeanDetail(
             id: 'sample-bean-detail-3',
             coffeeBeanId: 'sample-bean-kenya-1',
-            origin: '케냐',
+            origin: l10n.sampleOriginKenya,
             variety: 'SL28',
-            process: '워시드',
+            process: l10n.sampleProcessWashed,
             ratio: 100,
             createdAt: now.subtract(const Duration(days: 8)),
           ),
@@ -266,18 +305,18 @@ class GuestSampleService {
     ];
   }
 
-  static List<CoffeeLog> _buildLogs() {
+  List<CoffeeLog> _buildLogs(AppLocalizations l10n) {
     final now = DateTime(2026, 2, 14, 9);
     return <CoffeeLog>[
       CoffeeLog(
         id: 'sample-log-1',
         userId: guestUserId,
         cafeVisitDate: DateTime(2026, 2, 12),
-        coffeeType: '아메리카노',
-        coffeeName: '싱글 오리진 아메리카노',
-        cafeName: '샘플 카페',
+        coffeeType: CoffeeTypeCatalog.americano,
+        coffeeName: l10n.sampleCoffeeName1,
+        cafeName: l10n.sampleCafe,
         rating: 4.5,
-        notes: '산미가 선명하고 끝맛이 깨끗했다.',
+        notes: l10n.sampleLogNote1,
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 2)),
         updatedAt: now.subtract(const Duration(days: 2)),
@@ -286,11 +325,11 @@ class GuestSampleService {
         id: 'sample-log-2',
         userId: guestUserId,
         cafeVisitDate: DateTime(2026, 2, 8),
-        coffeeType: '라떼',
-        coffeeName: '오트 라떼',
-        cafeName: '샘플 카페',
+        coffeeType: CoffeeTypeCatalog.latte,
+        coffeeName: l10n.sampleCoffeeName2,
+        cafeName: l10n.sampleCafe,
         rating: 4.2,
-        notes: '바디감은 좋았지만 후반에 단맛이 살짝 과함.',
+        notes: l10n.sampleLogNote2,
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 6)),
         updatedAt: now.subtract(const Duration(days: 6)),
@@ -299,27 +338,25 @@ class GuestSampleService {
         id: 'sample-log-3',
         userId: guestUserId,
         cafeVisitDate: DateTime(2026, 2, 1),
-        coffeeType: '콜드브루',
-        coffeeName: '콜드브루 블렌드',
-        cafeName: '샘플 카페',
+        coffeeType: CoffeeTypeCatalog.coldBrew,
+        coffeeName: l10n.sampleCoffeeName3,
+        cafeName: l10n.sampleCafe,
         rating: 4.7,
-        notes: '초콜릿과 견과류 뉘앙스가 안정적이었다.',
+        notes: l10n.sampleLogNote3,
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 13)),
         updatedAt: now.subtract(const Duration(days: 13)),
       ),
     ];
   }
-}
 
-class _SampleProfiles {
-  final UserProfile guest = UserProfile(
-    id: GuestSampleService.guestUserId,
-    nickname: '게스트',
-    email: 'guest@local.sample',
-    createdAt: DateTime(2026, 1, 1),
-    updatedAt: DateTime(2026, 1, 1),
-  );
+  static String _resolveLanguageCode(String? languageCode) {
+    final code =
+        (languageCode ?? PlatformDispatcher.instance.locale.languageCode)
+            .toLowerCase();
+    if (code == 'ko' || code == 'ja') {
+      return code;
+    }
+    return 'en';
+  }
 }
-
-final _profiles = _SampleProfiles();

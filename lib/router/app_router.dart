@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../l10n/l10n.dart';
 import '../cubits/auth/auth_cubit.dart';
 import '../cubits/auth/auth_state.dart';
 import '../cubits/bean/bean_detail_cubit.dart';
@@ -388,13 +389,13 @@ GoRouter createAppRouter({
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              '페이지를 찾을 수 없습니다',
+              context.l10n.pageNotFound,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => context.go(AppRoutePath.dashboard),
-              child: const Text('홈으로 돌아가기'),
+              child: Text(context.l10n.backToHome),
             ),
           ],
         ),

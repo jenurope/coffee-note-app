@@ -38,8 +38,10 @@ class CommunityPost {
           : null,
       comments: json['community_comments'] != null
           ? (json['community_comments'] as List)
-              .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (e) => CommunityComment.fromJson(e as Map<String, dynamic>),
+                )
+                .toList()
           : null,
       commentCount: json['comment_count'] as int?,
     );
@@ -57,11 +59,7 @@ class CommunityPost {
   }
 
   Map<String, dynamic> toInsertJson() {
-    return {
-      'user_id': userId,
-      'title': title,
-      'content': content,
-    };
+    return {'user_id': userId, 'title': title, 'content': content};
   }
 
   CommunityPost copyWith({
