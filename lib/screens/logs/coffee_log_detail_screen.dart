@@ -7,6 +7,7 @@ import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
+import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/log/log_detail_cubit.dart';
 import '../../cubits/log/log_detail_state.dart';
 import '../../cubits/log/log_list_cubit.dart';
@@ -291,6 +292,7 @@ class CoffeeLogDetailScreen extends StatelessWidget {
         await getIt<CoffeeLogService>().deleteLog(logId);
         if (context.mounted) {
           context.read<LogListCubit>().reload();
+          context.read<DashboardCubit>().refresh();
           context.go('/logs');
           ScaffoldMessenger.of(
             context,

@@ -163,8 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     child: CustomButton(
                                       text: l10n.recordBean,
                                       icon: Icons.add,
-                                      onPressed: () =>
-                                          context.push('/beans/new'),
+                                      onPressed: () => context.go('/beans/new'),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -173,8 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       text: l10n.recordCoffee,
                                       icon: Icons.add,
                                       isOutlined: true,
-                                      onPressed: () =>
-                                          context.push('/logs/new'),
+                                      onPressed: () => context.go('/logs/new'),
                                     ),
                                   ),
                                 ],
@@ -209,7 +207,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           const SizedBox(height: 12),
                                           TextButton(
                                             onPressed: () =>
-                                                context.push('/beans/new'),
+                                                context.go('/beans/new'),
                                             child: Text(l10n.firstBeanRecord),
                                           ),
                                         ],
@@ -236,7 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         child: BeanCard(
                                           bean: bean,
                                           onTap: () =>
-                                              context.push('/beans/${bean.id}'),
+                                              context.go('/beans/${bean.id}'),
                                         ),
                                       );
                                     },
@@ -271,7 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           const SizedBox(height: 12),
                                           TextButton(
                                             onPressed: () =>
-                                                context.push('/logs/new'),
+                                                context.go('/logs/new'),
                                             child: Text(l10n.firstCoffeeRecord),
                                           ),
                                         ],
@@ -289,7 +287,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           child: CoffeeLogListTile(
                                             log: log,
                                             onTap: () =>
-                                                context.push('/logs/${log.id}'),
+                                                context.go('/logs/${log.id}'),
                                           ),
                                         ),
                                       )

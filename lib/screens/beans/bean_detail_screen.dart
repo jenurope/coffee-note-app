@@ -10,6 +10,7 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/bean/bean_detail_cubit.dart';
 import '../../cubits/bean/bean_detail_state.dart';
 import '../../cubits/bean/bean_list_cubit.dart';
+import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../domain/catalogs/brew_method_catalog.dart';
 import '../../domain/catalogs/grind_size_catalog.dart';
 import '../../domain/catalogs/roast_level_catalog.dart';
@@ -478,6 +479,7 @@ class BeanDetailScreen extends StatelessWidget {
         await getIt<CoffeeBeanService>().deleteBean(beanId);
         if (context.mounted) {
           context.read<BeanListCubit>().reload();
+          context.read<DashboardCubit>().refresh();
           context.go('/beans');
           ScaffoldMessenger.of(
             context,
