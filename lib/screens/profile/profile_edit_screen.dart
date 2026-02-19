@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -157,20 +159,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
     switch (action) {
       case _ProfileImageAction.gallery:
-        final picked = await imageService.pickImageFromGallery();
-        if (picked == null || !mounted) return;
-        setState(() {
-          _selectedAvatar = picked;
-          _markAvatarDeleted = false;
-        });
+        await _pickAndCropAvatar(imageService.pickAvatarFromGallery);
         return;
       case _ProfileImageAction.camera:
-        final picked = await imageService.pickImageFromCamera();
-        if (picked == null || !mounted) return;
-        setState(() {
-          _selectedAvatar = picked;
-          _markAvatarDeleted = false;
-        });
+        await _pickAndCropAvatar(imageService.pickAvatarFromCamera);
         return;
       case _ProfileImageAction.delete:
         setState(() {
@@ -182,6 +174,26 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       case _ProfileImageAction.cancel:
         return;
     }
+  }
+
+  Future<void> _pickAndCropAvatar(Future<XFile?> Function() picker) async {
+    final picked = await picker();
+    if (picked == null || !mounted) return;
+
+    final cropped = await Navigator.of(context, rootNavigator: true)
+        .push<XFile>(
+          MaterialPageRoute(
+            builder: (_) => _AvatarCropScreen(sourceFile: picked),
+            fullscreenDialog: true,
+          ),
+        );
+
+    if (cropped == null || !mounted) return;
+
+    setState(() {
+      _selectedAvatar = cropped;
+      _markAvatarDeleted = false;
+    });
   }
 
   String? _validateNickname(String? value) {
@@ -427,6 +439,130 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 ),
               ),
       ),
+    );
+  }
+}
+
+class _AvatarCropScreen extends StatefulWidget {
+  const _AvatarCropScreen({required this.sourceFile});
+
+  final XFile sourceFile;
+
+  @override
+  State<_AvatarCropScreen> createState() => _AvatarCropScreenState();
+}
+
+class _AvatarCropScreenState extends State<_AvatarCropScreen> {
+  final _cropController = CropController();
+
+  Uint8List? _imageBytes;
+  bool _isCropping = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageBytes();
+  }
+
+  Future<void> _loadImageBytes() async {
+    try {
+      final bytes = await widget.sourceFile.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _imageBytes = bytes;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _onCropped(CropResult result) async {
+    switch (result) {
+      case CropSuccess(:final croppedImage):
+        final file = await _writeTempCroppedFile(croppedImage);
+        if (!mounted) return;
+        Navigator.of(context).pop(file);
+      case CropFailure():
+        if (!mounted) return;
+        setState(() {
+          _isCropping = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.profileEditSaveFailed)),
+        );
+    }
+  }
+
+  Future<XFile> _writeTempCroppedFile(Uint8List bytes) async {
+    final tempPath =
+        '${Directory.systemTemp.path}/avatar_crop_${DateTime.now().microsecondsSinceEpoch}.jpg';
+    final file = File(tempPath);
+    await file.writeAsBytes(bytes, flush: true);
+    return XFile(file.path);
+  }
+
+  void _onSave() {
+    if (_isCropping || _imageBytes == null) return;
+    setState(() {
+      _isCropping = true;
+    });
+    _cropController.crop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isReady = _imageBytes != null;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(context.l10n.profileEditPhotoAction),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: context.l10n.cancel,
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: isReady && !_isCropping ? _onSave : null,
+            tooltip: context.l10n.save,
+          ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: FilledButton.icon(
+            onPressed: isReady && !_isCropping ? _onSave : null,
+            icon: const Icon(Icons.check),
+            label: Text(context.l10n.save),
+          ),
+        ),
+      ),
+      body: isReady
+          ? Stack(
+              fit: StackFit.expand,
+              children: [
+                Container(color: Colors.black),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Crop(
+                      controller: _cropController,
+                      image: _imageBytes!,
+                      onCropped: _onCropped,
+                      aspectRatio: 1,
+                      withCircleUi: false,
+                      maskColor: Colors.black.withValues(alpha: 0.55),
+                      baseColor: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }

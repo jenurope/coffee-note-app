@@ -1,6 +1,15 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+class _ProcessedAvatar {
+  const _ProcessedAvatar({required this.bytes, required this.extension});
+
+  final Uint8List bytes;
+  final String extension;
+}
 
 class ImageUploadService {
   final SupabaseClient _client;
@@ -38,6 +47,16 @@ class ImageUploadService {
     }
   }
 
+  /// 프로필용: 이미지 선택 후 정사각형 크롭 UI 제공
+  Future<XFile?> pickAvatarFromGallery() async {
+    return pickImageFromGallery();
+  }
+
+  /// 프로필용: 카메라 촬영 후 정사각형 크롭 UI 제공
+  Future<XFile?> pickAvatarFromCamera() async {
+    return pickImageFromCamera();
+  }
+
   /// Supabase Storage에 이미지 업로드
   /// [bucket] - 스토리지 버킷 이름 ('beans', 'logs', 'avatars')
   /// [userId] - 사용자 ID (폴더 구분용)
@@ -49,20 +68,21 @@ class ImageUploadService {
   }) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final extension = file.path.split('.').last;
+      final originalExtension = file.path.split('.').last.toLowerCase();
+      final processedAvatar = bucket == 'avatars'
+          ? await _processAvatarImage(file)
+          : null;
+      final extension = processedAvatar?.extension ?? originalExtension;
       final fileName = '$userId/$timestamp.$extension';
-
-      final bytes = await file.readAsBytes();
+      final bytes = processedAvatar?.bytes ?? await file.readAsBytes();
+      final contentType = _resolveContentType(extension);
 
       await _client.storage
           .from(bucket)
           .uploadBinary(
             fileName,
             bytes,
-            fileOptions: FileOptions(
-              contentType: 'image/$extension',
-              upsert: true,
-            ),
+            fileOptions: FileOptions(contentType: contentType, upsert: true),
           );
 
       // 공개 URL 반환
@@ -71,6 +91,58 @@ class ImageUploadService {
     } catch (e) {
       debugPrint('Upload image error: $e');
       return null;
+    }
+  }
+
+  Future<_ProcessedAvatar> _processAvatarImage(XFile file) async {
+    final bytes = await file.readAsBytes();
+    final decodedImage = img.decodeImage(bytes);
+
+    if (decodedImage == null) {
+      throw Exception('Invalid avatar image');
+    }
+
+    final oriented = img.bakeOrientation(decodedImage);
+    final squareSize = min(oriented.width, oriented.height);
+    final offsetX = (oriented.width - squareSize) ~/ 2;
+    final offsetY = (oriented.height - squareSize) ~/ 2;
+
+    final cropped = img.copyCrop(
+      oriented,
+      x: offsetX,
+      y: offsetY,
+      width: squareSize,
+      height: squareSize,
+    );
+
+    final normalized = squareSize > 512
+        ? img.copyResize(
+            cropped,
+            width: 512,
+            height: 512,
+            interpolation: img.Interpolation.average,
+          )
+        : cropped;
+
+    return _ProcessedAvatar(
+      bytes: Uint8List.fromList(img.encodeJpg(normalized, quality: 90)),
+      extension: 'jpg',
+    );
+  }
+
+  String _resolveContentType(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'application/octet-stream';
     }
   }
 

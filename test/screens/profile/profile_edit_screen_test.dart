@@ -69,6 +69,12 @@ void main() {
           imageUrl: any(named: 'imageUrl'),
         ),
       ).thenAnswer((_) async => true);
+      when(
+        () => imageUploadService.pickAvatarFromGallery(),
+      ).thenAnswer((_) async => null);
+      when(
+        () => imageUploadService.pickAvatarFromCamera(),
+      ).thenAnswer((_) async => null);
 
       whenListen(
         postListCubit,
@@ -244,6 +250,28 @@ void main() {
 
       verify(() => dashboardCubit.refresh()).called(1);
       verify(() => postListCubit.reload()).called(1);
+    });
+
+    testWidgets('갤러리 선택 시 아바타 크롭 선택 경로를 호출한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await _pumpProfileEditScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+        postListCubit: postListCubit,
+      );
+
+      await tester.tap(find.text('프로필 사진 변경').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('갤러리에서 선택'));
+      await tester.pumpAndSettle();
+
+      verify(() => imageUploadService.pickAvatarFromGallery()).called(1);
+      verifyNever(() => imageUploadService.pickImageFromGallery());
     });
   });
 }
