@@ -38,7 +38,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
 
   DateTime _purchaseDate = DateTime.now();
   double _rating = 3.0;
-  String? _roastLevel;
+  String? _roastLevel = RoastLevelCatalog.medium;
   bool _isLoading = false;
   bool _isInitialized = false;
 
@@ -396,19 +396,83 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                 // 로스팅 레벨
                 Text(context.l10n.roastLevel, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: CoffeeBean.roastLevels.map((level) {
-                    return ChoiceChip(
-                      label: Text(RoastLevelCatalog.label(context.l10n, level)),
-                      selected: _roastLevel == level,
-                      onSelected: (selected) {
-                        setState(() {
-                          _roastLevel = selected ? level : null;
-                        });
-                      },
-                    );
-                  }).toList(),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 52,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFFC4A676),
+                                const Color(0xFFA97445),
+                                const Color(0xFF7A4A27),
+                                const Color(0xFF4F2B17),
+                                const Color(0xFF2D160C),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: CoffeeBean.roastLevels.asMap().entries.map((entry) {
+                              final level = entry.value;
+                              final isSelected = _roastLevel == level;
+
+                              return Expanded(
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () {
+                                    setState(() {
+                                      _roastLevel = level;
+                                    });
+                                  },
+                                  child: Center(
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 180),
+                                      height: isSelected ? 26 : 14,
+                                      width: isSelected ? 26 : 14,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.white.withOpacity(0.35),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF2D160C)
+                                              : Colors.white.withOpacity(0.6),
+                                          width: 2,
+                                        ),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.25),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 3),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(context.l10n.roastLight, style: theme.textTheme.labelMedium),
+                            Text(context.l10n.roastMedium, style: theme.textTheme.labelMedium),
+                            Text(context.l10n.roastDark, style: theme.textTheme.labelMedium),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
