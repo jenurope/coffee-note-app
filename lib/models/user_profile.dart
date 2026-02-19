@@ -1,14 +1,14 @@
 class UserProfile {
   final String id;
   final String nickname;
-  final String email;
+  final String? email;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   UserProfile({
     required this.id,
     required this.nickname,
-    required this.email,
+    this.email,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -17,7 +17,7 @@ class UserProfile {
     return UserProfile(
       id: json['id'] as String,
       nickname: json['nickname'] as String,
-      email: json['email'] as String,
+      email: json['email'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );

@@ -156,7 +156,7 @@ class AuthService {
     try {
       final response = await _client
           .from('profiles')
-          .select()
+          .select('id, nickname, created_at, updated_at')
           .eq('id', userId)
           .maybeSingle();
 

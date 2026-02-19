@@ -21,7 +21,6 @@ class CommunityService {
         profiles!community_posts_user_id_fkey(
           id,
           nickname,
-          email,
           created_at,
           updated_at
         )
@@ -69,7 +68,6 @@ class CommunityService {
         profiles!community_posts_user_id_fkey(
           id,
           nickname,
-          email,
           created_at,
           updated_at
         ),
@@ -78,7 +76,6 @@ class CommunityService {
           profiles!community_comments_user_id_fkey(
             id,
             nickname,
-            email,
             created_at,
             updated_at
           )
