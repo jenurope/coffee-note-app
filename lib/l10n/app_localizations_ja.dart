@@ -527,6 +527,39 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logoutConfirmContent => 'ログアウトしますか？';
 
   @override
+  String get profileEditTitle => 'プロフィール編集';
+
+  @override
+  String get profileEditPhotoAction => 'プロフィール写真を変更';
+
+  @override
+  String get profileEditNicknameLabel => 'ニックネーム';
+
+  @override
+  String get profileEditNicknameHint => 'ニックネームを入力してください';
+
+  @override
+  String get profileEditNicknameRule => 'ニックネームは2〜20文字で、空白のみは使用できません。';
+
+  @override
+  String get profileEditNicknameRequired => 'ニックネームを入力してください。';
+
+  @override
+  String get profileEditNicknameLength => 'ニックネームは2〜20文字で入力してください。';
+
+  @override
+  String get profileEditNicknameDuplicate => 'このニックネームは既に使用されています。';
+
+  @override
+  String get profileEditSaveSuccess => 'プロフィールを保存しました。';
+
+  @override
+  String get profileEditSaveFailed => 'プロフィール保存中にエラーが発生しました。しばらくしてから再試行してください。';
+
+  @override
+  String get save => '保存';
+
+  @override
   String get userDefault => 'ユーザー';
 
   @override

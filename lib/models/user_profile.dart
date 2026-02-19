@@ -2,6 +2,7 @@ class UserProfile {
   final String id;
   final String nickname;
   final String? email;
+  final String? avatarUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -9,6 +10,7 @@ class UserProfile {
     required this.id,
     required this.nickname,
     this.email,
+    this.avatarUrl,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -18,6 +20,7 @@ class UserProfile {
       id: json['id'] as String,
       nickname: json['nickname'] as String,
       email: json['email'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -28,6 +31,7 @@ class UserProfile {
       'id': id,
       'nickname': nickname,
       'email': email,
+      'avatar_url': avatarUrl,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -37,6 +41,7 @@ class UserProfile {
     String? id,
     String? nickname,
     String? email,
+    String? avatarUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -44,6 +49,7 @@ class UserProfile {
       id: id ?? this.id,
       nickname: nickname ?? this.nickname,
       email: email ?? this.email,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

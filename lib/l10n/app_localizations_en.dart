@@ -542,6 +542,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logoutConfirmContent => 'Do you want to logout?';
 
   @override
+  String get profileEditTitle => 'Edit Profile';
+
+  @override
+  String get profileEditPhotoAction => 'Change Profile Photo';
+
+  @override
+  String get profileEditNicknameLabel => 'Nickname';
+
+  @override
+  String get profileEditNicknameHint => 'Enter a nickname';
+
+  @override
+  String get profileEditNicknameRule =>
+      'Nickname must be 2-20 characters and cannot be blank.';
+
+  @override
+  String get profileEditNicknameRequired => 'Please enter a nickname.';
+
+  @override
+  String get profileEditNicknameLength => 'Nickname must be 2-20 characters.';
+
+  @override
+  String get profileEditNicknameDuplicate => 'This nickname is already in use.';
+
+  @override
+  String get profileEditSaveSuccess => 'Profile has been saved.';
+
+  @override
+  String get profileEditSaveFailed =>
+      'An error occurred while saving profile. Please try again later.';
+
+  @override
+  String get save => 'Save';
+
+  @override
   String get userDefault => 'User';
 
   @override

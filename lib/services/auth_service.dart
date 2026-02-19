@@ -170,14 +170,11 @@ class AuthService {
     try {
       final response = await _client
           .from('profiles')
-          .select('id, nickname, created_at, updated_at')
+          .select('id, nickname, email, avatar_url, created_at, updated_at')
           .eq('id', userId)
           .maybeSingle();
 
-      if (response != null) {
-        return UserProfile.fromJson(response);
-      }
-      return null;
+      return response == null ? null : UserProfile.fromJson(response);
     } catch (e) {
       debugPrint('Get profile error: $e');
       return null;
@@ -185,12 +182,17 @@ class AuthService {
   }
 
   // 프로필 업데이트
-  Future<void> updateProfile({required String userId, String? nickname}) async {
+  Future<void> updateProfile({
+    required String userId,
+    required String nickname,
+    required String? avatarUrl,
+  }) async {
     try {
       final updates = <String, dynamic>{
+        'nickname': nickname.trim(),
+        'avatar_url': avatarUrl,
         'updated_at': DateTime.now().toIso8601String(),
       };
-      if (nickname != null) updates['nickname'] = nickname;
 
       await _client.from('profiles').update(updates).eq('id', userId);
     } catch (e) {

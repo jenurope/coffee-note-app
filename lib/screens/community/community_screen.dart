@@ -10,6 +10,7 @@ import '../../cubits/community/post_list_cubit.dart';
 import '../../cubits/community/post_list_state.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/common/common_widgets.dart';
+import '../../widgets/common/user_avatar.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -205,6 +206,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   itemCount: posts.length,
                                   itemBuilder: (context, index) {
                                     final post = posts[index];
+                                    final authorName =
+                                        post.author?.nickname ??
+                                        l10n.guestNickname;
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 12),
                                       child: InkWell(
@@ -220,34 +224,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                             children: [
                                               Row(
                                                 children: [
-                                                  CircleAvatar(
+                                                  UserAvatar(
+                                                    nickname: authorName,
+                                                    avatarUrl:
+                                                        post.author?.avatarUrl,
                                                     radius: 16,
-                                                    backgroundColor: theme
-                                                        .colorScheme
-                                                        .primary
-                                                        .withValues(alpha: 0.1),
-                                                    child: Text(
-                                                      post
-                                                              .author
-                                                              ?.nickname
-                                                              .characters
-                                                              .first
-                                                              .toUpperCase() ??
-                                                          '?',
-                                                      style: TextStyle(
-                                                        color: theme
-                                                            .colorScheme
-                                                            .primary,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
                                                   ),
                                                   const SizedBox(width: 8),
                                                   Expanded(
                                                     child: Text(
-                                                      post.author?.nickname ??
-                                                          l10n.guestNickname,
+                                                      authorName,
                                                       style: theme
                                                           .textTheme
                                                           .bodyMedium

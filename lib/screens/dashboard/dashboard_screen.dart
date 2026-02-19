@@ -42,6 +42,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return BlocBuilder<DashboardCubit, DashboardState>(
           builder: (context, dashState) {
             final l10n = context.l10n;
+            final rawName = currentUser?.userMetadata?['name'];
+            final metadataName = rawName is String ? rawName.trim() : '';
+            final authenticatedFallbackName = metadataName.isNotEmpty
+                ? metadataName
+                : l10n.userDefault;
             return Scaffold(
               appBar: AppBar(
                 title: Text(l10n.appTitle),
@@ -108,7 +113,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               userProfile?.nickname ??
                                   (isGuest
                                       ? l10n.guestNickname
-                                      : l10n.defaultCoffeeLover),
+                                      : authenticatedFallbackName),
                             ),
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,

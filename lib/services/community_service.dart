@@ -16,42 +16,44 @@ class CommunityService {
     int? offset,
   }) async {
     try {
-      var query = _client.from('community_posts').select('''
-        *,
-        profiles!community_posts_user_id_fkey(
-          id,
-          nickname,
-          created_at,
-          updated_at
-        )
-      ''');
+      return await _getPostsInternal(
+        includeAvatar: true,
+        includeProfiles: true,
+        searchQuery: searchQuery,
+        sortBy: sortBy,
+        ascending: ascending,
+        limit: limit,
+        offset: offset,
+      );
+    } on PostgrestException catch (e) {
+      if (!_shouldRetryWithoutAvatar(e)) {
+        debugPrint('Get posts error: $e');
+        rethrow;
+      }
 
-      // 검색어 필터
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        query = query.or(
-          'title.ilike.%$searchQuery%,content.ilike.%$searchQuery%',
+      try {
+        return await _getPostsInternal(
+          includeAvatar: false,
+          includeProfiles: true,
+          searchQuery: searchQuery,
+          sortBy: sortBy,
+          ascending: ascending,
+          limit: limit,
+          offset: offset,
+        );
+      } on PostgrestException catch (fallbackError) {
+        if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
+
+        return _getPostsInternal(
+          includeAvatar: false,
+          includeProfiles: false,
+          searchQuery: searchQuery,
+          sortBy: sortBy,
+          ascending: ascending,
+          limit: limit,
+          offset: offset,
         );
       }
-
-      // 정렬 및 페이지네이션
-      final orderColumn = sortBy ?? 'created_at';
-
-      dynamic response;
-      if (limit != null && offset != null) {
-        response = await query
-            .order(orderColumn, ascending: ascending)
-            .range(offset, offset + limit - 1);
-      } else if (limit != null) {
-        response = await query
-            .order(orderColumn, ascending: ascending)
-            .limit(limit);
-      } else {
-        response = await query.order(orderColumn, ascending: ascending);
-      }
-
-      return (response as List)
-          .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
-          .toList();
     } catch (e) {
       debugPrint('Get posts error: $e');
       rethrow;
@@ -61,33 +63,35 @@ class CommunityService {
   // 게시글 상세 조회 (댓글 포함)
   Future<CommunityPost?> getPost(String id) async {
     try {
-      final response = await _client
-          .from('community_posts')
-          .select('''
-        *,
-        profiles!community_posts_user_id_fkey(
-          id,
-          nickname,
-          created_at,
-          updated_at
-        ),
-        community_comments(
-          *,
-          profiles!community_comments_user_id_fkey(
-            id,
-            nickname,
-            created_at,
-            updated_at
-          )
-        )
-      ''')
-          .eq('id', id)
-          .maybeSingle();
-
-      if (response != null) {
-        return CommunityPost.fromJson(response);
+      final response = await _getPostInternal(
+        id: id,
+        includeAvatar: true,
+        includeProfiles: true,
+      );
+      return response == null ? null : CommunityPost.fromJson(response);
+    } on PostgrestException catch (e) {
+      if (!_shouldRetryWithoutAvatar(e)) {
+        debugPrint('Get post error: $e');
+        rethrow;
       }
-      return null;
+
+      try {
+        final fallback = await _getPostInternal(
+          id: id,
+          includeAvatar: false,
+          includeProfiles: true,
+        );
+        return fallback == null ? null : CommunityPost.fromJson(fallback);
+      } on PostgrestException catch (fallbackError) {
+        if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
+
+        final noProfile = await _getPostInternal(
+          id: id,
+          includeAvatar: false,
+          includeProfiles: false,
+        );
+        return noProfile == null ? null : CommunityPost.fromJson(noProfile);
+      }
     } catch (e) {
       debugPrint('Get post error: $e');
       rethrow;
@@ -167,5 +171,126 @@ class CommunityService {
       debugPrint('Delete comment error: $e');
       rethrow;
     }
+  }
+
+  Future<List<CommunityPost>> _getPostsInternal({
+    required bool includeAvatar,
+    required bool includeProfiles,
+    String? searchQuery,
+    String? sortBy,
+    required bool ascending,
+    int? limit,
+    int? offset,
+  }) async {
+    var query = _client
+        .from('community_posts')
+        .select(_postListSelect(includeAvatar, includeProfiles));
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      query = query.or(
+        'title.ilike.%$searchQuery%,content.ilike.%$searchQuery%',
+      );
+    }
+
+    final orderColumn = sortBy ?? 'created_at';
+
+    dynamic response;
+    if (limit != null && offset != null) {
+      response = await query
+          .order(orderColumn, ascending: ascending)
+          .range(offset, offset + limit - 1);
+    } else if (limit != null) {
+      response = await query
+          .order(orderColumn, ascending: ascending)
+          .limit(limit);
+    } else {
+      response = await query.order(orderColumn, ascending: ascending);
+    }
+
+    return (response as List)
+        .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>?> _getPostInternal({
+    required String id,
+    required bool includeAvatar,
+    required bool includeProfiles,
+  }) {
+    return _client
+        .from('community_posts')
+        .select(_postDetailSelect(includeAvatar, includeProfiles))
+        .eq('id', id)
+        .maybeSingle();
+  }
+
+  String _postListSelect(bool includeAvatar, bool includeProfiles) {
+    if (!includeProfiles) return '*';
+
+    return '''
+      *,
+      profiles!community_posts_user_id_fkey(
+        ${_profileColumns(includeAvatar)}
+      )
+    ''';
+  }
+
+  String _postDetailSelect(bool includeAvatar, bool includeProfiles) {
+    if (!includeProfiles) {
+      return '''
+        *,
+        community_comments(*)
+      ''';
+    }
+
+    return '''
+      *,
+      profiles!community_posts_user_id_fkey(
+        ${_profileColumns(includeAvatar)}
+      ),
+      community_comments(
+        *,
+        profiles!community_comments_user_id_fkey(
+          ${_profileColumns(includeAvatar)}
+        )
+      )
+    ''';
+  }
+
+  String _profileColumns(bool includeAvatar) {
+    return includeAvatar
+        ? '''
+          id,
+          nickname,
+          avatar_url,
+          created_at,
+          updated_at
+        '''
+        : '''
+          id,
+          nickname,
+          created_at,
+          updated_at
+        ''';
+  }
+
+  bool _shouldRetryWithoutAvatar(PostgrestException e) {
+    if (e.code == '42501' || e.code == '42703') {
+      return true;
+    }
+
+    final message = '${e.message} ${e.details ?? ''} ${e.hint ?? ''}'
+        .toLowerCase();
+    return message.contains('avatar_url') || message.contains('permission');
+  }
+
+  bool _shouldRetryWithoutProfiles(PostgrestException e) {
+    if (e.code == '42501' || e.code == 'PGRST108') {
+      return true;
+    }
+
+    final message = '${e.message} ${e.details ?? ''} ${e.hint ?? ''}'
+        .toLowerCase();
+    return message.contains('profiles') && message.contains('permission');
   }
 }

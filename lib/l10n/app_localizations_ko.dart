@@ -527,6 +527,39 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logoutConfirmContent => '로그아웃 하시겠습니까?';
 
   @override
+  String get profileEditTitle => '프로필 수정';
+
+  @override
+  String get profileEditPhotoAction => '프로필 사진 변경';
+
+  @override
+  String get profileEditNicknameLabel => '닉네임';
+
+  @override
+  String get profileEditNicknameHint => '닉네임을 입력하세요';
+
+  @override
+  String get profileEditNicknameRule => '닉네임은 2~20자이며, 공백만 입력할 수 없습니다.';
+
+  @override
+  String get profileEditNicknameRequired => '닉네임을 입력해주세요.';
+
+  @override
+  String get profileEditNicknameLength => '닉네임은 2~20자여야 합니다.';
+
+  @override
+  String get profileEditNicknameDuplicate => '이미 사용 중인 닉네임입니다.';
+
+  @override
+  String get profileEditSaveSuccess => '프로필이 저장되었습니다.';
+
+  @override
+  String get profileEditSaveFailed => '프로필 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get save => '저장';
+
+  @override
   String get userDefault => '사용자';
 
   @override

@@ -12,6 +12,7 @@ import '../../cubits/community/post_list_cubit.dart';
 import '../../l10n/l10n.dart';
 import '../../models/community_post.dart';
 import '../../services/community_service.dart';
+import '../../widgets/common/user_avatar.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final String postId;
@@ -114,6 +115,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ),
               PostDetailLoaded(post: final post) => () {
                 final isOwner = currentUser?.id == post.userId;
+                final authorName = post.author?.nickname ?? l10n.guestNickname;
                 return Scaffold(
                   appBar: AppBar(
                     title: Text(l10n.postScreenTitle),
@@ -142,20 +144,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             children: [
                               Row(
                                 children: [
-                                  CircleAvatar(
+                                  UserAvatar(
+                                    nickname: authorName,
+                                    avatarUrl: post.author?.avatarUrl,
                                     radius: 20,
-                                    backgroundColor: theme.colorScheme.primary
-                                        .withValues(alpha: 0.1),
-                                    child: Text(
-                                      post.author?.nickname.characters.first
-                                              .toUpperCase() ??
-                                          '?',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -164,8 +156,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          post.author?.nickname ??
-                                              l10n.guestNickname,
+                                          authorName,
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
                                                 fontWeight: FontWeight.w500,
@@ -333,6 +324,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final dateFormat = DateFormat.Md(
       Localizations.localeOf(context).toString(),
     ).add_Hm();
+    final authorName = comment.author?.nickname ?? l10n.guestNickname;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -343,24 +335,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                UserAvatar(
+                  nickname: authorName,
+                  avatarUrl: comment.author?.avatarUrl,
                   radius: 14,
                   backgroundColor: theme.colorScheme.secondary.withValues(
                     alpha: 0.1,
                   ),
-                  child: Text(
-                    comment.author?.nickname.characters.first.toUpperCase() ??
-                        '?',
-                    style: TextStyle(
-                      color: theme.colorScheme.secondary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+                  foregroundColor: theme.colorScheme.secondary,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  comment.author?.nickname ?? l10n.guestNickname,
+                  authorName,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),

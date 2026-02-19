@@ -21,6 +21,7 @@ import '../screens/logs/coffee_log_form_screen.dart';
 import '../screens/logs/coffee_log_list_screen.dart';
 import '../screens/main/main_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/profile/profile_edit_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../widgets/navigation/guest_tab_root_back_guard.dart';
 
@@ -32,6 +33,7 @@ abstract final class AppRoutePath {
   static const logs = '/logs';
   static const community = '/community';
   static const profile = '/profile';
+  static const profileEdit = '/profile/edit';
 }
 
 enum AppAuthStatus { resolving, unauthenticated, guest, authenticated }
@@ -141,6 +143,10 @@ class AppRouteBuilders {
 
   Widget buildProfile(BuildContext context, GoRouterState state) {
     return const ProfileScreen();
+  }
+
+  Widget buildProfileEdit(BuildContext context, GoRouterState state) {
+    return const ProfileEditScreen();
   }
 }
 
@@ -370,6 +376,14 @@ GoRouter createAppRouter({
                     child: routeBuilders.buildProfile(context, state),
                   ),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    name: 'profile-edit',
+                    builder: (context, state) =>
+                        routeBuilders.buildProfileEdit(context, state),
+                  ),
+                ],
               ),
             ],
           ),

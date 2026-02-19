@@ -8,6 +8,7 @@ import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/dashboard/dashboard_state.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/common/common_widgets.dart';
+import '../../widgets/common/user_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -103,11 +104,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             final userProfile = dashState is DashboardLoaded
                 ? dashState.userProfile
                 : null;
+            final rawName = currentUser.userMetadata?['name'];
+            final metadataName = rawName is String ? rawName.trim() : '';
+            final fallbackNickname = metadataName.isNotEmpty
+                ? metadataName
+                : l10n.userDefault;
+            final displayNickname = userProfile?.nickname.isNotEmpty == true
+                ? userProfile!.nickname
+                : fallbackNickname;
 
             return Scaffold(
               appBar: AppBar(
                 title: Text(l10n.profileScreenTitle),
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => context.push('/profile/edit'),
+                  ),
                   IconButton(
                     icon: const Icon(Icons.settings),
                     onPressed: () {
@@ -128,24 +141,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         padding: const EdgeInsets.all(24),
                         child: Column(
                           children: [
-                            CircleAvatar(
+                            UserAvatar(
+                              nickname: displayNickname,
+                              avatarUrl: userProfile?.avatarUrl,
                               radius: 48,
-                              backgroundColor: theme.colorScheme.primary
-                                  .withValues(alpha: 0.1),
-                              child: Text(
-                                userProfile?.nickname.characters.first
-                                        .toUpperCase() ??
-                                    '?',
-                                style: TextStyle(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 36,
-                                ),
-                              ),
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              userProfile?.nickname ?? l10n.userDefault,
+                              displayNickname,
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),

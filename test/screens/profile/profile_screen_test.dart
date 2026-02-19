@@ -57,6 +57,7 @@ void main() {
       expect(find.text('문의/제보하기'), findsOneWidget);
       expect(find.text('앱 정보'), findsOneWidget);
       expect(find.text('버전 1.0.0'), findsOneWidget);
+      expect(find.byIcon(Icons.edit), findsOneWidget);
 
       expect(find.text('내 원두 기록'), findsNothing);
       expect(find.text('내 커피 기록'), findsNothing);

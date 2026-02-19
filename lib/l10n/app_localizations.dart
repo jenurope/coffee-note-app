@@ -1096,6 +1096,72 @@ abstract class AppLocalizations {
   /// **'Do you want to logout?'**
   String get logoutConfirmContent;
 
+  /// No description provided for @profileEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get profileEditTitle;
+
+  /// No description provided for @profileEditPhotoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Profile Photo'**
+  String get profileEditPhotoAction;
+
+  /// No description provided for @profileEditNicknameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get profileEditNicknameLabel;
+
+  /// No description provided for @profileEditNicknameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a nickname'**
+  String get profileEditNicknameHint;
+
+  /// No description provided for @profileEditNicknameRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname must be 2-20 characters and cannot be blank.'**
+  String get profileEditNicknameRule;
+
+  /// No description provided for @profileEditNicknameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a nickname.'**
+  String get profileEditNicknameRequired;
+
+  /// No description provided for @profileEditNicknameLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname must be 2-20 characters.'**
+  String get profileEditNicknameLength;
+
+  /// No description provided for @profileEditNicknameDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'This nickname is already in use.'**
+  String get profileEditNicknameDuplicate;
+
+  /// No description provided for @profileEditSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile has been saved.'**
+  String get profileEditSaveSuccess;
+
+  /// No description provided for @profileEditSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while saving profile. Please try again later.'**
+  String get profileEditSaveFailed;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
   /// No description provided for @userDefault.
   ///
   /// In en, this message translates to:
