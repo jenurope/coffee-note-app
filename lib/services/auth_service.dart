@@ -93,60 +93,12 @@ class AuthService {
     }
   }
 
-  // 이메일/비밀번호 회원가입 (레거시 - 참조용 유지)
-  Future<AuthResponse> signUp({
-    required String email,
-    required String password,
-    required String nickname,
-  }) async {
-    try {
-      final response = await _auth.signUp(email: email, password: password);
-
-      // 프로필 생성
-      if (response.user != null) {
-        await _client.from('profiles').insert({
-          'id': response.user!.id,
-          'email': email,
-          'nickname': nickname,
-        });
-      }
-
-      return response;
-    } catch (e) {
-      debugPrint('SignUp error: $e');
-      rethrow;
-    }
-  }
-
-  // 이메일/비밀번호 로그인 (레거시 - 참조용 유지)
-  Future<AuthResponse> signIn({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      return await _auth.signInWithPassword(email: email, password: password);
-    } catch (e) {
-      debugPrint('SignIn error: $e');
-      rethrow;
-    }
-  }
-
   // 로그아웃
   Future<void> signOut() async {
     try {
       await _auth.signOut();
     } catch (e) {
       debugPrint('SignOut error: $e');
-      rethrow;
-    }
-  }
-
-  // 비밀번호 재설정 이메일 발송
-  Future<void> resetPassword(String email) async {
-    try {
-      await _auth.resetPasswordForEmail(email);
-    } catch (e) {
-      debugPrint('Reset password error: $e');
       rethrow;
     }
   }
@@ -185,29 +137,22 @@ class AuthService {
     }
   }
 
-  // 에러 메시지 한글 변환
-  String getErrorMessage(dynamic error) {
+  // 로그인 에러 메시지 한글 변환
+  String getSignInErrorMessage(dynamic error) {
     final message = error.toString().toLowerCase();
 
-    if (message.contains('invalid login credentials')) {
-      return '이메일 또는 비밀번호가 올바르지 않습니다.';
+    if (message.contains('cancel')) {
+      return 'Google 로그인이 취소되었습니다.';
     }
-    if (message.contains('email not confirmed')) {
-      return '이메일 인증이 필요합니다. 이메일을 확인해주세요.';
+    if (message.contains('token')) {
+      return 'Google 인증 토큰을 가져올 수 없습니다.';
     }
-    if (message.contains('user already registered')) {
-      return '이미 가입된 이메일입니다.';
-    }
-    if (message.contains('password')) {
-      return '비밀번호는 10자 이상이어야 합니다.';
-    }
-    if (message.contains('email')) {
-      return '올바른 이메일 형식을 입력해주세요.';
-    }
-    if (message.contains('network')) {
+    if (message.contains('network') ||
+        message.contains('socket') ||
+        message.contains('timeout')) {
       return '네트워크 연결을 확인해주세요.';
     }
 
-    return '오류가 발생했습니다. 다시 시도해주세요.';
+    return '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
   }
 }

@@ -71,7 +71,7 @@ class AuthCubit extends Cubit<AuthState> {
         emit(const AuthState.unauthenticated());
       }
     } catch (e) {
-      final message = service.getErrorMessage(e);
+      final message = service.getSignInErrorMessage(e);
       emit(AuthState.error(message: message));
     }
   }
