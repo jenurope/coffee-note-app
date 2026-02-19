@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/di/service_locator.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/community/post_list_cubit.dart';
@@ -110,9 +111,17 @@ class _PostFormScreenState extends State<PostFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: $e')));
+        final action = isEditing ? '수정' : '등록';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              UserErrorMessage.from(
+                e,
+                fallback: '게시글 $action 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {

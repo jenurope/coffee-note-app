@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
+import '../../core/errors/user_error_message.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
 import '../../services/coffee_bean_service.dart';
@@ -60,7 +61,15 @@ class BeanListCubit extends Cubit<BeanListState> {
       emit(BeanListState.loaded(beans: const [], filters: filters));
     } catch (e) {
       debugPrint('BeanListCubit.load error: $e');
-      emit(BeanListState.error(message: e.toString(), filters: filters));
+      emit(
+        BeanListState.error(
+          message: UserErrorMessage.from(
+            e,
+            fallback: '원두 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+          ),
+          filters: filters,
+        ),
+      );
     }
   }
 

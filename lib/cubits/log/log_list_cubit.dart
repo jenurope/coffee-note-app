@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
+import '../../core/errors/user_error_message.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
 import '../../services/coffee_log_service.dart';
@@ -59,7 +60,15 @@ class LogListCubit extends Cubit<LogListState> {
       emit(LogListState.loaded(logs: const [], filters: filters));
     } catch (e) {
       debugPrint('LogListCubit.load error: $e');
-      emit(LogListState.error(message: e.toString(), filters: filters));
+      emit(
+        LogListState.error(
+          message: UserErrorMessage.from(
+            e,
+            fallback: '기록 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+          ),
+          filters: filters,
+        ),
+      );
     }
   }
 

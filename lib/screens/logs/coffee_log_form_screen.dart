@@ -5,6 +5,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/di/service_locator.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/log/log_list_cubit.dart';
@@ -216,9 +217,17 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: $e')));
+        final action = isEditing ? '수정' : '등록';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              UserErrorMessage.from(
+                e,
+                fallback: '기록 $action 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {

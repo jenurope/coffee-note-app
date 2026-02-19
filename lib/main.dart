@@ -5,6 +5,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter/services.dart';
 import 'core/bloc/app_bloc_observer.dart';
 import 'core/di/service_locator.dart';
+import 'core/errors/user_error_message.dart';
 import 'config/supabase_config.dart';
 import 'cubits/auth/auth_cubit.dart';
 import 'cubits/bean/bean_list_cubit.dart';
@@ -27,7 +28,10 @@ void main() async {
     // GetIt 서비스 등록 (Supabase 초기화 후)
     setupServiceLocator();
   } catch (e, st) {
-    initializationError = e.toString();
+    initializationError = UserErrorMessage.from(
+      e,
+      fallback: '앱을 시작할 수 없습니다. 잠시 후 다시 시도해주세요.',
+    );
     debugPrint('초기화 실패: $e');
     debugPrint(st.toString());
   } finally {

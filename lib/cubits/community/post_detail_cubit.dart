@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
+import '../../core/errors/user_error_message.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
 import '../../services/community_service.dart';
@@ -33,7 +34,14 @@ class PostDetailCubit extends Cubit<PostDetailState> {
       }
     } catch (e) {
       debugPrint('PostDetailCubit.load error: $e');
-      emit(PostDetailState.error(message: e.toString()));
+      emit(
+        PostDetailState.error(
+          message: UserErrorMessage.from(
+            e,
+            fallback: '게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+          ),
+        ),
+      );
     }
   }
 }

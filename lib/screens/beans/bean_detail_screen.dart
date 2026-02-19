@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../core/di/service_locator.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/bean/bean_detail_cubit.dart';
@@ -451,9 +452,16 @@ class BeanDetailScreen extends StatelessWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('삭제 중 오류가 발생했습니다: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                UserErrorMessage.from(
+                  e,
+                  fallback: '원두 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                ),
+              ),
+            ),
+          );
         }
       }
     }

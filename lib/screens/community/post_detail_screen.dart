@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/di/service_locator.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/community/post_detail_cubit.dart';
@@ -68,9 +69,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              UserErrorMessage.from(
+                e,
+                fallback: '댓글 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -366,7 +374,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('삭제 실패: $e')),
+                              SnackBar(
+                                content: Text(
+                                  UserErrorMessage.from(
+                                    e,
+                                    fallback:
+                                        '댓글 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                                  ),
+                                ),
+                              ),
                             );
                           }
                         }
@@ -417,9 +433,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('삭제 중 오류가 발생했습니다: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                UserErrorMessage.from(
+                  e,
+                  fallback: '게시글 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+                ),
+              ),
+            ),
+          );
         }
       }
     }
