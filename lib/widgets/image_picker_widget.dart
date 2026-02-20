@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 
@@ -214,8 +216,8 @@ class ImagePickerWidget extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     if (localImagePath != null)
-                      Image.asset(
-                        localImagePath!,
+                      Image.file(
+                        File(localImagePath!),
                         fit: BoxFit.cover,
                         errorBuilder: (_, error, stackTrace) =>
                             _buildPlaceholder(context, theme),

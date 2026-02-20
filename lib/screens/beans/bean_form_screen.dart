@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -311,18 +310,6 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                   height: 200,
                   placeholderIcon: Icons.coffee,
                 ),
-                if (_selectedImage != null) ...[
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.file(
-                      File(_selectedImage!.path),
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 16),
 
                 // 원두 이름
