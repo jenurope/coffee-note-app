@@ -5,6 +5,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const int _photoUploadMaxBytes = 1024 * 1024;
+const Set<String> _unsupportedResizeExtensions = {'heic', 'heif'};
+
+class ImageUploadException implements Exception {
+  const ImageUploadException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'ImageUploadException: $message';
+}
 
 @visibleForTesting
 Uint8List resizePhotoToMaxBytesIfNeeded(
@@ -180,7 +190,7 @@ class ImageUploadService {
       return publicUrl;
     } catch (e) {
       debugPrint('Upload image error: $e');
-      return null;
+      rethrow;
     }
   }
 
@@ -223,6 +233,13 @@ class ImageUploadService {
     required Uint8List bytes,
     required String originalExtension,
   }) {
+    if (bytes.lengthInBytes > _photoUploadMaxBytes &&
+        _unsupportedResizeExtensions.contains(originalExtension)) {
+      throw const ImageUploadException(
+        'Unsupported image format for resize. Please use JPG, PNG, or WEBP.',
+      );
+    }
+
     final processedBytes = resizePhotoToMaxBytesIfNeeded(bytes);
     final isResized = !identical(bytes, processedBytes);
 
@@ -243,6 +260,10 @@ class ImageUploadService {
         return 'image/webp';
       case 'gif':
         return 'image/gif';
+      case 'heic':
+        return 'image/heic';
+      case 'heif':
+        return 'image/heif';
       default:
         return 'application/octet-stream';
     }

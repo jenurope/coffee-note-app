@@ -90,6 +90,24 @@ void main() {
       expect(message, 'errPermissionDenied');
     });
 
+    test('이미지 포맷 오류는 입력값 오류 메시지로 변환한다', () {
+      final error = Exception('ImageUploadException: Invalid photo image');
+
+      final message = UserErrorMessage.from(error);
+
+      expect(message, 'errInvalidInput');
+    });
+
+    test('스토리지 403 오류는 권한 메시지로 변환한다', () {
+      final error = Exception(
+        'StorageException(message: not authorized, statusCode: 403, error: Unauthorized)',
+      );
+
+      final message = UserErrorMessage.from(error);
+
+      expect(message, 'errPermissionDenied');
+    });
+
     test('일반 예외 미분류 오류는 fallback 메시지를 사용한다', () {
       final error = Exception('totally unknown failure');
       const fallback = 'errRequestFailed';

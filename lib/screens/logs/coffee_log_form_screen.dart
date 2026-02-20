@@ -149,7 +149,12 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
         userId: userId,
         file: _selectedImage!,
       );
-      return imageUrl ?? _existingImageUrl;
+
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw const ImageUploadException('Image upload failed');
+      }
+
+      return imageUrl;
     } finally {
       if (mounted) {
         setState(() {
