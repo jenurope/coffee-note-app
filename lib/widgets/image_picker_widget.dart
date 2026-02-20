@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../l10n/l10n.dart';
+
+enum ImagePickerSelection { gallery, camera, delete, dismissed }
 
 /// 이미지 소스 선택 바텀시트
 class ImagePickerBottomSheet extends StatelessWidget {
@@ -15,11 +16,11 @@ class ImagePickerBottomSheet extends StatelessWidget {
     this.onDeleteTap,
   });
 
-  static Future<ImageSource?> show(
+  static Future<ImagePickerSelection> show(
     BuildContext context, {
     bool showDelete = false,
   }) async {
-    return await showModalBottomSheet<ImageSource>(
+    final result = await showModalBottomSheet<ImagePickerSelection>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -53,20 +54,23 @@ class ImagePickerBottomSheet extends StatelessWidget {
                     context,
                     icon: Icons.photo_library,
                     label: context.l10n.gallery,
-                    onTap: () => Navigator.pop(context, ImageSource.gallery),
+                    onTap: () =>
+                        Navigator.pop(context, ImagePickerSelection.gallery),
                   ),
                   _buildOption(
                     context,
                     icon: Icons.camera_alt,
                     label: context.l10n.camera,
-                    onTap: () => Navigator.pop(context, ImageSource.camera),
+                    onTap: () =>
+                        Navigator.pop(context, ImagePickerSelection.camera),
                   ),
                   if (showDelete)
                     _buildOption(
                       context,
                       icon: Icons.delete,
                       label: context.l10n.photoDelete,
-                      onTap: () => Navigator.pop(context, null),
+                      onTap: () =>
+                          Navigator.pop(context, ImagePickerSelection.delete),
                       color: Theme.of(context).colorScheme.error,
                     ),
                 ],
@@ -77,6 +81,8 @@ class ImagePickerBottomSheet extends StatelessWidget {
         ),
       ),
     );
+
+    return result ?? ImagePickerSelection.dismissed;
   }
 
   static Widget _buildOption(

@@ -127,13 +127,14 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
   }
 
   Future<void> _pickImage() async {
-    final source = await ImagePickerBottomSheet.show(
+    final selection = await ImagePickerBottomSheet.show(
       context,
       showDelete: _existingImageUrl != null || _selectedImage != null,
     );
 
-    if (source == null) {
-      // 삭제 선택
+    if (selection == ImagePickerSelection.dismissed) return;
+
+    if (selection == ImagePickerSelection.delete) {
       setState(() {
         _selectedImage = null;
         _existingImageUrl = null;
@@ -144,7 +145,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     final imageService = getIt<ImageUploadService>();
     XFile? picked;
 
-    if (source == ImageSource.gallery) {
+    if (selection == ImagePickerSelection.gallery) {
       picked = await imageService.pickImageFromGallery();
     } else {
       picked = await imageService.pickImageFromCamera();
