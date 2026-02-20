@@ -137,6 +137,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
   @override
   Widget build(BuildContext context) {
     // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
+    final submitText = isEditing ? context.l10n.update : '작성완료';
 
     return Scaffold(
       appBar: AppBar(
@@ -145,18 +146,17 @@ class _PostFormScreenState extends State<PostFormScreen> {
               ? context.l10n.postFormEditTitle
               : context.l10n.postFormNewTitle,
         ),
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _handleSubmit,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(isEditing ? context.l10n.update : context.l10n.register),
-          ),
-        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: CustomButton(
+          text: submitText,
+          onPressed: _isLoading ? null : _handleSubmit,
+          isLoading: _isLoading,
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+        ),
       ),
       body: LoadingOverlay(
         isLoading: _isLoading,
