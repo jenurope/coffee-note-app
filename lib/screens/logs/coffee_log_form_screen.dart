@@ -103,13 +103,14 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
   }
 
   Future<void> _pickImage() async {
-    final source = await ImagePickerBottomSheet.show(
+    final selection = await ImagePickerBottomSheet.show(
       context,
       showDelete: _existingImageUrl != null || _selectedImage != null,
     );
 
-    if (source == null) {
-      // 삭제 선택
+    if (selection == ImagePickerSelection.dismissed) return;
+
+    if (selection == ImagePickerSelection.delete) {
       setState(() {
         _selectedImage = null;
         _existingImageUrl = null;
@@ -120,7 +121,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
     final imageService = getIt<ImageUploadService>();
     XFile? picked;
 
-    if (source == ImageSource.gallery) {
+    if (selection == ImagePickerSelection.gallery) {
       picked = await imageService.pickImageFromGallery();
     } else {
       picked = await imageService.pickImageFromCamera();
@@ -149,7 +150,12 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
         userId: userId,
         file: _selectedImage!,
       );
-      return imageUrl ?? _existingImageUrl;
+
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw const ImageUploadException('Image upload failed');
+      }
+
+      return imageUrl;
     } finally {
       if (mounted) {
         setState(() {

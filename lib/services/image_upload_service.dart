@@ -4,8 +4,99 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class _ProcessedAvatar {
-  const _ProcessedAvatar({required this.bytes, required this.extension});
+const int _photoUploadMaxBytes = 1024 * 1024;
+const Set<String> _unsupportedResizeExtensions = {'heic', 'heif'};
+
+class ImageUploadException implements Exception {
+  const ImageUploadException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'ImageUploadException: $message';
+}
+
+@visibleForTesting
+Uint8List resizePhotoToMaxBytesIfNeeded(
+  Uint8List sourceBytes, {
+  int maxBytes = _photoUploadMaxBytes,
+}) {
+  if (maxBytes <= 0) {
+    throw ArgumentError.value(maxBytes, 'maxBytes', 'must be positive');
+  }
+
+  if (sourceBytes.lengthInBytes <= maxBytes) {
+    return sourceBytes;
+  }
+
+  final decodedImage = img.decodeImage(sourceBytes);
+  if (decodedImage == null) {
+    throw Exception('Invalid photo image');
+  }
+
+  var working = img.bakeOrientation(decodedImage);
+  var quality = 90;
+  var encoded = Uint8List.fromList(img.encodeJpg(working, quality: quality));
+
+  const minQuality = 35;
+  const minDimension = 128;
+  const resizeFactor = 0.9;
+
+  while (encoded.lengthInBytes > maxBytes) {
+    if (quality > minQuality) {
+      quality = max(minQuality, quality - 5);
+    } else {
+      final nextWidth = max(
+        minDimension,
+        (working.width * resizeFactor).round(),
+      );
+      final nextHeight = max(
+        minDimension,
+        (working.height * resizeFactor).round(),
+      );
+
+      if (nextWidth == working.width && nextHeight == working.height) {
+        break;
+      }
+
+      working = img.copyResize(
+        working,
+        width: nextWidth,
+        height: nextHeight,
+        interpolation: img.Interpolation.average,
+      );
+    }
+
+    encoded = Uint8List.fromList(img.encodeJpg(working, quality: quality));
+  }
+
+  if (encoded.lengthInBytes <= maxBytes) {
+    return encoded;
+  }
+
+  while (encoded.lengthInBytes > maxBytes &&
+      (working.width > 16 || working.height > 16)) {
+    final fallbackWidth = max(16, (working.width * 0.8).round());
+    final fallbackHeight = max(16, (working.height * 0.8).round());
+
+    if (fallbackWidth == working.width && fallbackHeight == working.height) {
+      break;
+    }
+
+    working = img.copyResize(
+      working,
+      width: fallbackWidth,
+      height: fallbackHeight,
+      interpolation: img.Interpolation.average,
+    );
+    encoded = Uint8List.fromList(img.encodeJpg(working, quality: minQuality));
+  }
+
+  return encoded;
+}
+
+class _ProcessedImage {
+  const _ProcessedImage({required this.bytes, required this.extension});
 
   final Uint8List bytes;
   final String extension;
@@ -69,12 +160,21 @@ class ImageUploadService {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final originalExtension = file.path.split('.').last.toLowerCase();
-      final processedAvatar = bucket == 'avatars'
-          ? await _processAvatarImage(file)
-          : null;
-      final extension = processedAvatar?.extension ?? originalExtension;
+      final originalBytes = await file.readAsBytes();
+
+      _ProcessedImage? processedImage;
+      if (bucket == 'avatars') {
+        processedImage = _processAvatarImage(originalBytes);
+      } else if (bucket == 'beans' || bucket == 'logs') {
+        processedImage = _processPhotoImage(
+          bytes: originalBytes,
+          originalExtension: originalExtension,
+        );
+      }
+
+      final extension = processedImage?.extension ?? originalExtension;
       final fileName = '$userId/$timestamp.$extension';
-      final bytes = processedAvatar?.bytes ?? await file.readAsBytes();
+      final bytes = processedImage?.bytes ?? originalBytes;
       final contentType = _resolveContentType(extension);
 
       await _client.storage
@@ -90,12 +190,11 @@ class ImageUploadService {
       return publicUrl;
     } catch (e) {
       debugPrint('Upload image error: $e');
-      return null;
+      rethrow;
     }
   }
 
-  Future<_ProcessedAvatar> _processAvatarImage(XFile file) async {
-    final bytes = await file.readAsBytes();
+  _ProcessedImage _processAvatarImage(Uint8List bytes) {
     final decodedImage = img.decodeImage(bytes);
 
     if (decodedImage == null) {
@@ -124,9 +223,29 @@ class ImageUploadService {
           )
         : cropped;
 
-    return _ProcessedAvatar(
+    return _ProcessedImage(
       bytes: Uint8List.fromList(img.encodeJpg(normalized, quality: 90)),
       extension: 'jpg',
+    );
+  }
+
+  _ProcessedImage _processPhotoImage({
+    required Uint8List bytes,
+    required String originalExtension,
+  }) {
+    if (bytes.lengthInBytes > _photoUploadMaxBytes &&
+        _unsupportedResizeExtensions.contains(originalExtension)) {
+      throw const ImageUploadException(
+        'Unsupported image format for resize. Please use JPG, PNG, or WEBP.',
+      );
+    }
+
+    final processedBytes = resizePhotoToMaxBytesIfNeeded(bytes);
+    final isResized = !identical(bytes, processedBytes);
+
+    return _ProcessedImage(
+      bytes: processedBytes,
+      extension: isResized ? 'jpg' : originalExtension,
     );
   }
 
@@ -141,6 +260,10 @@ class ImageUploadService {
         return 'image/webp';
       case 'gif':
         return 'image/gif';
+      case 'heic':
+        return 'image/heic';
+      case 'heif':
+        return 'image/heif';
       default:
         return 'application/octet-stream';
     }

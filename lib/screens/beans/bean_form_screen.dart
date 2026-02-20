@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -127,13 +126,14 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
   }
 
   Future<void> _pickImage() async {
-    final source = await ImagePickerBottomSheet.show(
+    final selection = await ImagePickerBottomSheet.show(
       context,
       showDelete: _existingImageUrl != null || _selectedImage != null,
     );
 
-    if (source == null) {
-      // 삭제 선택
+    if (selection == ImagePickerSelection.dismissed) return;
+
+    if (selection == ImagePickerSelection.delete) {
       setState(() {
         _selectedImage = null;
         _existingImageUrl = null;
@@ -144,7 +144,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     final imageService = getIt<ImageUploadService>();
     XFile? picked;
 
-    if (source == ImageSource.gallery) {
+    if (selection == ImagePickerSelection.gallery) {
       picked = await imageService.pickImageFromGallery();
     } else {
       picked = await imageService.pickImageFromCamera();
@@ -173,7 +173,12 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
         userId: userId,
         file: _selectedImage!,
       );
-      return imageUrl ?? _existingImageUrl;
+
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw const ImageUploadException('Image upload failed');
+      }
+
+      return imageUrl;
     } finally {
       if (mounted) {
         setState(() {
@@ -305,18 +310,6 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                   height: 200,
                   placeholderIcon: Icons.coffee,
                 ),
-                if (_selectedImage != null) ...[
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.file(
-                      File(_selectedImage!.path),
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 16),
 
                 // 원두 이름

@@ -66,6 +66,24 @@ class UserErrorMessage {
     }
 
     final message = error.toString().toLowerCase();
+    if (_containsAny(message, [
+      'invalid photo image',
+      'unsupported image format',
+      'image upload failed',
+      'imageuploadexception',
+      'heic',
+      'heif',
+    ])) {
+      return 'errInvalidInput';
+    }
+    if (_containsAny(message, ['storageexception']) &&
+        _containsAny(message, ['statuscode: 401', 'statuscode: 403'])) {
+      return 'errPermissionDenied';
+    }
+    if (_containsAny(message, ['storageexception']) &&
+        _containsAny(message, ['statuscode: 413', 'too large'])) {
+      return 'errInvalidInput';
+    }
     if (_containsAny(message, ['network', 'socket', 'timeout', 'connection'])) {
       return 'errNetwork';
     }
