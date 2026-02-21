@@ -718,6 +718,12 @@ abstract class AppLocalizations {
   /// **'Record Coffee'**
   String get logsRecordButton;
 
+  /// No description provided for @listLoadingMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading more items...'**
+  String get listLoadingMore;
+
   /// No description provided for @logFormNewTitle.
   ///
   /// In en, this message translates to:

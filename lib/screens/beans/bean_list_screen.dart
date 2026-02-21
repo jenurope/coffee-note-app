@@ -271,18 +271,18 @@ class _PaginationLoadingIndicator extends StatelessWidget {
         color: backgroundColor.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Padding(
+      child: Padding(
         padding: EdgeInsets.symmetric(vertical: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(strokeWidth: 2.4),
             ),
-            SizedBox(width: 10),
-            Text('추가 항목 불러오는 중...'),
+            const SizedBox(width: 10),
+            Text(context.l10n.listLoadingMore),
           ],
         ),
       ),

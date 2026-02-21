@@ -159,6 +159,7 @@
   "logsEmptySubtitleAuth": "今日飲んだコーヒーを記録しましょう！",
   "logsEmptySubtitleGuest": "ログインするとコーヒーを記録できます。",
   "logsRecordButton": "コーヒーを記録",
+  "listLoadingMore": "追加項目を読み込み中...",
   "logFormNewTitle": "新しいコーヒー記録",
   "logFormEditTitle": "記録を編集",
   "coffeePhoto": "コーヒー写真",

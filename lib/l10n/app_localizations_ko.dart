@@ -334,6 +334,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logsRecordButton => '커피 기록하기';
 
   @override
+  String get listLoadingMore => '추가 항목 불러오는 중...';
+
+  @override
   String get logFormNewTitle => '새 커피 기록';
 
   @override

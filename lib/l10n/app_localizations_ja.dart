@@ -334,6 +334,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logsRecordButton => 'コーヒーを記録';
 
   @override
+  String get listLoadingMore => '追加項目を読み込み中...';
+
+  @override
   String get logFormNewTitle => '新しいコーヒー記録';
 
   @override

@@ -159,6 +159,7 @@
   "logsEmptySubtitleAuth": "Record the coffee you drank today!",
   "logsEmptySubtitleGuest": "Log in to record coffee.",
   "logsRecordButton": "Record Coffee",
+  "listLoadingMore": "Loading more items...",
   "logFormNewTitle": "New Coffee Record",
   "logFormEditTitle": "Edit Record",
   "coffeePhoto": "Coffee Photo",
