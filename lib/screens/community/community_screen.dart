@@ -163,19 +163,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     padding: const EdgeInsets.all(16),
                     child: TextField(
                       controller: _searchController,
+                      textInputAction: TextInputAction.search,
                       onSubmitted: (_) => _search(),
                       decoration: InputDecoration(
                         hintText: l10n.postSearchHint,
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _search();
-                                },
-                              )
-                            : null,
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: _search,
+                        ),
                       ),
                     ),
                   ),
