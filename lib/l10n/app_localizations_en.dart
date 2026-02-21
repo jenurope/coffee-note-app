@@ -442,6 +442,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postTitleMaxLength => 'Title must be 50 characters or fewer';
 
   @override
+  String postTitleCount(int count) {
+    return 'Title $count/50';
+  }
+
+  @override
   String get postContent => 'Content';
 
   @override
@@ -455,6 +460,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get postContentMaxLength => 'Content must be 500 characters or fewer';
+
+  @override
+  String postContentCount(int count) {
+    return 'Content $count/500';
+  }
 
   @override
   String get postImageInsert => 'Insert Image';

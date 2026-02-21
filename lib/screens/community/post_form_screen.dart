@@ -64,10 +64,13 @@ class _PostFormScreenState extends State<PostFormScreen> {
   }
 
   String _currentPlainTextContent({bool trim = false}) {
-    final text = _quillController.document.toPlainText().replaceAll(
+    var text = _quillController.document.toPlainText().replaceAll(
       '\u{fffc}',
       '',
     );
+    if (text.endsWith('\n')) {
+      text = text.substring(0, text.length - 1);
+    }
     return trim ? text.trim() : text;
   }
 
@@ -508,6 +511,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   hint: context.l10n.postTitleHint,
                   controller: _titleController,
                   textInputAction: TextInputAction.next,
+                  onChanged: (_) {
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return context.l10n.postTitleRequired;
@@ -522,14 +530,19 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
                 const SizedBox(height: 8),
-                Text(
-                  context.l10n.postImageCount(_imageCount),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    context.l10n.postTitleCount(
+                      _titleController.text.trim().length,
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
                   ),
                 ),
+                const SizedBox(height: 16),
                 QuillSimpleToolbar(
                   controller: _quillController,
                   config: QuillSimpleToolbarConfig(
@@ -622,6 +635,32 @@ class _PostFormScreenState extends State<PostFormScreen> {
                               ),
                             ),
                           ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Row(
+                            children: [
+                              Text(
+                                context.l10n.postImageCount(_imageCount),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                context.l10n.postContentCount(
+                                  _currentPlainTextContent(trim: true).length,
+                                ),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     );
                   },

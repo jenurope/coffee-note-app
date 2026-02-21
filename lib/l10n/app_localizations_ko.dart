@@ -433,6 +433,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postTitleMaxLength => '제목은 50자 이하여야 합니다';
 
   @override
+  String postTitleCount(int count) {
+    return '제목 $count/50';
+  }
+
+  @override
   String get postContent => '내용';
 
   @override
@@ -446,6 +451,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get postContentMaxLength => '내용은 500자 이하여야 합니다';
+
+  @override
+  String postContentCount(int count) {
+    return '내용 $count/500';
+  }
 
   @override
   String get postImageInsert => '이미지 삽입';

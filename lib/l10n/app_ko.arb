@@ -192,11 +192,27 @@
   "postTitleRequired": "제목을 입력해주세요",
   "postTitleMinLength": "제목은 2자 이상이어야 합니다",
   "postTitleMaxLength": "제목은 50자 이하여야 합니다",
+  "postTitleCount": "제목 {count}/50",
+  "@postTitleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "postContent": "내용",
   "postContentHint": "커피에 대한 이야기를 나눠보세요...",
   "postContentRequired": "내용을 입력해주세요",
   "postContentMinLength": "내용은 2자 이상이어야 합니다",
   "postContentMaxLength": "내용은 500자 이하여야 합니다",
+  "postContentCount": "내용 {count}/500",
+  "@postContentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "postImageInsert": "이미지 삽입",
   "postImageLimitReached": "이미지는 최대 3장까지 첨부할 수 있습니다.",
   "postImageCount": "이미지 {count}/3",

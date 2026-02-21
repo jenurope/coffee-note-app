@@ -916,6 +916,12 @@ abstract class AppLocalizations {
   /// **'Title must be 50 characters or fewer'**
   String get postTitleMaxLength;
 
+  /// No description provided for @postTitleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Title {count}/50'**
+  String postTitleCount(int count);
+
   /// No description provided for @postContent.
   ///
   /// In en, this message translates to:
@@ -945,6 +951,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Content must be 500 characters or fewer'**
   String get postContentMaxLength;
+
+  /// No description provided for @postContentCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Content {count}/500'**
+  String postContentCount(int count);
 
   /// No description provided for @postImageInsert.
   ///

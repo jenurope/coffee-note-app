@@ -192,11 +192,27 @@
   "postTitleRequired": "タイトルを入力してください",
   "postTitleMinLength": "タイトルは2文字以上で入力してください",
   "postTitleMaxLength": "タイトルは50文字以内で入力してください",
+  "postTitleCount": "タイトル {count}/50",
+  "@postTitleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "postContent": "内容",
   "postContentHint": "コーヒーについて話してみましょう...",
   "postContentRequired": "内容を入力してください",
   "postContentMinLength": "内容は2文字以上で入力してください",
   "postContentMaxLength": "内容は500文字以内で入力してください",
+  "postContentCount": "内容 {count}/500",
+  "@postContentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "postImageInsert": "画像を挿入",
   "postImageLimitReached": "画像は最大3枚まで添付できます。",
   "postImageCount": "画像 {count}/3",
