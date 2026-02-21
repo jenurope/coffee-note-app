@@ -656,6 +656,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errPermissionDenied => 'この操作を実行する権限がありません。';
 
   @override
+  String get errCommunityPostHourlyLimit =>
+      '1時間あたりの投稿上限に達しました。しばらくしてから再試行してください。';
+
+  @override
+  String get errCommunityCommentHourlyLimit =>
+      '1時間あたりのコメント上限に達しました。しばらくしてから再試行してください。';
+
+  @override
   String get errNotFound => '要求したデータが見つかりません。';
 
   @override

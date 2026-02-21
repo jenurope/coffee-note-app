@@ -58,6 +58,28 @@ void main() {
       expect(message, 'errPermissionDenied');
     });
 
+    test('PostgrestException 게시글 시간당 제한 오류를 사용자 메시지로 변환한다', () {
+      const error = PostgrestException(
+        message: 'community_post_hourly_limit_exceeded',
+        code: 'P0001',
+      );
+
+      final message = UserErrorMessage.from(error);
+
+      expect(message, 'errCommunityPostHourlyLimit');
+    });
+
+    test('PostgrestException 댓글 시간당 제한 오류를 사용자 메시지로 변환한다', () {
+      const error = PostgrestException(
+        message: 'community_comment_hourly_limit_exceeded',
+        code: 'P0001',
+      );
+
+      final message = UserErrorMessage.from(error);
+
+      expect(message, 'errCommunityCommentHourlyLimit');
+    });
+
     test('PostgrestException 코드가 없어도 foreign key 문구를 변환한다', () {
       const error = PostgrestException(
         message: 'insert violates foreign key constraint',

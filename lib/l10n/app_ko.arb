@@ -298,6 +298,8 @@
   "errAlreadyExists": "이미 등록된 데이터입니다.",
   "errInvalidInput": "입력값을 다시 확인해주세요.",
   "errPermissionDenied": "이 작업을 수행할 권한이 없습니다.",
+  "errCommunityPostHourlyLimit": "시간당 게시글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.",
+  "errCommunityCommentHourlyLimit": "시간당 댓글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.",
   "errNotFound": "요청한 데이터를 찾을 수 없습니다.",
   "errReauthRequired": "요청을 처리할 수 없습니다. 다시 로그인 후 시도해주세요.",
   "errGoogleLoginCanceled": "Google 로그인이 취소되었습니다.",

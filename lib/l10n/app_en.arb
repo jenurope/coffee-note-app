@@ -298,6 +298,8 @@
   "errAlreadyExists": "Data already exists.",
   "errInvalidInput": "Please check your input.",
   "errPermissionDenied": "You do not have permission for this action.",
+  "errCommunityPostHourlyLimit": "You have reached the hourly post limit. Please try again later.",
+  "errCommunityCommentHourlyLimit": "You have reached the hourly comment limit. Please try again later.",
   "errNotFound": "Requested data was not found.",
   "errReauthRequired": "Unable to process request. Please log in again.",
   "errGoogleLoginCanceled": "Google sign-in was canceled.",
