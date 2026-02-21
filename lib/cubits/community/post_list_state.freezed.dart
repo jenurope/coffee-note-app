@@ -125,12 +125,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( PostFilters filters)?  loading,TResult Function( List<CommunityPost> posts,  PostFilters filters)?  loaded,TResult Function( String message,  PostFilters filters)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( PostFilters filters)?  loading,TResult Function( List<CommunityPost> posts,  PostFilters filters,  bool isLoadingMore,  bool hasMore)?  loaded,TResult Function( String message,  PostFilters filters)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case PostListInitial() when initial != null:
 return initial();case PostListLoading() when loading != null:
 return loading(_that.filters);case PostListLoaded() when loaded != null:
-return loaded(_that.posts,_that.filters);case PostListError() when error != null:
+return loaded(_that.posts,_that.filters,_that.isLoadingMore,_that.hasMore);case PostListError() when error != null:
 return error(_that.message,_that.filters);case _:
   return orElse();
 
@@ -149,12 +149,12 @@ return error(_that.message,_that.filters);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( PostFilters filters)  loading,required TResult Function( List<CommunityPost> posts,  PostFilters filters)  loaded,required TResult Function( String message,  PostFilters filters)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( PostFilters filters)  loading,required TResult Function( List<CommunityPost> posts,  PostFilters filters,  bool isLoadingMore,  bool hasMore)  loaded,required TResult Function( String message,  PostFilters filters)  error,}) {final _that = this;
 switch (_that) {
 case PostListInitial():
 return initial();case PostListLoading():
 return loading(_that.filters);case PostListLoaded():
-return loaded(_that.posts,_that.filters);case PostListError():
+return loaded(_that.posts,_that.filters,_that.isLoadingMore,_that.hasMore);case PostListError():
 return error(_that.message,_that.filters);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +169,12 @@ return error(_that.message,_that.filters);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( PostFilters filters)?  loading,TResult? Function( List<CommunityPost> posts,  PostFilters filters)?  loaded,TResult? Function( String message,  PostFilters filters)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( PostFilters filters)?  loading,TResult? Function( List<CommunityPost> posts,  PostFilters filters,  bool isLoadingMore,  bool hasMore)?  loaded,TResult? Function( String message,  PostFilters filters)?  error,}) {final _that = this;
 switch (_that) {
 case PostListInitial() when initial != null:
 return initial();case PostListLoading() when loading != null:
 return loading(_that.filters);case PostListLoaded() when loaded != null:
-return loaded(_that.posts,_that.filters);case PostListError() when error != null:
+return loaded(_that.posts,_that.filters,_that.isLoadingMore,_that.hasMore);case PostListError() when error != null:
 return error(_that.message,_that.filters);case _:
   return null;
 
@@ -294,7 +294,7 @@ $PostFiltersCopyWith<$Res> get filters {
 
 
 class PostListLoaded implements PostListState {
-  const PostListLoaded({required final  List<CommunityPost> posts, required this.filters}): _posts = posts;
+  const PostListLoaded({required final  List<CommunityPost> posts, required this.filters, this.isLoadingMore = false, this.hasMore = true}): _posts = posts;
   
 
  final  List<CommunityPost> _posts;
@@ -305,6 +305,8 @@ class PostListLoaded implements PostListState {
 }
 
  final  PostFilters filters;
+@JsonKey() final  bool isLoadingMore;
+@JsonKey() final  bool hasMore;
 
 /// Create a copy of PostListState
 /// with the given fields replaced by the non-null parameter values.
@@ -316,16 +318,16 @@ $PostListLoadedCopyWith<PostListLoaded> get copyWith => _$PostListLoadedCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostListLoaded&&const DeepCollectionEquality().equals(other._posts, _posts)&&(identical(other.filters, filters) || other.filters == filters));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostListLoaded&&const DeepCollectionEquality().equals(other._posts, _posts)&&(identical(other.filters, filters) || other.filters == filters)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_posts),filters);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_posts),filters,isLoadingMore,hasMore);
 
 @override
 String toString() {
-  return 'PostListState.loaded(posts: $posts, filters: $filters)';
+  return 'PostListState.loaded(posts: $posts, filters: $filters, isLoadingMore: $isLoadingMore, hasMore: $hasMore)';
 }
 
 
@@ -336,7 +338,7 @@ abstract mixin class $PostListLoadedCopyWith<$Res> implements $PostListStateCopy
   factory $PostListLoadedCopyWith(PostListLoaded value, $Res Function(PostListLoaded) _then) = _$PostListLoadedCopyWithImpl;
 @useResult
 $Res call({
- List<CommunityPost> posts, PostFilters filters
+ List<CommunityPost> posts, PostFilters filters, bool isLoadingMore, bool hasMore
 });
 
 
@@ -353,11 +355,13 @@ class _$PostListLoadedCopyWithImpl<$Res>
 
 /// Create a copy of PostListState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? posts = null,Object? filters = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? posts = null,Object? filters = null,Object? isLoadingMore = null,Object? hasMore = null,}) {
   return _then(PostListLoaded(
 posts: null == posts ? _self._posts : posts // ignore: cast_nullable_to_non_nullable
 as List<CommunityPost>,filters: null == filters ? _self.filters : filters // ignore: cast_nullable_to_non_nullable
-as PostFilters,
+as PostFilters,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMore // ignore: cast_nullable_to_non_nullable
+as bool,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

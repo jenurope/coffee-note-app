@@ -74,8 +74,8 @@ void main() {
           searchQuery: null,
           sortBy: null,
           ascending: false,
-          limit: null,
-          offset: null,
+          limit: 20,
+          offset: 0,
         ),
       ).thenAnswer((_) async => [post]);
 
@@ -94,10 +94,66 @@ void main() {
           searchQuery: null,
           sortBy: null,
           ascending: false,
-          limit: null,
-          offset: null,
+          limit: 20,
+          offset: 0,
         ),
       ).called(1);
+    });
+
+    test('다음 페이지를 이어 로드하고 마지막 페이지에서 hasMore를 false로 바꾼다', () async {
+      final user = _testUser('auth-post-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 14, 12);
+      final firstPagePosts = List.generate(
+        20,
+        (index) => _buildPost(
+          id: 'post-$index',
+          userId: user.id,
+          createdAt: now.add(Duration(minutes: index)),
+        ),
+      );
+      final secondPagePosts = [
+        _buildPost(
+          id: 'post-20',
+          userId: user.id,
+          createdAt: now.add(const Duration(minutes: 20)),
+        ),
+      ];
+
+      when(
+        () => communityService.getPosts(
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          limit: 20,
+          offset: 0,
+        ),
+      ).thenAnswer((_) async => firstPagePosts);
+      when(
+        () => communityService.getPosts(
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          limit: 20,
+          offset: 20,
+        ),
+      ).thenAnswer((_) async => secondPagePosts);
+
+      final cubit = PostListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.load();
+      await cubit.loadMore();
+
+      final state = cubit.state;
+      expect(state, isA<PostListLoaded>());
+      final loaded = state as PostListLoaded;
+      expect(loaded.posts, hasLength(21));
+      expect(loaded.posts.last.id, 'post-20');
+      expect(loaded.hasMore, isFalse);
+      expect(loaded.isLoadingMore, isFalse);
     });
   });
 }
@@ -110,5 +166,21 @@ User _testUser(String id) {
     aud: 'authenticated',
     email: '$id@example.com',
     createdAt: '2026-02-14T00:00:00.000Z',
+  );
+}
+
+CommunityPost _buildPost({
+  required String id,
+  required String userId,
+  required DateTime createdAt,
+}) {
+  return CommunityPost(
+    id: id,
+    userId: userId,
+    title: '게시글 $id',
+    content: '내용 $id',
+    createdAt: createdAt,
+    updatedAt: createdAt,
+    commentCount: 0,
   );
 }

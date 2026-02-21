@@ -15,34 +15,80 @@ class PostListCubit extends Cubit<PostListState> {
       _authCubit = authCubit,
       super(const PostListState.initial());
 
+  static const int _defaultPageSize = 20;
+
   final CommunityService _service;
   final AuthCubit? _authCubit;
 
   Future<void> load([PostFilters filters = const PostFilters()]) async {
-    emit(PostListState.loading(filters: filters));
+    final pageSize = _resolvePageSize(filters);
+    final initialFilters = filters.copyWith(limit: pageSize, offset: 0);
+    emit(PostListState.loading(filters: initialFilters));
     try {
       final authState = _authCubit?.state;
       if (authState is AuthAuthenticated) {
         final posts = await _service.getPosts(
-          searchQuery: filters.searchQuery,
-          sortBy: filters.sortBy,
-          ascending: filters.ascending,
-          limit: filters.limit,
-          offset: filters.offset,
+          searchQuery: initialFilters.searchQuery,
+          sortBy: initialFilters.sortBy,
+          ascending: initialFilters.ascending,
+          limit: pageSize,
+          offset: 0,
         );
-        emit(PostListState.loaded(posts: posts, filters: filters));
+        emit(
+          PostListState.loaded(
+            posts: posts,
+            filters: initialFilters,
+            hasMore: posts.length == pageSize,
+          ),
+        );
         return;
       }
 
-      emit(PostListState.loaded(posts: const [], filters: filters));
+      emit(
+        PostListState.loaded(
+          posts: const [],
+          filters: initialFilters,
+          hasMore: false,
+        ),
+      );
     } catch (e) {
       debugPrint('PostListCubit.load error: $e');
       emit(
         PostListState.error(
           message: UserErrorMessage.from(e, fallbackKey: 'errLoadPosts'),
-          filters: filters,
+          filters: initialFilters,
         ),
       );
+    }
+  }
+
+  Future<void> loadMore() async {
+    final currentState = state;
+    if (currentState is! PostListLoaded) return;
+    if (currentState.isLoadingMore || !currentState.hasMore) return;
+
+    final pageSize = _resolvePageSize(currentState.filters);
+    emit(currentState.copyWith(isLoadingMore: true));
+
+    try {
+      final nextPosts = await _service.getPosts(
+        searchQuery: currentState.filters.searchQuery,
+        sortBy: currentState.filters.sortBy,
+        ascending: currentState.filters.ascending,
+        limit: pageSize,
+        offset: currentState.posts.length,
+      );
+
+      emit(
+        currentState.copyWith(
+          posts: [...currentState.posts, ...nextPosts],
+          isLoadingMore: false,
+          hasMore: nextPosts.length == pageSize,
+        ),
+      );
+    } catch (e) {
+      debugPrint('PostListCubit.loadMore error: $e');
+      emit(currentState.copyWith(isLoadingMore: false));
     }
   }
 
@@ -74,5 +120,13 @@ class PostListCubit extends Cubit<PostListState> {
 
   Future<void> updateFilters(PostFilters filters) async {
     await load(filters);
+  }
+
+  int _resolvePageSize(PostFilters filters) {
+    final limit = filters.limit;
+    if (limit == null || limit <= 0) {
+      return _defaultPageSize;
+    }
+    return limit;
   }
 }

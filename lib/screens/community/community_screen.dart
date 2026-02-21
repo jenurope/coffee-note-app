@@ -22,10 +22,12 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen> {
   final _searchController = TextEditingController();
+  final _listScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _listScrollController.addListener(_onListScroll);
     final cubit = context.read<PostListCubit>();
     final authState = context.read<AuthCubit>().state;
     if (cubit.state is PostListInitial && authState is AuthAuthenticated) {
@@ -35,11 +37,31 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   @override
   void dispose() {
+    _listScrollController
+      ..removeListener(_onListScroll)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
   }
 
+  void _onListScroll() {
+    if (!_listScrollController.hasClients) return;
+    final postState = context.read<PostListCubit>().state;
+    if (postState is! PostListLoaded) return;
+    if (!postState.hasMore || postState.isLoadingMore) return;
+    if (_listScrollController.position.extentAfter < 300) {
+      context.read<PostListCubit>().loadMore();
+    }
+  }
+
   void _search() {
+    if (_listScrollController.hasClients) {
+      _listScrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
     final cubit = context.read<PostListCubit>();
     final currentFilters = switch (cubit.state) {
       PostListLoaded(filters: final f) => f,
@@ -184,7 +206,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       PostListInitial() || PostListLoading() => const Center(
                         child: CircularProgressIndicator(),
                       ),
-                      PostListLoaded(posts: final posts) =>
+                      PostListLoaded(
+                        posts: final posts,
+                        isLoadingMore: final isLoadingMore,
+                        hasMore: final hasMore,
+                      ) =>
                         posts.isEmpty
                             ? EmptyState(
                                 icon: Icons.forum_outlined,
@@ -201,11 +227,36 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 onRefresh: () =>
                                     context.read<PostListCubit>().reload(),
                                 child: ListView.builder(
+                                  controller: _listScrollController,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                   ),
-                                  itemCount: posts.length,
+                                  itemCount: posts.length + (hasMore ? 1 : 0),
                                   itemBuilder: (context, index) {
+                                    if (index >= posts.length) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                        child: Center(
+                                          child: isLoadingMore
+                                              ? const CircularProgressIndicator()
+                                              : IconButton(
+                                                  onPressed: () => context
+                                                      .read<PostListCubit>()
+                                                      .loadMore(),
+                                                  icon: const Icon(
+                                                    Icons
+                                                        .expand_circle_down_outlined,
+                                                  ),
+                                                  tooltip:
+                                                      MaterialLocalizations.of(
+                                                        context,
+                                                      ).moreButtonTooltip,
+                                                ),
+                                        ),
+                                      );
+                                    }
                                     final post = posts[index];
                                     final authorName =
                                         post.author?.nickname ??

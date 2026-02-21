@@ -61,12 +61,16 @@ class CommunityService {
   }
 
   // 게시글 상세 조회 (댓글 포함)
-  Future<CommunityPost?> getPost(String id) async {
+  Future<CommunityPost?> getPost(
+    String id, {
+    bool includeComments = true,
+  }) async {
     try {
       final response = await _getPostInternal(
         id: id,
         includeAvatar: true,
         includeProfiles: true,
+        includeComments: includeComments,
       );
       return response == null ? null : CommunityPost.fromJson(response);
     } on PostgrestException catch (e) {
@@ -80,6 +84,7 @@ class CommunityService {
           id: id,
           includeAvatar: false,
           includeProfiles: true,
+          includeComments: includeComments,
         );
         return fallback == null ? null : CommunityPost.fromJson(fallback);
       } on PostgrestException catch (fallbackError) {
@@ -89,6 +94,7 @@ class CommunityService {
           id: id,
           includeAvatar: false,
           includeProfiles: false,
+          includeComments: includeComments,
         );
         return noProfile == null ? null : CommunityPost.fromJson(noProfile);
       }
@@ -173,6 +179,54 @@ class CommunityService {
     }
   }
 
+  Future<List<CommunityComment>> getComments({
+    required String postId,
+    int limit = 20,
+    int offset = 0,
+    bool ascending = false,
+  }) async {
+    try {
+      return await _getCommentsInternal(
+        postId: postId,
+        includeAvatar: true,
+        includeProfiles: true,
+        limit: limit,
+        offset: offset,
+        ascending: ascending,
+      );
+    } on PostgrestException catch (e) {
+      if (!_shouldRetryWithoutAvatar(e)) {
+        debugPrint('Get comments error: $e');
+        rethrow;
+      }
+
+      try {
+        return await _getCommentsInternal(
+          postId: postId,
+          includeAvatar: false,
+          includeProfiles: true,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+        );
+      } on PostgrestException catch (fallbackError) {
+        if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
+
+        return _getCommentsInternal(
+          postId: postId,
+          includeAvatar: false,
+          includeProfiles: false,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+        );
+      }
+    } catch (e) {
+      debugPrint('Get comments error: $e');
+      rethrow;
+    }
+  }
+
   Future<List<CommunityPost>> _getPostsInternal({
     required bool includeAvatar,
     required bool includeProfiles,
@@ -231,12 +285,39 @@ class CommunityService {
     required String id,
     required bool includeAvatar,
     required bool includeProfiles,
+    required bool includeComments,
   }) {
     return _client
         .from('community_posts')
-        .select(_postDetailSelect(includeAvatar, includeProfiles))
+        .select(
+          _postDetailSelect(
+            includeAvatar,
+            includeProfiles,
+            includeComments: includeComments,
+          ),
+        )
         .eq('id', id)
         .maybeSingle();
+  }
+
+  Future<List<CommunityComment>> _getCommentsInternal({
+    required String postId,
+    required bool includeAvatar,
+    required bool includeProfiles,
+    required int limit,
+    required int offset,
+    required bool ascending,
+  }) async {
+    final response = await _client
+        .from('community_comments')
+        .select(_commentSelect(includeAvatar, includeProfiles))
+        .eq('post_id', postId)
+        .order('created_at', ascending: ascending)
+        .range(offset, offset + limit - 1);
+
+    return (response as List)
+        .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   String _postListSelect(bool includeAvatar, bool includeProfiles) {
@@ -250,11 +331,25 @@ class CommunityService {
     ''';
   }
 
-  String _postDetailSelect(bool includeAvatar, bool includeProfiles) {
+  String _postDetailSelect(
+    bool includeAvatar,
+    bool includeProfiles, {
+    required bool includeComments,
+  }) {
     if (!includeProfiles) {
+      if (!includeComments) return '*';
       return '''
         *,
         community_comments(*)
+      ''';
+    }
+
+    if (!includeComments) {
+      return '''
+        *,
+        profiles!community_posts_user_id_fkey(
+          ${_profileColumns(includeAvatar)}
+        )
       ''';
     }
 
@@ -268,6 +363,17 @@ class CommunityService {
         profiles!community_comments_user_id_fkey(
           ${_profileColumns(includeAvatar)}
         )
+      )
+    ''';
+  }
+
+  String _commentSelect(bool includeAvatar, bool includeProfiles) {
+    if (!includeProfiles) return '*';
+
+    return '''
+      *,
+      profiles!community_comments_user_id_fkey(
+        ${_profileColumns(includeAvatar)}
       )
     ''';
   }
