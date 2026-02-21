@@ -12,6 +12,7 @@ import '../../cubits/community/post_list_cubit.dart';
 import '../../l10n/l10n.dart';
 import '../../models/community_post.dart';
 import '../../services/community_service.dart';
+import 'widgets/post_markdown_view.dart';
 import '../../widgets/common/user_avatar.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -185,10 +186,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              Text(
-                                post.content,
-                                style: theme.textTheme.bodyLarge,
-                              ),
+                              PostMarkdownView(content: post.content),
                               const Divider(height: 32),
                               Row(
                                 children: [

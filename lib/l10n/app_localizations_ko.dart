@@ -442,6 +442,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postContentMinLength => '내용은 10자 이상이어야 합니다';
 
   @override
+  String get postImageInsert => '이미지 삽입';
+
+  @override
+  String get postImageLimitReached => '이미지는 최대 3장까지 첨부할 수 있습니다.';
+
+  @override
+  String postImageCount(int count) {
+    return '이미지 $count/3';
+  }
+
+  @override
+  String get postPreview => '미리보기';
+
+  @override
+  String get postImageUploadPreparing => '이미지 업로드 중입니다...';
+
+  @override
   String get postCreated => '게시글이 등록되었습니다.';
 
   @override

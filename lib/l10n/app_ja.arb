@@ -195,6 +195,18 @@
   "postContentHint": "コーヒーについて話してみましょう...",
   "postContentRequired": "内容を入力してください",
   "postContentMinLength": "内容は10文字以上で入力してください",
+  "postImageInsert": "画像を挿入",
+  "postImageLimitReached": "画像は最大3枚まで添付できます。",
+  "postImageCount": "画像 {count}/3",
+  "@postImageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "postPreview": "プレビュー",
+  "postImageUploadPreparing": "画像をアップロード中です...",
   "postCreated": "投稿が登録されました。",
   "postUpdated": "投稿が更新されました。",
   "postSaveFailed": "投稿の保存中にエラーが発生しました。しばらくしてから再試行してください。",

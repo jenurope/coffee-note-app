@@ -934,6 +934,36 @@ abstract class AppLocalizations {
   /// **'Content must be at least 10 characters'**
   String get postContentMinLength;
 
+  /// No description provided for @postImageInsert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert Image'**
+  String get postImageInsert;
+
+  /// No description provided for @postImageLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'You can attach up to 3 images.'**
+  String get postImageLimitReached;
+
+  /// No description provided for @postImageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Images {count}/3'**
+  String postImageCount(int count);
+
+  /// No description provided for @postPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get postPreview;
+
+  /// No description provided for @postImageUploadPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading images...'**
+  String get postImageUploadPreparing;
+
   /// No description provided for @postCreated.
   ///
   /// In en, this message translates to:

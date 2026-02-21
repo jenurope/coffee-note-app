@@ -451,6 +451,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postContentMinLength => 'Content must be at least 10 characters';
 
   @override
+  String get postImageInsert => 'Insert Image';
+
+  @override
+  String get postImageLimitReached => 'You can attach up to 3 images.';
+
+  @override
+  String postImageCount(int count) {
+    return 'Images $count/3';
+  }
+
+  @override
+  String get postPreview => 'Preview';
+
+  @override
+  String get postImageUploadPreparing => 'Uploading images...';
+
+  @override
   String get postCreated => 'Post has been registered.';
 
   @override

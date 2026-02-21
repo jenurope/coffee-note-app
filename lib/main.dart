@@ -4,6 +4,7 @@ import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'core/bloc/app_bloc_observer.dart';
 import 'core/di/service_locator.dart';
 import 'core/errors/user_error_message.dart';
@@ -87,6 +88,7 @@ class _InitializationErrorApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
       ],
       supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
       localeResolutionCallback: (locale, supportedLocales) {

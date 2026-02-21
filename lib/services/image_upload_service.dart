@@ -149,7 +149,7 @@ class ImageUploadService {
   }
 
   /// Supabase Storage에 이미지 업로드
-  /// [bucket] - 스토리지 버킷 이름 ('beans', 'logs', 'avatars')
+  /// [bucket] - 스토리지 버킷 이름 ('beans', 'logs', 'community', 'avatars')
   /// [userId] - 사용자 ID (폴더 구분용)
   /// [file] - 업로드할 파일
   Future<String?> uploadImage({
@@ -165,7 +165,7 @@ class ImageUploadService {
       _ProcessedImage? processedImage;
       if (bucket == 'avatars') {
         processedImage = _processAvatarImage(originalBytes);
-      } else if (bucket == 'beans' || bucket == 'logs') {
+      } else if (_isPhotoBucket(bucket)) {
         processedImage = _processPhotoImage(
           bytes: originalBytes,
           originalExtension: originalExtension,
@@ -247,6 +247,13 @@ class ImageUploadService {
       bytes: processedBytes,
       extension: isResized ? 'jpg' : originalExtension,
     );
+  }
+
+  @visibleForTesting
+  static bool isPhotoBucket(String bucket) => _isPhotoBucket(bucket);
+
+  static bool _isPhotoBucket(String bucket) {
+    return bucket == 'beans' || bucket == 'logs' || bucket == 'community';
   }
 
   String _resolveContentType(String extension) {

@@ -442,6 +442,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postContentMinLength => '内容は10文字以上で入力してください';
 
   @override
+  String get postImageInsert => '画像を挿入';
+
+  @override
+  String get postImageLimitReached => '画像は最大3枚まで添付できます。';
+
+  @override
+  String postImageCount(int count) {
+    return '画像 $count/3';
+  }
+
+  @override
+  String get postPreview => 'プレビュー';
+
+  @override
+  String get postImageUploadPreparing => '画像をアップロード中です...';
+
+  @override
   String get postCreated => '投稿が登録されました。';
 
   @override

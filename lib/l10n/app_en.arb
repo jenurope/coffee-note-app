@@ -195,6 +195,18 @@
   "postContentHint": "Share your story about coffee...",
   "postContentRequired": "Please enter content",
   "postContentMinLength": "Content must be at least 10 characters",
+  "postImageInsert": "Insert Image",
+  "postImageLimitReached": "You can attach up to 3 images.",
+  "postImageCount": "Images {count}/3",
+  "@postImageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "postPreview": "Preview",
+  "postImageUploadPreparing": "Uploading images...",
   "postCreated": "Post has been registered.",
   "postUpdated": "Post has been updated.",
   "postSaveFailed": "An error occurred while saving post. Please try again later.",

@@ -5,6 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
 void main() {
+  group('ImageUploadService.isPhotoBucket', () {
+    test('community 버킷을 사진 리사이즈 대상으로 포함한다', () {
+      expect(ImageUploadService.isPhotoBucket('beans'), isTrue);
+      expect(ImageUploadService.isPhotoBucket('logs'), isTrue);
+      expect(ImageUploadService.isPhotoBucket('community'), isTrue);
+      expect(ImageUploadService.isPhotoBucket('avatars'), isFalse);
+    });
+  });
+
   group('resizePhotoToMaxBytesIfNeeded', () {
     test('이미 제한 이하인 이미지는 그대로 반환한다', () {
       final source = Uint8List.fromList(
