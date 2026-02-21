@@ -504,27 +504,15 @@ class _PostFormScreenState extends State<PostFormScreen> {
                 ),
                 const SizedBox(height: 16),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      context.l10n.postImageCount(_imageCount),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.7,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: _isLoading ? null : _insertImageEmbed,
-                      icon: const Icon(Icons.image_outlined),
-                      label: Text(context.l10n.postImageInsert),
-                    ),
-                  ],
+                Text(
+                  context.l10n.postImageCount(_imageCount),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
                 QuillSimpleToolbar(
                   controller: _quillController,
-                  config: const QuillSimpleToolbarConfig(
+                  config: QuillSimpleToolbarConfig(
                     showDividers: false,
                     showFontFamily: false,
                     showFontSize: false,
@@ -556,6 +544,13 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     showClipboardCut: false,
                     showClipboardCopy: false,
                     showClipboardPaste: false,
+                    customButtons: [
+                      QuillToolbarCustomButtonOptions(
+                        icon: const Icon(Icons.image_outlined),
+                        tooltip: context.l10n.postImageInsert,
+                        onPressed: _isLoading ? null : _insertImageEmbed,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
