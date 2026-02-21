@@ -50,6 +50,7 @@ dependencies:
   flutter_bloc: ^9.1.0
   get_it: ^8.0.3
   freezed_annotation: ^3.0.0
+  flutter_cache_manager: ^3.4.1
   package_info_plus: ^8.3.0
   flutter_native_splash: ^2.4.4
   flutter_quill: ^11.5.0

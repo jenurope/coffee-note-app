@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../core/image/app_image_cache_policy.dart';
 import '../domain/catalogs/roast_level_catalog.dart';
 import '../l10n/l10n.dart';
 import '../models/coffee_bean.dart';
@@ -14,6 +15,8 @@ class BeanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final imageUrl = bean.imageUrl?.trim();
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -25,9 +28,11 @@ class BeanCard extends StatelessWidget {
             // 이미지
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: bean.imageUrl != null
+              child: hasImage
                   ? CachedNetworkImage(
-                      imageUrl: bean.imageUrl!,
+                      imageUrl: imageUrl,
+                      cacheManager: AppImageCachePolicy.cacheManager,
+                      cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: theme.colorScheme.primary.withValues(alpha: 0.1),
@@ -149,6 +154,8 @@ class BeanListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final imageUrl = bean.imageUrl?.trim();
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -159,9 +166,11 @@ class BeanListTile extends StatelessWidget {
           child: SizedBox(
             width: 56,
             height: 56,
-            child: bean.imageUrl != null
+            child: hasImage
                 ? CachedNetworkImage(
-                    imageUrl: bean.imageUrl!,
+                    imageUrl: imageUrl,
+                    cacheManager: AppImageCachePolicy.cacheManager,
+                    cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
                       color: theme.colorScheme.primary.withValues(alpha: 0.1),

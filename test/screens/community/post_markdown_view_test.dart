@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:coffee_note_app/screens/community/widgets/post_markdown_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,7 +33,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(Image), findsWidgets);
+      expect(find.byType(CachedNetworkImage), findsWidgets);
     });
 
     testWidgets('pending 이미지는 로컬 경로를 사용한다', (tester) async {

@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../core/image/app_image_cache_policy.dart';
 import '../l10n/l10n.dart';
 
 enum ImagePickerSelection { gallery, camera, delete, dismissed }
@@ -193,7 +195,10 @@ class ImagePickerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasImage = imageUrl != null || localImagePath != null;
+    final remoteImageUrl = imageUrl?.trim();
+    final hasImage =
+        localImagePath != null ||
+        (remoteImageUrl != null && remoteImageUrl.isNotEmpty);
 
     return GestureDetector(
       onTap: onTap,
@@ -222,22 +227,23 @@ class ImagePickerWidget extends StatelessWidget {
                         errorBuilder: (_, error, stackTrace) =>
                             _buildPlaceholder(context, theme),
                       )
-                    else if (imageUrl != null)
-                      Image.network(
-                        imageUrl!,
+                    else if (remoteImageUrl != null)
+                      CachedNetworkImage(
+                        imageUrl: remoteImageUrl,
+                        cacheManager: AppImageCachePolicy.cacheManager,
+                        cacheKey: AppImageCachePolicy.cacheKeyFor(
+                          remoteImageUrl,
+                        ),
                         fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                        errorBuilder: (_, error, stackTrace) =>
+                        progressIndicatorBuilder:
+                            (context, url, downloadProgress) {
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: downloadProgress.progress,
+                                ),
+                              );
+                            },
+                        errorWidget: (_, url, error) =>
                             _buildPlaceholder(context, theme),
                       ),
                     // 변경 오버레이

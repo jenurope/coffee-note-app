@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -11,6 +12,7 @@ import 'package:markdown_quill/markdown_quill.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
+import '../../core/image/app_image_cache_policy.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/community/post_list_cubit.dart';
@@ -601,9 +603,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                         Container(
                           constraints: const BoxConstraints(minHeight: 280),
                           decoration: BoxDecoration(
-                            border: Border.all(
-                              color: borderColor,
-                            ),
+                            border: Border.all(color: borderColor),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: QuillEditor(
@@ -705,13 +705,15 @@ class _PostImageEmbedBuilder extends EmbedBuilder {
     }
 
     if (uri?.scheme == 'http' || uri?.scheme == 'https') {
+      final normalizedImageUrl = imageUrl.trim();
       return _imageFrame(
         context,
-        Image.network(
-          imageUrl,
+        CachedNetworkImage(
+          imageUrl: normalizedImageUrl,
+          cacheManager: AppImageCachePolicy.cacheManager,
+          cacheKey: AppImageCachePolicy.cacheKeyFor(normalizedImageUrl),
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
-              _imagePlaceholder(context),
+          errorWidget: (context, url, error) => _imagePlaceholder(context),
         ),
       );
     }
