@@ -21,7 +21,15 @@ set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
+update storage.buckets
+set
+  public = false,
+  file_size_limit = 1048576,
+  allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
+where id in ('beans', 'logs');
+
 drop policy if exists "public_read_media_buckets" on storage.objects;
+drop policy if exists "authenticated_read_private_media_buckets" on storage.objects;
 drop policy if exists "authenticated_upload_media_buckets" on storage.objects;
 drop policy if exists "authenticated_update_media_buckets" on storage.objects;
 drop policy if exists "authenticated_delete_media_buckets" on storage.objects;
@@ -30,7 +38,16 @@ create policy "public_read_media_buckets"
 on storage.objects
 for select
 to public
-using (bucket_id in ('beans', 'logs', 'avatars', 'community'));
+using (bucket_id in ('avatars', 'community'));
+
+create policy "authenticated_read_private_media_buckets"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id in ('beans', 'logs')
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
 
 create policy "authenticated_upload_media_buckets"
 on storage.objects

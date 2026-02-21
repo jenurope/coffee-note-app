@@ -136,7 +136,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
 
   Future<String?> _uploadImageIfNeeded(String userId) async {
     if (_selectedImage == null) {
-      return _existingImageUrl;
+      return _normalizedExistingImageReference();
     }
 
     setState(() {
@@ -163,6 +163,19 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
         });
       }
     }
+  }
+
+  String? _normalizedExistingImageReference() {
+    final existing = _existingImageUrl?.trim();
+    if (existing == null || existing.isEmpty) {
+      return null;
+    }
+
+    final filePath = ImageUploadService.extractFilePathFromReference(
+      bucket: 'logs',
+      imageReference: existing,
+    );
+    return filePath ?? existing;
   }
 
   Future<void> _handleSubmit() async {

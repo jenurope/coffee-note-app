@@ -13,14 +13,14 @@ values
   (
     'beans',
     'beans',
-    true,
+    false,
     1048576,
     array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
   ),
   (
     'logs',
     'logs',
-    true,
+    false,
     1048576,
     array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
   ),
@@ -43,6 +43,7 @@ set
 -- 소유자 권한이 필요하므로 여기서는 수행하지 않습니다.
 
 drop policy if exists "public_read_media_buckets" on storage.objects;
+drop policy if exists "authenticated_read_private_media_buckets" on storage.objects;
 drop policy if exists "authenticated_upload_media_buckets" on storage.objects;
 drop policy if exists "authenticated_update_media_buckets" on storage.objects;
 drop policy if exists "authenticated_delete_media_buckets" on storage.objects;
@@ -51,7 +52,16 @@ create policy "public_read_media_buckets"
 on storage.objects
 for select
 to public
-using (bucket_id in ('beans', 'logs', 'avatars'));
+using (bucket_id in ('avatars'));
+
+create policy "authenticated_read_private_media_buckets"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id in ('beans', 'logs')
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
 
 create policy "authenticated_upload_media_buckets"
 on storage.objects
