@@ -94,6 +94,12 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthState.unauthenticated());
   }
 
+  /// 회원 탈퇴
+  Future<void> withdraw() async {
+    await _authService?.withdrawAccount();
+    emit(const AuthState.unauthenticated());
+  }
+
   /// 게스트 모드 진입
   void enterGuestMode() {
     emit(const AuthState.guest());

@@ -383,6 +383,7 @@ class CommunityService {
         ? '''
           id,
           nickname,
+          is_withdrawn,
           avatar_url,
           created_at,
           updated_at
@@ -390,6 +391,7 @@ class CommunityService {
         : '''
           id,
           nickname,
+          is_withdrawn,
           created_at,
           updated_at
         ''';

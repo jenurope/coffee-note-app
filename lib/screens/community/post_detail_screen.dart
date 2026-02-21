@@ -9,8 +9,10 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/community/post_detail_cubit.dart';
 import '../../cubits/community/post_detail_state.dart';
 import '../../cubits/community/post_list_cubit.dart';
+import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n.dart';
 import '../../models/community_post.dart';
+import '../../models/user_profile.dart';
 import '../../services/community_service.dart';
 import 'widgets/post_markdown_view.dart';
 import '../../widgets/common/user_avatar.dart';
@@ -114,6 +116,40 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  String _resolveAuthorName(AppLocalizations l10n, UserProfile? author) {
+    if (author == null) {
+      return l10n.guestNickname;
+    }
+    if (author.isWithdrawn) {
+      return l10n.withdrawnUser;
+    }
+    return author.nickname;
+  }
+
+  String _resolvePostTitle(AppLocalizations l10n, CommunityPost post) {
+    if (post.isWithdrawnContent) {
+      return l10n.withdrawnPostMessage;
+    }
+    return post.title;
+  }
+
+  String _resolvePostContent(AppLocalizations l10n, CommunityPost post) {
+    if (post.isWithdrawnContent) {
+      return l10n.withdrawnPostMessage;
+    }
+    return post.content;
+  }
+
+  String _resolveCommentContent(
+    AppLocalizations l10n,
+    CommunityComment comment,
+  ) {
+    if (comment.isWithdrawnContent) {
+      return l10n.withdrawnCommentMessage;
+    }
+    return comment.content;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -143,8 +179,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ) =>
                 () {
                   final isOwner = currentUser?.id == post.userId;
-                  final authorName =
-                      post.author?.nickname ?? l10n.guestNickname;
+                  final authorName = _resolveAuthorName(l10n, post.author);
+                  final postTitle = _resolvePostTitle(l10n, post);
+                  final postContent = _resolvePostContent(l10n, post);
                   return Scaffold(
                     appBar: AppBar(
                       title: Text(l10n.postScreenTitle),
@@ -217,14 +254,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ),
                                 const Divider(height: 32),
                                 Text(
-                                  post.title,
+                                  postTitle,
                                   style: theme.textTheme.headlineSmall
                                       ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 10),
                                 const Divider(height: 1),
                                 const SizedBox(height: 16),
-                                PostMarkdownView(content: post.content),
+                                PostMarkdownView(content: postContent),
                                 const Divider(height: 32),
                                 Row(
                                   children: [
@@ -384,7 +421,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final dateFormat = DateFormat.Md(
       Localizations.localeOf(context).toString(),
     ).add_Hm();
-    final authorName = comment.author?.nickname ?? l10n.guestNickname;
+    final authorName = _resolveAuthorName(l10n, comment.author);
+    final commentContent = _resolveCommentContent(l10n, comment);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -458,7 +496,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(comment.content),
+            Text(commentContent),
           ],
         ),
       ),

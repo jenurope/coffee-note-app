@@ -566,6 +566,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logoutConfirmContent => 'ログアウトしますか？';
 
   @override
+  String get withdrawAccount => '退会する';
+
+  @override
+  String get withdrawWarningTitle => '退会のご案内';
+
+  @override
+  String get withdrawWarningBodyStrong =>
+      '退会すると、コーヒー/豆/投稿/コメントの原文データは即時に削除され、復元できません。\nコミュニティには退会案内メッセージのみが残る場合があります。';
+
+  @override
+  String get withdrawFinalConfirmTitle => '本当に退会しますか？';
+
+  @override
+  String get withdrawFinalConfirmBody => '退会後は元に戻せません。続行しますか？';
+
+  @override
+  String get withdrawCompleted => '退会が完了しました。';
+
+  @override
+  String get withdrawFailed => '退会処理中にエラーが発生しました。しばらくしてから再試行してください。';
+
+  @override
   String get profileEditTitle => 'プロフィール編集';
 
   @override
@@ -823,6 +845,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get grindExtraCoarse => '極粗挽き';
+
+  @override
+  String get withdrawnUser => '退会したユーザー';
+
+  @override
+  String get withdrawnPostMessage => '退会したユーザーの投稿です。';
+
+  @override
+  String get withdrawnCommentMessage => '退会したユーザーのコメントです。';
 
   @override
   String get guestNickname => 'ゲスト';

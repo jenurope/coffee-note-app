@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
@@ -19,6 +20,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late final Future<String> _versionFuture;
+  bool _isWithdrawing = false;
 
   @override
   void initState() {
@@ -29,6 +31,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<String> _loadVersion() async {
     final packageInfo = await PackageInfo.fromPlatform();
     return packageInfo.version;
+  }
+
+  Future<void> _handleWithdraw(BuildContext context) async {
+    if (_isWithdrawing) {
+      return;
+    }
+
+    final l10n = context.l10n;
+    final warningConfirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.withdrawWarningTitle),
+        content: Text(l10n.withdrawWarningBodyStrong),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            child: Text(l10n.withdrawAccount),
+          ),
+        ],
+      ),
+    );
+
+    if (warningConfirmed != true || !context.mounted) {
+      return;
+    }
+
+    final finalConfirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.withdrawFinalConfirmTitle),
+        content: Text(l10n.withdrawFinalConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            child: Text(l10n.withdrawAccount),
+          ),
+        ],
+      ),
+    );
+
+    if (finalConfirmed != true || !context.mounted) {
+      return;
+    }
+
+    setState(() {
+      _isWithdrawing = true;
+    });
+
+    try {
+      await context.read<AuthCubit>().withdraw();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.withdrawCompleted)));
+      context.go('/auth/login');
+    } catch (e) {
+      if (!context.mounted) return;
+      final messageKey = UserErrorMessage.from(
+        e,
+        fallbackKey: 'withdrawFailed',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(UserErrorMessage.localize(context.l10n, messageKey)),
+        ),
+      );
+    } finally {
+      if (context.mounted) {
+        setState(() {
+          _isWithdrawing = false;
+        });
+      }
+    }
   }
 
   @override
@@ -225,32 +314,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // 로그아웃 버튼
                     CustomButton(
                       text: l10n.logout,
-                      onPressed: () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(l10n.logoutConfirmTitle),
-                            content: Text(l10n.logoutConfirmContent),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: Text(l10n.cancel),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: Text(l10n.logout),
-                              ),
-                            ],
-                          ),
-                        );
+                      onPressed: _isWithdrawing
+                          ? null
+                          : () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text(l10n.logoutConfirmTitle),
+                                  content: Text(l10n.logoutConfirmContent),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: Text(l10n.cancel),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: Text(l10n.logout),
+                                    ),
+                                  ],
+                                ),
+                              );
 
-                        if (confirmed == true && context.mounted) {
-                          await context.read<AuthCubit>().signOut();
-                          if (context.mounted) {
-                            context.go('/auth/login');
-                          }
-                        }
-                      },
+                              if (confirmed == true && context.mounted) {
+                                await context.read<AuthCubit>().signOut();
+                                if (context.mounted) {
+                                  context.go('/auth/login');
+                                }
+                              }
+                            },
+                      isOutlined: true,
+                      width: double.infinity,
+                      textColor: theme.colorScheme.error,
+                      backgroundColor: theme.colorScheme.error,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // 회원탈퇴 버튼
+                    CustomButton(
+                      text: l10n.withdrawAccount,
+                      onPressed: _isWithdrawing
+                          ? null
+                          : () => _handleWithdraw(context),
+                      isLoading: _isWithdrawing,
                       isOutlined: true,
                       width: double.infinity,
                       textColor: theme.colorScheme.error,

@@ -581,6 +581,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logoutConfirmContent => 'Do you want to logout?';
 
   @override
+  String get withdrawAccount => 'Delete Account';
+
+  @override
+  String get withdrawWarningTitle => 'Delete Account Notice';
+
+  @override
+  String get withdrawWarningBodyStrong =>
+      'Deleting your account immediately removes the original content of your coffee, bean, post, and comment data, and this cannot be recovered.\nOnly system notice messages may remain in the community.';
+
+  @override
+  String get withdrawFinalConfirmTitle =>
+      'Are you sure you want to delete your account?';
+
+  @override
+  String get withdrawFinalConfirmBody =>
+      'This action cannot be undone. Do you want to continue?';
+
+  @override
+  String get withdrawCompleted => 'Your account has been deleted.';
+
+  @override
+  String get withdrawFailed =>
+      'An error occurred while deleting your account. Please try again later.';
+
+  @override
   String get profileEditTitle => 'Edit Profile';
 
   @override
@@ -853,6 +878,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get grindExtraCoarse => 'Extra Coarse';
+
+  @override
+  String get withdrawnUser => 'Deleted User';
+
+  @override
+  String get withdrawnPostMessage => 'This is a post from a deleted user.';
+
+  @override
+  String get withdrawnCommentMessage =>
+      'This is a comment from a deleted user.';
 
   @override
   String get guestNickname => 'Guest';

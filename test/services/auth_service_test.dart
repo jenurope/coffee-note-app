@@ -7,6 +7,15 @@ class _MockSupabaseClient extends Mock implements SupabaseClient {}
 
 class _MockGoTrueClient extends Mock implements GoTrueClient {}
 
+class _TestableAuthService extends AuthService {
+  _TestableAuthService(super.client, {required this.onInvokeWithdrawRpc});
+
+  final Future<void> Function() onInvokeWithdrawRpc;
+
+  @override
+  Future<void> invokeWithdrawRpc() => onInvokeWithdrawRpc();
+}
+
 void main() {
   group('AuthService.getValidatedCurrentUser', () {
     late _MockSupabaseClient client;
@@ -68,6 +77,49 @@ void main() {
       final result = await authService.getValidatedCurrentUser();
 
       expect(result?.id, localUser.id);
+      verifyNever(() => authClient.signOut(scope: SignOutScope.local));
+    });
+  });
+
+  group('AuthService.withdrawAccount', () {
+    late _MockSupabaseClient client;
+    late _MockGoTrueClient authClient;
+
+    setUp(() {
+      client = _MockSupabaseClient();
+      authClient = _MockGoTrueClient();
+
+      when(() => client.auth).thenReturn(authClient);
+      when(
+        () => authClient.signOut(scope: SignOutScope.local),
+      ).thenAnswer((_) async {});
+    });
+
+    test('RPC 호출 성공 시 로컬 세션을 정리한다', () async {
+      var rpcCalled = false;
+      final authService = _TestableAuthService(
+        client,
+        onInvokeWithdrawRpc: () async {
+          rpcCalled = true;
+        },
+      );
+
+      await authService.withdrawAccount();
+
+      expect(rpcCalled, isTrue);
+      verify(() => authClient.signOut(scope: SignOutScope.local)).called(1);
+    });
+
+    test('RPC 호출 실패 시 에러를 전파하고 로컬 세션은 유지한다', () async {
+      final authService = _TestableAuthService(
+        client,
+        onInvokeWithdrawRpc: () async {
+          throw Exception('rpc failed');
+        },
+      );
+
+      await expectLater(authService.withdrawAccount(), throwsException);
+
       verifyNever(() => authClient.signOut(scope: SignOutScope.local));
     });
   });

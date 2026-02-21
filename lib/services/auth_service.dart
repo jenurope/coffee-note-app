@@ -165,12 +165,30 @@ class AuthService {
     }
   }
 
+  @visibleForTesting
+  Future<void> invokeWithdrawRpc() async {
+    await _client.rpc('withdraw_my_account');
+  }
+
+  // 회원 탈퇴
+  Future<void> withdrawAccount() async {
+    try {
+      await invokeWithdrawRpc();
+      await _clearLocalSession();
+    } catch (e) {
+      debugPrint('Withdraw account error: $e');
+      rethrow;
+    }
+  }
+
   // 사용자 프로필 가져오기
   Future<UserProfile?> getProfile(String userId) async {
     try {
       final response = await _client
           .from('profiles')
-          .select('id, nickname, email, avatar_url, created_at, updated_at')
+          .select(
+            'id, nickname, email, avatar_url, is_withdrawn, created_at, updated_at',
+          )
           .eq('id', userId)
           .maybeSingle();
 

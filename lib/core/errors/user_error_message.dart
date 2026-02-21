@@ -140,6 +140,7 @@ class UserErrorMessage {
       'errGoogleLoginCanceled' => l10n.errGoogleLoginCanceled,
       'errGoogleTokenUnavailable' => l10n.errGoogleTokenUnavailable,
       'errLoginFailed' => l10n.errLoginFailed,
+      'withdrawFailed' => l10n.withdrawFailed,
       'errServiceNotInitialized' => l10n.errServiceNotInitialized,
       'errLoadBeans' => l10n.errLoadBeans,
       'errLoadBeanDetail' => l10n.errLoadBeanDetail,

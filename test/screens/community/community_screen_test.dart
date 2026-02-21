@@ -6,6 +6,7 @@ import 'package:coffee_note_app/cubits/community/post_list_cubit.dart';
 import 'package:coffee_note_app/cubits/community/post_list_state.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:coffee_note_app/models/community_post.dart';
+import 'package:coffee_note_app/models/user_profile.dart';
 import 'package:coffee_note_app/screens/community/community_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -100,6 +101,47 @@ void main() {
       );
 
       expect(find.text('전체보기'), findsNothing);
+    });
+
+    testWidgets('탈퇴 사용자 게시글은 작성자와 본문을 안내 문구로 표시한다', (tester) async {
+      final now = DateTime(2026, 2, 21, 14);
+      final withdrawnPost = CommunityPost(
+        id: 'post-withdrawn',
+        userId: 'withdrawn-user-id',
+        title: '원문 제목',
+        content: '원문 내용',
+        createdAt: now,
+        updatedAt: now,
+        isWithdrawnContent: true,
+        author: UserProfile(
+          id: 'withdrawn-user-id',
+          nickname: '원래 닉네임',
+          email: 'withdrawn@example.com',
+          isWithdrawn: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: PostListState.loaded(
+          posts: [withdrawnPost],
+          filters: const PostFilters(),
+        ),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      expect(find.text('탈퇴한 사용자'), findsOneWidget);
+      expect(find.text('탈퇴한 사용자의 게시글입니다.'), findsWidgets);
+      expect(find.text('원문 제목'), findsNothing);
+      expect(find.text('원문 내용'), findsNothing);
     });
   });
 }

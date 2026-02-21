@@ -1162,6 +1162,48 @@ abstract class AppLocalizations {
   /// **'Do you want to logout?'**
   String get logoutConfirmContent;
 
+  /// No description provided for @withdrawAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get withdrawAccount;
+
+  /// No description provided for @withdrawWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account Notice'**
+  String get withdrawWarningTitle;
+
+  /// No description provided for @withdrawWarningBodyStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting your account immediately removes the original content of your coffee, bean, post, and comment data, and this cannot be recovered.\nOnly system notice messages may remain in the community.'**
+  String get withdrawWarningBodyStrong;
+
+  /// No description provided for @withdrawFinalConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete your account?'**
+  String get withdrawFinalConfirmTitle;
+
+  /// No description provided for @withdrawFinalConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This action cannot be undone. Do you want to continue?'**
+  String get withdrawFinalConfirmBody;
+
+  /// No description provided for @withdrawCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been deleted.'**
+  String get withdrawCompleted;
+
+  /// No description provided for @withdrawFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while deleting your account. Please try again later.'**
+  String get withdrawFailed;
+
   /// No description provided for @profileEditTitle.
   ///
   /// In en, this message translates to:
@@ -1671,6 +1713,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Extra Coarse'**
   String get grindExtraCoarse;
+
+  /// No description provided for @withdrawnUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted User'**
+  String get withdrawnUser;
+
+  /// No description provided for @withdrawnPostMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a post from a deleted user.'**
+  String get withdrawnPostMessage;
+
+  /// No description provided for @withdrawnCommentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a comment from a deleted user.'**
+  String get withdrawnCommentMessage;
 
   /// No description provided for @guestNickname.
   ///

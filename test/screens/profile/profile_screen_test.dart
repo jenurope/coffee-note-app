@@ -12,6 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
@@ -126,6 +127,54 @@ void main() {
 
       expect(find.text('게스트 모드'), findsOneWidget);
       expect(find.text('로그인'), findsOneWidget);
+    });
+
+    testWidgets('회원탈퇴는 2단계 확인 다이얼로그를 표시한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+      when(() => authCubit.withdraw()).thenAnswer((_) async {});
+
+      await _pumpProfileScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      expect(find.text('회원탈퇴'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('회원탈퇴'),
+        200,
+        scrollable: find.byType(Scrollable),
+      );
+
+      await tester.tap(find.text('회원탈퇴'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('회원탈퇴 안내'), findsOneWidget);
+      expect(find.textContaining('커피/원두/게시글/댓글 원문 데이터가 즉시 삭제'), findsOneWidget);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('회원탈퇴'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('정말 탈퇴하시겠습니까?'), findsOneWidget);
+      expect(find.textContaining('탈퇴 후에는 되돌릴 수 없습니다'), findsOneWidget);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('취소'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      verifyNever(() => authCubit.withdraw());
     });
   });
 }
