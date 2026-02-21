@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -255,9 +256,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
     final uploadedUrls = <String>[];
 
     try {
-      var content = _currentMarkdownContent(trim: true);
-      content = await _uploadPendingImagesAndReplace(
-        content: content,
+      var content = await _uploadPendingImagesAndReplace(
         userId: currentUser.id,
         uploadedUrls: uploadedUrls,
       );
@@ -294,7 +293,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       if (mounted) {
         final messenger = ScaffoldMessenger.of(context);
-        context.pop();
+        context.pop(true);
         messenger.showSnackBar(
           SnackBar(
             content: Text(
@@ -327,11 +326,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
   }
 
   Future<String> _uploadPendingImagesAndReplace({
-    required String content,
     required String userId,
     required List<String> uploadedUrls,
   }) async {
     final imageService = getIt<ImageUploadService>();
+    final content = _currentMarkdownContent(trim: true);
     final imageUrls = extractImageUrlsFromMarkdown(content);
     final pendingUrls = imageUrls
         .where((url) => url.startsWith(pendingImageSchemePrefix))
@@ -365,7 +364,53 @@ class _PostFormScreenState extends State<PostFormScreen> {
       uploadedUrls.add(uploadedUrl);
     }
 
-    return replacePendingImageTokens(content, replacements);
+    _replacePendingImageEmbeds(replacements);
+
+    var resolvedContent = _currentMarkdownContent(trim: true);
+    if (resolvedContent.contains(pendingImageSchemePrefix)) {
+      // Fallback: markdown 문자열에 pending이 남아있는 경우를 대비합니다.
+      resolvedContent = replacePendingImageTokens(
+        resolvedContent,
+        replacements,
+      );
+    }
+
+    return resolvedContent;
+  }
+
+  void _replacePendingImageEmbeds(Map<String, String> replacements) {
+    if (replacements.isEmpty) return;
+
+    final sourceDelta = _quillController.document.toDelta();
+    final nextDelta = Delta();
+
+    for (final operation in sourceDelta.toList()) {
+      if (operation.isInsert && operation.data is Map) {
+        final embedData = Map<String, dynamic>.from(
+          operation.data as Map<dynamic, dynamic>,
+        );
+
+        if (embedData.containsKey(BlockEmbed.imageType)) {
+          final currentUrl = embedData[BlockEmbed.imageType];
+          if (currentUrl is String && replacements.containsKey(currentUrl)) {
+            embedData[BlockEmbed.imageType] = replacements[currentUrl]!;
+            nextDelta.push(Operation.insert(embedData, operation.attributes));
+            continue;
+          }
+        }
+      }
+
+      nextDelta.push(operation);
+    }
+
+    _quillController.document = Document.fromDelta(nextDelta);
+    final cursorOffset = (_quillController.document.length - 1)
+        .clamp(0, _quillController.document.length)
+        .toInt();
+    _quillController.updateSelection(
+      TextSelection.collapsed(offset: cursorOffset),
+      ChangeSource.local,
+    );
   }
 
   Future<void> _deleteRemovedCommunityImages({

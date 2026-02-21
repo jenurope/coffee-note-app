@@ -124,9 +124,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         ? [
                             IconButton(
                               icon: const Icon(Icons.edit),
-                              onPressed: () => context.push(
-                                '/community/${widget.postId}/edit',
-                              ),
+                              onPressed: () async {
+                                final updated = await context.push<bool>(
+                                  '/community/${widget.postId}/edit',
+                                );
+                                if (!context.mounted) return;
+                                if (updated == true) {
+                                  context.read<PostDetailCubit>().load(
+                                    widget.postId,
+                                  );
+                                }
+                              },
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete),
