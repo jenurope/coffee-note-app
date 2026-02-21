@@ -22,11 +22,14 @@ class CoffeeLogListScreen extends StatefulWidget {
 
 class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   bool _isGridView = true;
+  bool _isPagingLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_handleScroll);
     final cubit = context.read<LogListCubit>();
     if (cubit.state is LogListInitial) {
       cubit.load();
@@ -35,8 +38,34 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
 
   @override
   void dispose() {
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_isPagingLoading) return;
+
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 240) {
+      final cubit = context.read<LogListCubit>();
+      if (!cubit.hasMore) return;
+      _loadMore(cubit);
+    }
+  }
+
+  Future<void> _loadMore(LogListCubit cubit) async {
+    setState(() {
+      _isPagingLoading = true;
+    });
+    await cubit.loadMore();
+    if (!mounted) return;
+    setState(() {
+      _isPagingLoading = false;
+    });
   }
 
   void _search() {
@@ -47,6 +76,9 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
       LogListError(filters: final f) => f,
       _ => const LogFilters(),
     };
+    setState(() {
+      _isPagingLoading = false;
+    });
     cubit.updateFilters(
       currentFilters.copyWith(searchQuery: _searchController.text),
     );
@@ -65,6 +97,9 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
       builder: (context) => _FilterSheet(
         currentFilters: currentFilters,
         onApply: (filters) {
+          setState(() {
+            _isPagingLoading = false;
+          });
           cubit.updateFilters(filters);
           Navigator.pop(context);
         },
@@ -143,49 +178,7 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
                                     ? () => context.push('/logs/new')
                                     : null,
                               )
-                            : _isGridView
-                            ? RefreshIndicator(
-                                onRefresh: () =>
-                                    context.read<LogListCubit>().reload(),
-                                child: GridView.builder(
-                                  padding: const EdgeInsets.all(16),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        childAspectRatio: 0.7,
-                                        crossAxisSpacing: 12,
-                                        mainAxisSpacing: 12,
-                                      ),
-                                  itemCount: logs.length,
-                                  itemBuilder: (context, index) {
-                                    final log = logs[index];
-                                    return CoffeeLogCard(
-                                      log: log,
-                                      onTap: () =>
-                                          context.push('/logs/${log.id}'),
-                                    );
-                                  },
-                                ),
-                              )
-                            : RefreshIndicator(
-                                onRefresh: () =>
-                                    context.read<LogListCubit>().reload(),
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.all(16),
-                                  itemCount: logs.length,
-                                  itemBuilder: (context, index) {
-                                    final log = logs[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 8),
-                                      child: CoffeeLogListTile(
-                                        log: log,
-                                        onTap: () =>
-                                            context.push('/logs/${log.id}'),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
+                            : _buildLogList(logs),
                       LogListError(message: final message) => Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -225,6 +218,66 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
       },
     );
   }
+
+  Widget _buildLogList(List<CoffeeLog> logs) {
+    final listWidget = _isGridView
+        ? RefreshIndicator(
+            onRefresh: () => context.read<LogListCubit>().reload(),
+            child: GridView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.7,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: logs.length,
+              itemBuilder: (context, index) {
+                final log = logs[index];
+                return CoffeeLogCard(
+                  log: log,
+                  onTap: () => context.push('/logs/${log.id}'),
+                );
+              },
+            ),
+          )
+        : RefreshIndicator(
+            onRefresh: () => context.read<LogListCubit>().reload(),
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: logs.length,
+              itemBuilder: (context, index) {
+                final log = logs[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: CoffeeLogListTile(
+                    log: log,
+                    onTap: () => context.push('/logs/${log.id}'),
+                  ),
+                );
+              },
+            ),
+          );
+
+    return Stack(
+      children: [
+        Positioned.fill(child: listWidget),
+        if (_isPagingLoading)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: IgnorePointer(
+              child: _PaginationLoadingIndicator(
+                backgroundColor: Theme.of(context).colorScheme.surface,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _FilterSheet extends StatefulWidget {
@@ -235,6 +288,37 @@ class _FilterSheet extends StatefulWidget {
 
   @override
   State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _PaginationLoadingIndicator extends StatelessWidget {
+  final Color backgroundColor;
+
+  const _PaginationLoadingIndicator({required this.backgroundColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: backgroundColor.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2.4),
+            ),
+            SizedBox(width: 10),
+            Text('추가 항목 불러오는 중...'),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _FilterSheetState extends State<_FilterSheet> {
