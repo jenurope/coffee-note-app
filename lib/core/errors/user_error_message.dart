@@ -37,7 +37,6 @@ class UserErrorMessage {
       final message =
           '${error.message} ${error.details ?? ''} ${error.hint ?? ''}'
               .toLowerCase();
-
       if (_containsAny(message, [
         'community_post_hourly_limit_exceeded',
         '시간당 게시글 작성 제한',
@@ -46,6 +45,7 @@ class UserErrorMessage {
       }
       if (_containsAny(message, [
         'community_comment_hourly_limit_exceeded',
+        'comment_hourly_limit_exceeded',
         '시간당 댓글 작성 제한',
       ])) {
         return 'errCommunityCommentHourlyLimit';

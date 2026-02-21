@@ -92,6 +92,32 @@ void main() {
       expect(message, isNot(contains('PostgrestException')));
     });
 
+    test('PostgrestException 게시글 시간당 제한 오류를 전용 메시지로 변환한다', () {
+      const error = PostgrestException(
+        message: 'community_post_hourly_limit_exceeded',
+        code: 'P0001',
+        details: 'limit=3;window=1h',
+        hint: '시간당 게시글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.',
+      );
+
+      final message = UserErrorMessage.from(error);
+
+      expect(message, 'errCommunityPostHourlyLimit');
+    });
+
+    test('PostgrestException 댓글 시간당 제한 오류를 전용 메시지로 변환한다', () {
+      const error = PostgrestException(
+        message: 'community_comment_hourly_limit_exceeded',
+        code: 'P0001',
+        details: 'limit=10;window=1h',
+        hint: '시간당 댓글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.',
+      );
+
+      final message = UserErrorMessage.from(error);
+
+      expect(message, 'errCommunityCommentHourlyLimit');
+    });
+
     test('PostgrestException 미분류 오류는 fallback 메시지를 사용한다', () {
       const error = PostgrestException(
         message: 'unknown db error',
@@ -148,6 +174,14 @@ void main() {
       expect(UserErrorMessage.localize(en, 'errNetwork'), contains('network'));
       expect(UserErrorMessage.localize(ko, 'errNetwork'), contains('네트워크'));
       expect(UserErrorMessage.localize(ja, 'errNetwork'), contains('ネットワーク'));
+      expect(
+        UserErrorMessage.localize(ko, 'errCommunityPostHourlyLimit'),
+        contains('시간당'),
+      );
+      expect(
+        UserErrorMessage.localize(ko, 'errCommunityCommentHourlyLimit'),
+        contains('댓글'),
+      );
     });
   });
 }

@@ -26,12 +26,34 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final _commentController = TextEditingController();
+  final _detailScrollController = ScrollController();
   bool _isSubmitting = false;
 
   @override
+  void initState() {
+    super.initState();
+    _detailScrollController.addListener(_onDetailScroll);
+  }
+
+  @override
   void dispose() {
+    _detailScrollController
+      ..removeListener(_onDetailScroll)
+      ..dispose();
     _commentController.dispose();
     super.dispose();
+  }
+
+  void _onDetailScroll() {
+    if (!_detailScrollController.hasClients) return;
+    final postState = context.read<PostDetailCubit>().state;
+    if (postState is! PostDetailLoaded) return;
+    if (!postState.hasMoreComments || postState.isLoadingMoreComments) {
+      return;
+    }
+    if (_detailScrollController.position.extentAfter < 260) {
+      context.read<PostDetailCubit>().loadMoreComments();
+    }
   }
 
   Future<void> _submitComment() async {
@@ -114,190 +136,220 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 appBar: AppBar(),
                 body: const Center(child: CircularProgressIndicator()),
               ),
-              PostDetailLoaded(post: final post) => () {
-                final isOwner = currentUser?.id == post.userId;
-                final authorName = post.author?.nickname ?? l10n.guestNickname;
-                return Scaffold(
-                  appBar: AppBar(
-                    title: Text(l10n.postScreenTitle),
-                    actions: isOwner
-                        ? [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () async {
-                                final updated = await context.push<bool>(
-                                  '/community/${widget.postId}/edit',
-                                );
-                                if (!context.mounted) return;
-                                if (updated == true) {
-                                  context.read<PostDetailCubit>().load(
-                                    widget.postId,
+              PostDetailLoaded(
+                post: final post,
+                isLoadingMoreComments: final isLoadingMoreComments,
+                hasMoreComments: final hasMoreComments,
+              ) =>
+                () {
+                  final isOwner = currentUser?.id == post.userId;
+                  final authorName =
+                      post.author?.nickname ?? l10n.guestNickname;
+                  return Scaffold(
+                    appBar: AppBar(
+                      title: Text(l10n.postScreenTitle),
+                      actions: isOwner
+                          ? [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () async {
+                                  final updated = await context.push<bool>(
+                                    '/community/${widget.postId}/edit',
                                   );
-                                }
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () => _showDeleteDialog(context),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  body: Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  UserAvatar(
-                                    nickname: authorName,
-                                    avatarUrl: post.author?.avatarUrl,
-                                    radius: 20,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          authorName,
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                        ),
-                                        Text(
-                                          dateFormat.format(post.createdAt),
-                                          style: theme.textTheme.bodySmall
-                                              ?.copyWith(
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.5),
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                  if (!context.mounted) return;
+                                  if (updated == true) {
+                                    context.read<PostDetailCubit>().load(
+                                      widget.postId,
+                                    );
+                                  }
+                                },
                               ),
-                              const Divider(height: 32),
-                              Text(
-                                post.title,
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => _showDeleteDialog(context),
                               ),
-                              const SizedBox(height: 10),
-                              const Divider(height: 1),
-                              const SizedBox(height: 16),
-                              PostMarkdownView(content: post.content),
-                              const Divider(height: 32),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline,
-                                    size: 20,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    l10n.commentsCount(
-                                      post.comments?.length ?? 0,
-                                    ),
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              if (post.comments != null &&
-                                  post.comments!.isNotEmpty)
-                                ...post.comments!.map(
-                                  (comment) => _buildCommentTile(
-                                    context,
-                                    comment,
-                                    currentUser?.id == comment.userId,
-                                  ),
-                                )
-                              else
-                                Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24),
-                                    child: Text(
-                                      l10n.commentNone,
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                            color: theme.colorScheme.onSurface
-                                                .withValues(alpha: 0.5),
-                                          ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (currentUser != null && !isGuest)
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, -2),
-                              ),
-                            ],
-                          ),
-                          child: SafeArea(
-                            child: Row(
+                            ]
+                          : null,
+                    ),
+                    body: Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            controller: _detailScrollController,
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _commentController,
-                                    decoration: InputDecoration(
-                                      hintText: l10n.commentHint,
-                                      border: const OutlineInputBorder(),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 12,
+                                Row(
+                                  children: [
+                                    UserAvatar(
+                                      nickname: authorName,
+                                      avatarUrl: post.author?.avatarUrl,
+                                      radius: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            authorName,
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                          ),
+                                          Text(
+                                            dateFormat.format(post.createdAt),
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.5),
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(height: 32),
+                                Text(
+                                  post.title,
+                                  style: theme.textTheme.headlineSmall
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 10),
+                                const Divider(height: 1),
+                                const SizedBox(height: 16),
+                                PostMarkdownView(content: post.content),
+                                const Divider(height: 32),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.chat_bubble_outline,
+                                      size: 20,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      l10n.commentsCount(
+                                        post.commentCount ??
+                                            post.comments?.length ??
+                                            0,
+                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
                                           ),
                                     ),
-                                    maxLines: null,
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                if (post.comments != null &&
+                                    post.comments!.isNotEmpty)
+                                  ...post.comments!.map(
+                                    (comment) => _buildCommentTile(
+                                      context,
+                                      comment,
+                                      currentUser?.id == comment.userId,
+                                    ),
+                                  )
+                                else
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Text(
+                                        l10n.commentNone,
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                              color: theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.5),
+                                            ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton.filled(
-                                  onPressed: _isSubmitting
-                                      ? null
-                                      : _submitComment,
-                                  icon: _isSubmitting
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.send),
-                                ),
+                                if (hasMoreComments || isLoadingMoreComments)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Center(
+                                      child: isLoadingMoreComments
+                                          ? const CircularProgressIndicator()
+                                          : IconButton(
+                                              onPressed: () => context
+                                                  .read<PostDetailCubit>()
+                                                  .loadMoreComments(),
+                                              icon: const Icon(
+                                                Icons
+                                                    .expand_circle_down_outlined,
+                                              ),
+                                              tooltip: MaterialLocalizations.of(
+                                                context,
+                                              ).moreButtonTooltip,
+                                            ),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                );
-              }(),
+                        if (currentUser != null && !isGuest)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, -2),
+                                ),
+                              ],
+                            ),
+                            child: SafeArea(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _commentController,
+                                      decoration: InputDecoration(
+                                        hintText: l10n.commentHint,
+                                        border: const OutlineInputBorder(),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                      ),
+                                      maxLines: null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton.filled(
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : _submitComment,
+                                    icon: _isSubmitting
+                                        ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(Icons.send),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }(),
               PostDetailError(message: final message) => Scaffold(
                 appBar: AppBar(),
                 body: Center(

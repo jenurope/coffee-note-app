@@ -12,6 +12,8 @@ sealed class PostListState with _$PostListState {
   const factory PostListState.loaded({
     required List<CommunityPost> posts,
     required PostFilters filters,
+    @Default(false) bool isLoadingMore,
+    @Default(true) bool hasMore,
   }) = PostListLoaded;
   const factory PostListState.error({
     required String message,

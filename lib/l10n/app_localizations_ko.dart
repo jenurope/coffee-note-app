@@ -632,6 +632,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errRequestFailed => '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.';
 
   @override
+  String get errPostHourlyLimitExceeded =>
+      '시간당 게시글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get errCommentHourlyLimitExceeded =>
+      '시간당 댓글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
   String get errNetwork => '네트워크 연결을 확인해주세요.';
 
   @override

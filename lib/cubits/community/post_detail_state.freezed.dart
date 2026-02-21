@@ -125,12 +125,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( CommunityPost post)?  loaded,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( CommunityPost post,  bool isLoadingMoreComments,  bool hasMoreComments)?  loaded,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case PostDetailInitial() when initial != null:
 return initial();case PostDetailLoading() when loading != null:
 return loading();case PostDetailLoaded() when loaded != null:
-return loaded(_that.post);case PostDetailError() when error != null:
+return loaded(_that.post,_that.isLoadingMoreComments,_that.hasMoreComments);case PostDetailError() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -149,12 +149,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( CommunityPost post)  loaded,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( CommunityPost post,  bool isLoadingMoreComments,  bool hasMoreComments)  loaded,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case PostDetailInitial():
 return initial();case PostDetailLoading():
 return loading();case PostDetailLoaded():
-return loaded(_that.post);case PostDetailError():
+return loaded(_that.post,_that.isLoadingMoreComments,_that.hasMoreComments);case PostDetailError():
 return error(_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +169,12 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( CommunityPost post)?  loaded,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( CommunityPost post,  bool isLoadingMoreComments,  bool hasMoreComments)?  loaded,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case PostDetailInitial() when initial != null:
 return initial();case PostDetailLoading() when loading != null:
 return loading();case PostDetailLoaded() when loaded != null:
-return loaded(_that.post);case PostDetailError() when error != null:
+return loaded(_that.post,_that.isLoadingMoreComments,_that.hasMoreComments);case PostDetailError() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -251,10 +251,12 @@ String toString() {
 
 
 class PostDetailLoaded implements PostDetailState {
-  const PostDetailLoaded({required this.post});
+  const PostDetailLoaded({required this.post, this.isLoadingMoreComments = false, this.hasMoreComments = true});
   
 
  final  CommunityPost post;
+@JsonKey() final  bool isLoadingMoreComments;
+@JsonKey() final  bool hasMoreComments;
 
 /// Create a copy of PostDetailState
 /// with the given fields replaced by the non-null parameter values.
@@ -266,16 +268,16 @@ $PostDetailLoadedCopyWith<PostDetailLoaded> get copyWith => _$PostDetailLoadedCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDetailLoaded&&(identical(other.post, post) || other.post == post));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDetailLoaded&&(identical(other.post, post) || other.post == post)&&(identical(other.isLoadingMoreComments, isLoadingMoreComments) || other.isLoadingMoreComments == isLoadingMoreComments)&&(identical(other.hasMoreComments, hasMoreComments) || other.hasMoreComments == hasMoreComments));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,post);
+int get hashCode => Object.hash(runtimeType,post,isLoadingMoreComments,hasMoreComments);
 
 @override
 String toString() {
-  return 'PostDetailState.loaded(post: $post)';
+  return 'PostDetailState.loaded(post: $post, isLoadingMoreComments: $isLoadingMoreComments, hasMoreComments: $hasMoreComments)';
 }
 
 
@@ -286,7 +288,7 @@ abstract mixin class $PostDetailLoadedCopyWith<$Res> implements $PostDetailState
   factory $PostDetailLoadedCopyWith(PostDetailLoaded value, $Res Function(PostDetailLoaded) _then) = _$PostDetailLoadedCopyWithImpl;
 @useResult
 $Res call({
- CommunityPost post
+ CommunityPost post, bool isLoadingMoreComments, bool hasMoreComments
 });
 
 
@@ -303,10 +305,12 @@ class _$PostDetailLoadedCopyWithImpl<$Res>
 
 /// Create a copy of PostDetailState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? post = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? post = null,Object? isLoadingMoreComments = null,Object? hasMoreComments = null,}) {
   return _then(PostDetailLoaded(
 post: null == post ? _self.post : post // ignore: cast_nullable_to_non_nullable
-as CommunityPost,
+as CommunityPost,isLoadingMoreComments: null == isLoadingMoreComments ? _self.isLoadingMoreComments : isLoadingMoreComments // ignore: cast_nullable_to_non_nullable
+as bool,hasMoreComments: null == hasMoreComments ? _self.hasMoreComments : hasMoreComments // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
