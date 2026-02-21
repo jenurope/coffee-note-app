@@ -40,6 +40,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   void _search() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      return;
+    }
     final cubit = context.read<PostListCubit>();
     final currentFilters = switch (cubit.state) {
       PostListLoaded(filters: final f) => f,
@@ -47,9 +51,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       PostListError(filters: final f) => f,
       _ => const PostFilters(),
     };
-    cubit.updateFilters(
-      currentFilters.copyWith(searchQuery: _searchController.text),
-    );
+    cubit.updateFilters(currentFilters.copyWith(searchQuery: query));
   }
 
   @override
@@ -174,19 +176,25 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: FilledButton(
-                            onPressed: _search,
-                            style: FilledButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _searchController,
+                          builder: (context, value, _) {
+                            final hasQuery = value.text.trim().isNotEmpty;
+                            return SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: FilledButton(
+                                onPressed: hasQuery ? _search : null,
+                                style: FilledButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: const Icon(Icons.search),
                               ),
-                            ),
-                            child: const Icon(Icons.search),
-                          ),
+                            );
+                          },
                         ),
                       ],
                     ),
