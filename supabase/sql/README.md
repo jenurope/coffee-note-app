@@ -6,6 +6,7 @@
 - `20260221_storage_community_bucket_and_policies.sql`
 - `20260221_community_hourly_write_limits.sql`
 - `20260221_withdraw_account_soft_preserve_rows.sql`
+- `20260221_remove_legacy_bean_and_brew_details.sql`
 
 ## 실행 목적
 - 개발환경 데이터를 초기화합니다.
@@ -15,6 +16,7 @@
 - `community` 스토리지 버킷을 생성(또는 동기화)하고, 기존 미디어 버킷 정책에 포함합니다.
 - 커뮤니티 글/댓글 작성에 대해 회원 가입일 기준 시간당 작성 제한(3단계)을 적용합니다.
 - 회원 탈퇴 시 개인정보/개인 기록 삭제, 커뮤니티 원문 마스킹, 스토리지 정리 로그 적재를 적용합니다.
+- 더 이상 사용하지 않는 레거시 테이블(`bean_details`, `brew_details`)을 제거합니다.
 
 ## 실행 방법
 1. Supabase SQL Editor에서 Role을 `postgres`(owner 권한)로 선택한 뒤 스크립트를 실행합니다.

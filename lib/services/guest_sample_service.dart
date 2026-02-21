@@ -3,12 +3,8 @@ import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 
-import '../domain/catalogs/brew_method_catalog.dart';
 import '../domain/catalogs/coffee_type_catalog.dart';
-import '../domain/catalogs/grind_size_catalog.dart';
 import '../domain/catalogs/roast_level_catalog.dart';
-import '../models/bean_detail.dart';
-import '../models/brew_detail.dart';
 import '../models/coffee_bean.dart';
 import '../models/coffee_log.dart';
 import '../models/guest_dashboard_snapshot.dart';
@@ -224,31 +220,6 @@ class GuestSampleService {
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 20)),
         updatedAt: now.subtract(const Duration(days: 18)),
-        beanDetails: <BeanDetail>[
-          BeanDetail(
-            id: 'sample-bean-detail-1',
-            coffeeBeanId: 'sample-bean-ethiopia-1',
-            origin: l10n.sampleOriginEthiopia,
-            variety: 'Heirloom',
-            process: l10n.sampleProcessWashed,
-            ratio: 100,
-            createdAt: now.subtract(const Duration(days: 20)),
-          ),
-        ],
-        brewDetails: <BrewDetail>[
-          BrewDetail(
-            id: 'sample-brew-detail-1',
-            coffeeBeanId: 'sample-bean-ethiopia-1',
-            brewDate: DateTime(2026, 2, 3),
-            brewMethod: BrewMethodCatalog.pourOver,
-            grindSize: GrindSizeCatalog.medium,
-            brewTime: '2:45',
-            waterTemperature: 92,
-            pairedFood: l10n.sampleFood1,
-            brewNotes: l10n.sampleBrewNote1,
-            createdAt: now.subtract(const Duration(days: 11)),
-          ),
-        ],
       ),
       CoffeeBean(
         id: 'sample-bean-colombia-1',
@@ -264,17 +235,6 @@ class GuestSampleService {
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 15)),
         updatedAt: now.subtract(const Duration(days: 14)),
-        beanDetails: <BeanDetail>[
-          BeanDetail(
-            id: 'sample-bean-detail-2',
-            coffeeBeanId: 'sample-bean-colombia-1',
-            origin: l10n.sampleOriginColombia,
-            variety: 'Caturra',
-            process: l10n.sampleProcessHoney,
-            ratio: 100,
-            createdAt: now.subtract(const Duration(days: 15)),
-          ),
-        ],
       ),
       CoffeeBean(
         id: 'sample-bean-kenya-1',
@@ -290,17 +250,6 @@ class GuestSampleService {
         imageUrl: null,
         createdAt: now.subtract(const Duration(days: 8)),
         updatedAt: now.subtract(const Duration(days: 7)),
-        beanDetails: <BeanDetail>[
-          BeanDetail(
-            id: 'sample-bean-detail-3',
-            coffeeBeanId: 'sample-bean-kenya-1',
-            origin: l10n.sampleOriginKenya,
-            variety: 'SL28',
-            process: l10n.sampleProcessWashed,
-            ratio: 100,
-            createdAt: now.subtract(const Duration(days: 8)),
-          ),
-        ],
       ),
     ];
   }

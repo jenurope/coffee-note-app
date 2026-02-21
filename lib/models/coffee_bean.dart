@@ -1,5 +1,3 @@
-import 'bean_detail.dart';
-import 'brew_detail.dart';
 import '../domain/catalogs/roast_level_catalog.dart';
 
 class CoffeeBean {
@@ -17,10 +15,6 @@ class CoffeeBean {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  // 관계 데이터
-  final List<BeanDetail>? beanDetails;
-  final List<BrewDetail>? brewDetails;
-
   CoffeeBean({
     required this.id,
     required this.userId,
@@ -35,8 +29,6 @@ class CoffeeBean {
     this.imageUrl,
     required this.createdAt,
     required this.updatedAt,
-    this.beanDetails,
-    this.brewDetails,
   });
 
   factory CoffeeBean.fromJson(Map<String, dynamic> json) {
@@ -54,16 +46,6 @@ class CoffeeBean {
       imageUrl: json['image_url'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      beanDetails: json['bean_details'] != null
-          ? (json['bean_details'] as List)
-                .map((e) => BeanDetail.fromJson(e as Map<String, dynamic>))
-                .toList()
-          : null,
-      brewDetails: json['brew_details'] != null
-          ? (json['brew_details'] as List)
-                .map((e) => BrewDetail.fromJson(e as Map<String, dynamic>))
-                .toList()
-          : null,
     );
   }
 
@@ -114,8 +96,6 @@ class CoffeeBean {
     String? imageUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
-    List<BeanDetail>? beanDetails,
-    List<BrewDetail>? brewDetails,
   }) {
     return CoffeeBean(
       id: id ?? this.id,
@@ -131,8 +111,6 @@ class CoffeeBean {
       imageUrl: imageUrl ?? this.imageUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      beanDetails: beanDetails ?? this.beanDetails,
-      brewDetails: brewDetails ?? this.brewDetails,
     );
   }
 
