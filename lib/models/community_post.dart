@@ -7,6 +7,7 @@ class CommunityPost {
   final String content;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isWithdrawnContent;
 
   // 관계 데이터
   final UserProfile? author;
@@ -20,6 +21,7 @@ class CommunityPost {
     required this.content,
     required this.createdAt,
     required this.updatedAt,
+    this.isWithdrawnContent = false,
     this.author,
     this.comments,
     this.commentCount,
@@ -33,6 +35,7 @@ class CommunityPost {
       content: json['content'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      isWithdrawnContent: json['is_withdrawn_content'] as bool? ?? false,
       author: json['profiles'] != null
           ? UserProfile.fromJson(json['profiles'] as Map<String, dynamic>)
           : null,
@@ -55,6 +58,7 @@ class CommunityPost {
       'content': content,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'is_withdrawn_content': isWithdrawnContent,
     };
   }
 
@@ -69,6 +73,7 @@ class CommunityPost {
     String? content,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isWithdrawnContent,
     UserProfile? author,
     List<CommunityComment>? comments,
     int? commentCount,
@@ -80,6 +85,7 @@ class CommunityPost {
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isWithdrawnContent: isWithdrawnContent ?? this.isWithdrawnContent,
       author: author ?? this.author,
       comments: comments ?? this.comments,
       commentCount: commentCount ?? this.commentCount,
@@ -95,6 +101,7 @@ class CommunityComment {
   final String? parentId;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isWithdrawnContent;
 
   // 관계 데이터
   final UserProfile? author;
@@ -108,6 +115,7 @@ class CommunityComment {
     this.parentId,
     required this.createdAt,
     required this.updatedAt,
+    this.isWithdrawnContent = false,
     this.author,
     this.replies,
   });
@@ -121,6 +129,7 @@ class CommunityComment {
       parentId: json['parent_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      isWithdrawnContent: json['is_withdrawn_content'] as bool? ?? false,
       author: json['profiles'] != null
           ? UserProfile.fromJson(json['profiles'] as Map<String, dynamic>)
           : null,
@@ -136,6 +145,7 @@ class CommunityComment {
       'parent_id': parentId,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'is_withdrawn_content': isWithdrawnContent,
     };
   }
 
@@ -156,6 +166,7 @@ class CommunityComment {
     String? parentId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isWithdrawnContent,
     UserProfile? author,
     List<CommunityComment>? replies,
   }) {
@@ -167,6 +178,7 @@ class CommunityComment {
       parentId: parentId ?? this.parentId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isWithdrawnContent: isWithdrawnContent ?? this.isWithdrawnContent,
       author: author ?? this.author,
       replies: replies ?? this.replies,
     );

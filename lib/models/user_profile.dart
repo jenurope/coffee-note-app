@@ -3,6 +3,7 @@ class UserProfile {
   final String nickname;
   final String? email;
   final String? avatarUrl;
+  final bool isWithdrawn;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -11,6 +12,7 @@ class UserProfile {
     required this.nickname,
     this.email,
     this.avatarUrl,
+    this.isWithdrawn = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -21,6 +23,7 @@ class UserProfile {
       nickname: json['nickname'] as String,
       email: json['email'] as String?,
       avatarUrl: json['avatar_url'] as String?,
+      isWithdrawn: json['is_withdrawn'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -32,6 +35,7 @@ class UserProfile {
       'nickname': nickname,
       'email': email,
       'avatar_url': avatarUrl,
+      'is_withdrawn': isWithdrawn,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -42,6 +46,7 @@ class UserProfile {
     String? nickname,
     String? email,
     String? avatarUrl,
+    bool? isWithdrawn,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -50,6 +55,7 @@ class UserProfile {
       nickname: nickname ?? this.nickname,
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      isWithdrawn: isWithdrawn ?? this.isWithdrawn,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

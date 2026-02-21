@@ -1,0 +1,130 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
+import 'package:coffee_note_app/cubits/auth/auth_state.dart';
+import 'package:coffee_note_app/cubits/community/post_detail_cubit.dart';
+import 'package:coffee_note_app/cubits/community/post_detail_state.dart';
+import 'package:coffee_note_app/l10n/app_localizations.dart';
+import 'package:coffee_note_app/models/community_post.dart';
+import 'package:coffee_note_app/models/user_profile.dart';
+import 'package:coffee_note_app/screens/community/post_detail_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
+
+class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
+
+class _MockPostDetailCubit extends MockCubit<PostDetailState>
+    implements PostDetailCubit {}
+
+void main() {
+  group('PostDetailScreen', () {
+    late _MockAuthCubit authCubit;
+    late _MockPostDetailCubit postDetailCubit;
+
+    setUp(() {
+      authCubit = _MockAuthCubit();
+      postDetailCubit = _MockPostDetailCubit();
+    });
+
+    tearDown(() async {
+      await authCubit.close();
+      await postDetailCubit.close();
+    });
+
+    testWidgets('탈퇴 사용자 글/댓글은 안내 문구로만 표시한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(post: _buildWithdrawnPost());
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-withdrawn'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('탈퇴한 사용자'), findsWidgets);
+      expect(find.text('탈퇴한 사용자의 게시글입니다.'), findsWidgets);
+      expect(find.text('탈퇴한 사용자의 댓글입니다.'), findsOneWidget);
+      expect(find.text('원문 제목'), findsNothing);
+      expect(find.text('원문 본문'), findsNothing);
+      expect(find.text('원문 댓글'), findsNothing);
+    });
+  });
+}
+
+CommunityPost _buildWithdrawnPost() {
+  final now = DateTime(2026, 2, 21, 14);
+  final author = UserProfile(
+    id: 'withdrawn-author',
+    nickname: '원래닉네임',
+    email: 'withdrawn@example.com',
+    isWithdrawn: true,
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  return CommunityPost(
+    id: 'post-withdrawn',
+    userId: author.id,
+    title: '원문 제목',
+    content: '원문 본문',
+    createdAt: now,
+    updatedAt: now,
+    isWithdrawnContent: true,
+    author: author,
+    comments: [
+      CommunityComment(
+        id: 'comment-withdrawn',
+        postId: 'post-withdrawn',
+        userId: author.id,
+        content: '원문 댓글',
+        createdAt: now,
+        updatedAt: now,
+        isWithdrawnContent: true,
+        author: author,
+      ),
+    ],
+    commentCount: 1,
+  );
+}
+
+User _testUser(String id) {
+  return User(
+    id: id,
+    appMetadata: const {},
+    userMetadata: const {},
+    aud: 'authenticated',
+    email: '$id@example.com',
+    createdAt: '2026-02-21T00:00:00.000Z',
+  );
+}

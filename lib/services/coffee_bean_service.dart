@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/coffee_bean.dart';
-import '../models/bean_detail.dart';
-import '../models/brew_detail.dart';
 import 'image_upload_service.dart';
 
 class CoffeeBeanService {
@@ -24,11 +22,7 @@ class CoffeeBeanService {
     int? offset,
   }) async {
     try {
-      var query = _client.from('coffee_beans').select('''
-        *,
-        bean_details(*),
-        brew_details(*)
-      ''');
+      var query = _client.from('coffee_beans').select();
 
       // 사용자 필터
       if (userId != null) {
@@ -87,11 +81,7 @@ class CoffeeBeanService {
     try {
       final response = await _client
           .from('coffee_beans')
-          .select('''
-        *,
-        bean_details(*),
-        brew_details(*)
-      ''')
+          .select()
           .eq('id', id)
           .maybeSingle();
 
@@ -151,58 +141,6 @@ class CoffeeBeanService {
       await _client.from('coffee_beans').delete().eq('id', id);
     } catch (e) {
       debugPrint('Delete bean error: $e');
-      rethrow;
-    }
-  }
-
-  // 원두 상세 정보 추가
-  Future<BeanDetail> addBeanDetail(BeanDetail detail) async {
-    try {
-      final response = await _client
-          .from('bean_details')
-          .insert(detail.toInsertJson())
-          .select()
-          .single();
-
-      return BeanDetail.fromJson(response);
-    } catch (e) {
-      debugPrint('Add bean detail error: $e');
-      rethrow;
-    }
-  }
-
-  // 원두 상세 정보 삭제
-  Future<void> deleteBeanDetail(String id) async {
-    try {
-      await _client.from('bean_details').delete().eq('id', id);
-    } catch (e) {
-      debugPrint('Delete bean detail error: $e');
-      rethrow;
-    }
-  }
-
-  // 추출 기록 추가
-  Future<BrewDetail> addBrewDetail(BrewDetail detail) async {
-    try {
-      final response = await _client
-          .from('brew_details')
-          .insert(detail.toInsertJson())
-          .select()
-          .single();
-
-      return BrewDetail.fromJson(response);
-    } catch (e) {
-      debugPrint('Add brew detail error: $e');
-      rethrow;
-    }
-  }
-
-  // 추출 기록 삭제
-  Future<void> deleteBrewDetail(String id) async {
-    try {
-      await _client.from('brew_details').delete().eq('id', id);
-    } catch (e) {
-      debugPrint('Delete brew detail error: $e');
       rethrow;
     }
   }

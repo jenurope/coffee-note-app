@@ -51,6 +51,28 @@ void main() {
 
       await cubit.close();
     });
+
+    test('withdraw 호출 시 회원탈퇴를 수행하고 unauthenticated 상태가 된다', () async {
+      final user = _testUser('withdraw-user');
+      when(
+        () => authService.getValidatedCurrentUser(),
+      ).thenAnswer((_) async => user);
+      when(() => authService.withdrawAccount()).thenAnswer((_) async {});
+
+      final cubit = AuthCubit(authService: authService);
+
+      await untilCalled(() => authService.getValidatedCurrentUser());
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state, isA<AuthAuthenticated>());
+
+      await cubit.withdraw();
+
+      expect(cubit.state, isA<AuthUnauthenticated>());
+      verify(() => authService.withdrawAccount()).called(1);
+
+      await cubit.close();
+    });
   });
 }
 

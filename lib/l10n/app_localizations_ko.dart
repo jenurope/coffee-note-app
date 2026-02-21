@@ -566,6 +566,28 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logoutConfirmContent => '로그아웃 하시겠습니까?';
 
   @override
+  String get withdrawAccount => '회원탈퇴';
+
+  @override
+  String get withdrawWarningTitle => '회원탈퇴 안내';
+
+  @override
+  String get withdrawWarningBodyStrong =>
+      '회원 탈퇴 시 커피/원두/게시글/댓글 원문 데이터가 즉시 삭제되며 복구할 수 없습니다.\n커뮤니티에는 탈퇴 안내 문구만 남을 수 있습니다.';
+
+  @override
+  String get withdrawFinalConfirmTitle => '정말 탈퇴하시겠습니까?';
+
+  @override
+  String get withdrawFinalConfirmBody => '탈퇴 후에는 되돌릴 수 없습니다. 계속 진행하시겠습니까?';
+
+  @override
+  String get withdrawCompleted => '회원탈퇴가 완료되었습니다.';
+
+  @override
+  String get withdrawFailed => '회원탈퇴 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
   String get profileEditTitle => '프로필 수정';
 
   @override
@@ -823,6 +845,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get grindExtraCoarse => '극굵';
+
+  @override
+  String get withdrawnUser => '탈퇴한 사용자';
+
+  @override
+  String get withdrawnPostMessage => '탈퇴한 사용자의 게시글입니다.';
+
+  @override
+  String get withdrawnCommentMessage => '탈퇴한 사용자의 댓글입니다.';
 
   @override
   String get guestNickname => '게스트';

@@ -7,6 +7,13 @@ import '../models/user_profile.dart';
 class AuthService {
   final SupabaseClient _client;
   late final GoTrueClient _auth;
+  bool _skipGetClaimsValidation = false;
+  static const List<String> _withdrawStorageBuckets = <String>[
+    'beans',
+    'logs',
+    'avatars',
+    'community',
+  ];
 
   // iOS 클라이언트 ID
   static const String _iosClientId =
@@ -29,6 +36,10 @@ class AuthService {
   Future<User?> getValidatedCurrentUser() async {
     final localUser = _auth.currentUser;
     if (localUser == null) return null;
+
+    if (_skipGetClaimsValidation) {
+      return _validateCurrentUserViaGetUser(localUser);
+    }
 
     try {
       final claimsResponse = await _auth.getClaims();
@@ -82,6 +93,13 @@ class AuthService {
       );
       return localUser;
     } catch (e) {
+      if (_isGetClaimsJwksCacheBug(e)) {
+        _skipGetClaimsValidation = true;
+        debugPrint(
+          'Validate current user via getClaims disabled and fallback(getUser)',
+        );
+        return _validateCurrentUserViaGetUser(localUser);
+      }
       debugPrint('Validate current user via getClaims unexpected error: $e');
       return localUser;
     }
@@ -165,12 +183,38 @@ class AuthService {
     }
   }
 
+  @visibleForTesting
+  Future<void> invokeWithdrawRpc() async {
+    await _client.rpc('withdraw_my_account');
+  }
+
+  // 회원 탈퇴
+  Future<void> withdrawAccount() async {
+    try {
+      final userId = _auth.currentUser?.id;
+      if (userId != null && userId.isNotEmpty) {
+        try {
+          await cleanupWithdrawStorageBestEffort(userId);
+        } catch (e) {
+          debugPrint('Withdraw storage cleanup unexpected error: $e');
+        }
+      }
+      await invokeWithdrawRpc();
+      await _clearLocalSession();
+    } catch (e) {
+      debugPrint('Withdraw account error: $e');
+      rethrow;
+    }
+  }
+
   // 사용자 프로필 가져오기
   Future<UserProfile?> getProfile(String userId) async {
     try {
       final response = await _client
           .from('profiles')
-          .select('id, nickname, email, avatar_url, created_at, updated_at')
+          .select(
+            'id, nickname, email, avatar_url, is_withdrawn, created_at, updated_at',
+          )
           .eq('id', userId)
           .maybeSingle();
 
@@ -263,5 +307,132 @@ class AuthService {
       'auth session missing',
     ];
     return patterns.any(normalized.contains);
+  }
+
+  bool _isGetClaimsJwksCacheBug(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('null check operator used on a null value');
+  }
+
+  @visibleForTesting
+  Future<void> cleanupWithdrawStorageBestEffort(String userId) async {
+    final objectPrefix = '$userId/';
+    for (final bucket in _withdrawStorageBuckets) {
+      try {
+        await _removeStorageObjectsByPrefix(bucket: bucket, userId: userId);
+      } catch (e) {
+        debugPrint('Withdraw storage cleanup failed ($bucket): $e');
+        await _recordWithdrawStorageCleanupFailure(
+          bucket: bucket,
+          objectPrefix: objectPrefix,
+          errorMessage: e.toString(),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeStorageObjectsByPrefix({
+    required String bucket,
+    required String userId,
+  }) async {
+    final storage = _client.storage.from(bucket);
+
+    for (var i = 0; i < 100; i++) {
+      final objects = await storage.list(
+        path: userId,
+        searchOptions: const SearchOptions(limit: 100, offset: 0),
+      );
+
+      if (objects.isEmpty) {
+        return;
+      }
+
+      final paths = objects
+          .where((object) => object.metadata != null)
+          .map(
+            (object) => _toStoragePath(userId: userId, objectName: object.name),
+          )
+          .where((path) => path.isNotEmpty)
+          .toList(growable: false);
+
+      if (paths.isEmpty) {
+        return;
+      }
+
+      await storage.remove(paths);
+    }
+
+    throw Exception('storage cleanup exceeded max iterations');
+  }
+
+  String _toStoragePath({required String userId, required String objectName}) {
+    final normalizedName = objectName.trim();
+    if (normalizedName.isEmpty) return '';
+    if (normalizedName.startsWith('$userId/')) return normalizedName;
+    if (normalizedName.startsWith('/')) return '$userId$normalizedName';
+    return '$userId/$normalizedName';
+  }
+
+  Future<void> _recordWithdrawStorageCleanupFailure({
+    required String bucket,
+    required String objectPrefix,
+    required String errorMessage,
+  }) async {
+    try {
+      await _client.rpc(
+        'log_withdraw_storage_cleanup_failure',
+        params: {
+          'p_bucket': bucket,
+          'p_object_prefix': objectPrefix,
+          'p_error_message': errorMessage,
+        },
+      );
+    } catch (e) {
+      debugPrint('Record withdraw storage cleanup failure error: $e');
+    }
+  }
+
+  Future<User?> _validateCurrentUserViaGetUser(User localUser) async {
+    try {
+      final response = await _auth.getUser();
+      final serverUserId = response.user?.id;
+
+      if (serverUserId == null || serverUserId.isEmpty) {
+        debugPrint('Validate current user via getUser failed: user is empty');
+        await _clearLocalSession();
+        return null;
+      }
+
+      if (serverUserId != localUser.id) {
+        debugPrint(
+          'Validate current user via getUser failed: id mismatch '
+          '(server: $serverUserId, local: ${localUser.id})',
+        );
+        await _clearLocalSession();
+        return null;
+      }
+
+      debugPrint(
+        'Validate current user via getUser success: userId=$serverUserId',
+      );
+      return localUser;
+    } on AuthException catch (e) {
+      if (_shouldForceSignOutForValidationError(e.message)) {
+        debugPrint(
+          'Validate current user via getUser failed and session cleared: '
+          '${e.message}',
+        );
+        await _clearLocalSession();
+        return null;
+      }
+
+      debugPrint(
+        'Validate current user via getUser skipped (transient): ${e.message}',
+      );
+      return localUser;
+    } catch (e) {
+      debugPrint('Validate current user via getUser unexpected error: $e');
+      return localUser;
+    }
   }
 }

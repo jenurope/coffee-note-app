@@ -8,7 +8,9 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/community/post_filters.dart';
 import '../../cubits/community/post_list_cubit.dart';
 import '../../cubits/community/post_list_state.dart';
+import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n.dart';
+import '../../models/community_post.dart';
 import 'post_markdown_utils.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/common/user_avatar.dart';
@@ -90,6 +92,31 @@ class _CommunityScreenState extends State<CommunityScreen> {
       PostListError(filters: final f) => f,
       _ => const PostFilters(),
     };
+  }
+
+  String _resolveAuthorName(AppLocalizations l10n, CommunityPost post) {
+    final author = post.author;
+    if (author == null) {
+      return l10n.guestNickname;
+    }
+    if (author.isWithdrawn) {
+      return l10n.withdrawnUser;
+    }
+    return author.nickname;
+  }
+
+  String _resolvePostTitle(AppLocalizations l10n, CommunityPost post) {
+    if (post.isWithdrawnContent) {
+      return l10n.withdrawnPostMessage;
+    }
+    return post.title;
+  }
+
+  String _resolvePostSnippet(AppLocalizations l10n, CommunityPost post) {
+    if (post.isWithdrawnContent) {
+      return l10n.withdrawnPostMessage;
+    }
+    return markdownToPlainTextSnippet(post.content);
   }
 
   @override
@@ -305,9 +332,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       );
                                     }
                                     final post = posts[index];
-                                    final authorName =
-                                        post.author?.nickname ??
-                                        l10n.guestNickname;
+                                    final authorName = _resolveAuthorName(
+                                      l10n,
+                                      post,
+                                    );
+                                    final postTitle = _resolvePostTitle(
+                                      l10n,
+                                      post,
+                                    );
+                                    final postSnippet = _resolvePostSnippet(
+                                      l10n,
+                                      post,
+                                    );
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 12),
                                       child: InkWell(
@@ -362,7 +398,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               ),
                                               const SizedBox(height: 12),
                                               Text(
-                                                post.title,
+                                                postTitle,
                                                 style: theme
                                                     .textTheme
                                                     .titleMedium
@@ -375,9 +411,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               ),
                                               const SizedBox(height: 8),
                                               Text(
-                                                markdownToPlainTextSnippet(
-                                                  post.content,
-                                                ),
+                                                postSnippet,
                                                 style: theme
                                                     .textTheme
                                                     .bodyMedium
