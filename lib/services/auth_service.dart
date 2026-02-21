@@ -8,6 +8,12 @@ class AuthService {
   final SupabaseClient _client;
   late final GoTrueClient _auth;
   bool _skipGetClaimsValidation = false;
+  static const List<String> _withdrawStorageBuckets = <String>[
+    'beans',
+    'logs',
+    'avatars',
+    'community',
+  ];
 
   // iOS 클라이언트 ID
   static const String _iosClientId =
@@ -185,6 +191,14 @@ class AuthService {
   // 회원 탈퇴
   Future<void> withdrawAccount() async {
     try {
+      final userId = _auth.currentUser?.id;
+      if (userId != null && userId.isNotEmpty) {
+        try {
+          await cleanupWithdrawStorageBestEffort(userId);
+        } catch (e) {
+          debugPrint('Withdraw storage cleanup unexpected error: $e');
+        }
+      }
       await invokeWithdrawRpc();
       await _clearLocalSession();
     } catch (e) {
@@ -298,6 +312,84 @@ class AuthService {
   bool _isGetClaimsJwksCacheBug(Object error) {
     final message = error.toString().toLowerCase();
     return message.contains('null check operator used on a null value');
+  }
+
+  @visibleForTesting
+  Future<void> cleanupWithdrawStorageBestEffort(String userId) async {
+    final objectPrefix = '$userId/';
+    for (final bucket in _withdrawStorageBuckets) {
+      try {
+        await _removeStorageObjectsByPrefix(bucket: bucket, userId: userId);
+      } catch (e) {
+        debugPrint('Withdraw storage cleanup failed ($bucket): $e');
+        await _recordWithdrawStorageCleanupFailure(
+          bucket: bucket,
+          objectPrefix: objectPrefix,
+          errorMessage: e.toString(),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeStorageObjectsByPrefix({
+    required String bucket,
+    required String userId,
+  }) async {
+    final storage = _client.storage.from(bucket);
+
+    for (var i = 0; i < 100; i++) {
+      final objects = await storage.list(
+        path: userId,
+        searchOptions: const SearchOptions(limit: 100, offset: 0),
+      );
+
+      if (objects.isEmpty) {
+        return;
+      }
+
+      final paths = objects
+          .where((object) => object.metadata != null)
+          .map(
+            (object) => _toStoragePath(userId: userId, objectName: object.name),
+          )
+          .where((path) => path.isNotEmpty)
+          .toList(growable: false);
+
+      if (paths.isEmpty) {
+        return;
+      }
+
+      await storage.remove(paths);
+    }
+
+    throw Exception('storage cleanup exceeded max iterations');
+  }
+
+  String _toStoragePath({required String userId, required String objectName}) {
+    final normalizedName = objectName.trim();
+    if (normalizedName.isEmpty) return '';
+    if (normalizedName.startsWith('$userId/')) return normalizedName;
+    if (normalizedName.startsWith('/')) return '$userId$normalizedName';
+    return '$userId/$normalizedName';
+  }
+
+  Future<void> _recordWithdrawStorageCleanupFailure({
+    required String bucket,
+    required String objectPrefix,
+    required String errorMessage,
+  }) async {
+    try {
+      await _client.rpc(
+        'log_withdraw_storage_cleanup_failure',
+        params: {
+          'p_bucket': bucket,
+          'p_object_prefix': objectPrefix,
+          'p_error_message': errorMessage,
+        },
+      );
+    } catch (e) {
+      debugPrint('Record withdraw storage cleanup failure error: $e');
+    }
   }
 
   Future<User?> _validateCurrentUserViaGetUser(User localUser) async {

@@ -8,12 +8,22 @@ class _MockSupabaseClient extends Mock implements SupabaseClient {}
 class _MockGoTrueClient extends Mock implements GoTrueClient {}
 
 class _TestableAuthService extends AuthService {
-  _TestableAuthService(super.client, {required this.onInvokeWithdrawRpc});
+  _TestableAuthService(
+    super.client, {
+    required this.onInvokeWithdrawRpc,
+    required this.onCleanupWithdrawStorage,
+  });
 
   final Future<void> Function() onInvokeWithdrawRpc;
+  final Future<void> Function(String userId) onCleanupWithdrawStorage;
 
   @override
   Future<void> invokeWithdrawRpc() => onInvokeWithdrawRpc();
+
+  @override
+  Future<void> cleanupWithdrawStorageBestEffort(String userId) {
+    return onCleanupWithdrawStorage(userId);
+  }
 }
 
 void main() {
@@ -100,12 +110,15 @@ void main() {
   group('AuthService.withdrawAccount', () {
     late _MockSupabaseClient client;
     late _MockGoTrueClient authClient;
+    late User localUser;
 
     setUp(() {
       client = _MockSupabaseClient();
       authClient = _MockGoTrueClient();
+      localUser = _testUser('withdraw-user');
 
       when(() => client.auth).thenReturn(authClient);
+      when(() => authClient.currentUser).thenReturn(localUser);
       when(
         () => authClient.signOut(scope: SignOutScope.local),
       ).thenAnswer((_) async {});
@@ -118,6 +131,7 @@ void main() {
         onInvokeWithdrawRpc: () async {
           rpcCalled = true;
         },
+        onCleanupWithdrawStorage: (_) async {},
       );
 
       await authService.withdrawAccount();
@@ -132,11 +146,30 @@ void main() {
         onInvokeWithdrawRpc: () async {
           throw Exception('rpc failed');
         },
+        onCleanupWithdrawStorage: (_) async {},
       );
 
       await expectLater(authService.withdrawAccount(), throwsException);
 
       verifyNever(() => authClient.signOut(scope: SignOutScope.local));
+    });
+
+    test('스토리지 정리 실패가 있어도 회원탈퇴를 계속 진행한다', () async {
+      var rpcCalled = false;
+      final authService = _TestableAuthService(
+        client,
+        onInvokeWithdrawRpc: () async {
+          rpcCalled = true;
+        },
+        onCleanupWithdrawStorage: (_) async {
+          throw Exception('storage cleanup failed');
+        },
+      );
+
+      await authService.withdrawAccount();
+
+      expect(rpcCalled, isTrue);
+      verify(() => authClient.signOut(scope: SignOutScope.local)).called(1);
     });
   });
 }
