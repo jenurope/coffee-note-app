@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +23,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late final Future<String> _versionFuture;
   bool _isWithdrawing = false;
+  BuildContext? _withdrawProgressDialogContext;
 
   @override
   void initState() {
@@ -92,9 +95,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _isWithdrawing = true;
     });
+    _showWithdrawProgressDialog(context);
 
     try {
       await context.read<AuthCubit>().withdraw();
+      _hideWithdrawProgressDialog();
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -112,12 +117,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } finally {
+      _hideWithdrawProgressDialog();
       if (context.mounted) {
         setState(() {
           _isWithdrawing = false;
         });
       }
     }
+  }
+
+  void _showWithdrawProgressDialog(BuildContext context) {
+    if (_withdrawProgressDialogContext != null) {
+      return;
+    }
+
+    unawaited(
+      showDialog<void>(
+        context: context,
+        useRootNavigator: true,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          _withdrawProgressDialogContext = dialogContext;
+          return const PopScope(
+            canPop: false,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        },
+      ).whenComplete(() {
+        _withdrawProgressDialogContext = null;
+      }),
+    );
+  }
+
+  void _hideWithdrawProgressDialog() {
+    final dialogContext = _withdrawProgressDialogContext;
+    if (dialogContext == null || !dialogContext.mounted) {
+      return;
+    }
+    Navigator.of(dialogContext, rootNavigator: true).pop();
   }
 
   @override
