@@ -79,6 +79,22 @@ void main() {
       expect(result?.id, localUser.id);
       verifyNever(() => authClient.signOut(scope: SignOutScope.local));
     });
+
+    test('getClaims null-check 오류 시 getUser fallback으로 검증한다', () async {
+      when(() => authClient.currentUser).thenReturn(localUser);
+      when(
+        () => authClient.getClaims(),
+      ).thenThrow(Exception('Null check operator used on a null value'));
+      when(
+        () => authClient.getUser(),
+      ).thenAnswer((_) async => _userResponse(localUser));
+
+      final result = await authService.getValidatedCurrentUser();
+
+      expect(result?.id, localUser.id);
+      verify(() => authClient.getUser()).called(1);
+      verifyNever(() => authClient.signOut(scope: SignOutScope.local));
+    });
   });
 
   group('AuthService.withdrawAccount', () {
@@ -146,4 +162,15 @@ User _testUser(String id) {
     email: '$id@example.com',
     createdAt: '2026-02-20T00:00:00.000Z',
   );
+}
+
+UserResponse _userResponse(User user) {
+  return UserResponse.fromJson({
+    'id': user.id,
+    'aud': user.aud,
+    'email': user.email,
+    'app_metadata': user.appMetadata,
+    'user_metadata': user.userMetadata,
+    'created_at': user.createdAt,
+  });
 }

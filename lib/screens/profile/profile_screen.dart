@@ -352,17 +352,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     const SizedBox(height: 12),
 
-                    // 회원탈퇴 버튼
-                    CustomButton(
-                      text: l10n.withdrawAccount,
-                      onPressed: _isWithdrawing
-                          ? null
-                          : () => _handleWithdraw(context),
-                      isLoading: _isWithdrawing,
-                      isOutlined: true,
-                      width: double.infinity,
-                      textColor: theme.colorScheme.error,
-                      backgroundColor: theme.colorScheme.error,
+                    // 회원탈퇴 텍스트 액션
+                    Align(
+                      alignment: Alignment.center,
+                      child: TextButton(
+                        onPressed: _isWithdrawing
+                            ? null
+                            : () => _handleWithdraw(context),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          foregroundColor: theme.colorScheme.error.withValues(
+                            alpha: 0.85,
+                          ),
+                        ),
+                        child: Text(
+                          l10n.withdrawAccount,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 32),

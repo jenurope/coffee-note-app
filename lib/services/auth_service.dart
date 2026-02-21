@@ -7,6 +7,7 @@ import '../models/user_profile.dart';
 class AuthService {
   final SupabaseClient _client;
   late final GoTrueClient _auth;
+  bool _skipGetClaimsValidation = false;
 
   // iOS 클라이언트 ID
   static const String _iosClientId =
@@ -29,6 +30,10 @@ class AuthService {
   Future<User?> getValidatedCurrentUser() async {
     final localUser = _auth.currentUser;
     if (localUser == null) return null;
+
+    if (_skipGetClaimsValidation) {
+      return _validateCurrentUserViaGetUser(localUser);
+    }
 
     try {
       final claimsResponse = await _auth.getClaims();
@@ -82,6 +87,13 @@ class AuthService {
       );
       return localUser;
     } catch (e) {
+      if (_isGetClaimsJwksCacheBug(e)) {
+        _skipGetClaimsValidation = true;
+        debugPrint(
+          'Validate current user via getClaims disabled and fallback(getUser)',
+        );
+        return _validateCurrentUserViaGetUser(localUser);
+      }
       debugPrint('Validate current user via getClaims unexpected error: $e');
       return localUser;
     }
@@ -281,5 +293,54 @@ class AuthService {
       'auth session missing',
     ];
     return patterns.any(normalized.contains);
+  }
+
+  bool _isGetClaimsJwksCacheBug(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('null check operator used on a null value');
+  }
+
+  Future<User?> _validateCurrentUserViaGetUser(User localUser) async {
+    try {
+      final response = await _auth.getUser();
+      final serverUserId = response.user?.id;
+
+      if (serverUserId == null || serverUserId.isEmpty) {
+        debugPrint('Validate current user via getUser failed: user is empty');
+        await _clearLocalSession();
+        return null;
+      }
+
+      if (serverUserId != localUser.id) {
+        debugPrint(
+          'Validate current user via getUser failed: id mismatch '
+          '(server: $serverUserId, local: ${localUser.id})',
+        );
+        await _clearLocalSession();
+        return null;
+      }
+
+      debugPrint(
+        'Validate current user via getUser success: userId=$serverUserId',
+      );
+      return localUser;
+    } on AuthException catch (e) {
+      if (_shouldForceSignOutForValidationError(e.message)) {
+        debugPrint(
+          'Validate current user via getUser failed and session cleared: '
+          '${e.message}',
+        );
+        await _clearLocalSession();
+        return null;
+      }
+
+      debugPrint(
+        'Validate current user via getUser skipped (transient): ${e.message}',
+      );
+      return localUser;
+    } catch (e) {
+      debugPrint('Validate current user via getUser unexpected error: $e');
+      return localUser;
+    }
   }
 }
