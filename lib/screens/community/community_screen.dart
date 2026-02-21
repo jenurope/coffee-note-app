@@ -45,13 +45,29 @@ class _CommunityScreenState extends State<CommunityScreen> {
       return;
     }
     final cubit = context.read<PostListCubit>();
-    final currentFilters = switch (cubit.state) {
+    final currentFilters = _currentFilters(cubit.state);
+    cubit.updateFilters(currentFilters.copyWith(searchQuery: query));
+  }
+
+  void _showAll() {
+    final cubit = context.read<PostListCubit>();
+    final currentFilters = _currentFilters(cubit.state);
+    final hasSearchQuery =
+        (currentFilters.searchQuery?.trim().isNotEmpty ?? false);
+    if (!hasSearchQuery) {
+      return;
+    }
+    _searchController.clear();
+    cubit.updateFilters(currentFilters.copyWith(searchQuery: null));
+  }
+
+  PostFilters _currentFilters(PostListState state) {
+    return switch (state) {
       PostListLoaded(filters: final f) => f,
       PostListLoading(filters: final f) => f,
       PostListError(filters: final f) => f,
       _ => const PostFilters(),
     };
-    cubit.updateFilters(currentFilters.copyWith(searchQuery: query));
   }
 
   @override
@@ -157,6 +173,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
         return BlocBuilder<PostListCubit, PostListState>(
           builder: (context, postState) {
+            final currentFilters = _currentFilters(postState);
+            final isSearchApplied =
+                (currentFilters.searchQuery?.trim().isNotEmpty ?? false);
+
             return Scaffold(
               appBar: AppBar(title: Text(l10n.communityScreenTitle)),
               body: Column(
@@ -196,6 +216,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             );
                           },
                         ),
+                        if (isSearchApplied) ...[
+                          const SizedBox(width: 4),
+                          TextButton(
+                            onPressed: _showAll,
+                            child: Text(l10n.showAll),
+                          ),
+                        ],
                       ],
                     ),
                   ),

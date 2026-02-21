@@ -78,6 +78,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get viewMore => '더보기';
 
   @override
+  String get showAll => '전체보기';
+
+  @override
   String get filter => '필터';
 
   @override

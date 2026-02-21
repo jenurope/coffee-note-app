@@ -78,6 +78,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get viewMore => 'もっと見る';
 
   @override
+  String get showAll => 'すべて表示';
+
+  @override
   String get filter => 'フィルター';
 
   @override
