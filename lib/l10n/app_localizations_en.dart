@@ -439,6 +439,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postTitleMinLength => 'Title must be at least 2 characters';
 
   @override
+  String get postTitleMaxLength => 'Title must be 50 characters or fewer';
+
+  @override
+  String postTitleCount(int count) {
+    return 'Title $count/50';
+  }
+
+  @override
   String get postContent => 'Content';
 
   @override
@@ -448,7 +456,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postContentRequired => 'Please enter content';
 
   @override
-  String get postContentMinLength => 'Content must be at least 10 characters';
+  String get postContentMinLength => 'Content must be at least 2 characters';
+
+  @override
+  String get postContentMaxLength => 'Content must be 500 characters or fewer';
+
+  @override
+  String postContentCount(int count) {
+    return 'Content $count/500';
+  }
+
+  @override
+  String get postImageInsert => 'Insert Image';
+
+  @override
+  String get postImageLimitReached => 'You can attach up to 3 images.';
+
+  @override
+  String postImageCount(int count) {
+    return 'Images $count/3';
+  }
+
+  @override
+  String get postPreview => 'Preview';
+
+  @override
+  String get postImageUploadPreparing => 'Uploading images...';
 
   @override
   String get postCreated => 'Post has been registered.';

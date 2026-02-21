@@ -430,6 +430,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postTitleMinLength => 'タイトルは2文字以上で入力してください';
 
   @override
+  String get postTitleMaxLength => 'タイトルは50文字以内で入力してください';
+
+  @override
+  String postTitleCount(int count) {
+    return 'タイトル $count/50';
+  }
+
+  @override
   String get postContent => '内容';
 
   @override
@@ -439,7 +447,32 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postContentRequired => '内容を入力してください';
 
   @override
-  String get postContentMinLength => '内容は10文字以上で入力してください';
+  String get postContentMinLength => '内容は2文字以上で入力してください';
+
+  @override
+  String get postContentMaxLength => '内容は500文字以内で入力してください';
+
+  @override
+  String postContentCount(int count) {
+    return '内容 $count/500';
+  }
+
+  @override
+  String get postImageInsert => '画像を挿入';
+
+  @override
+  String get postImageLimitReached => '画像は最大3枚まで添付できます。';
+
+  @override
+  String postImageCount(int count) {
+    return '画像 $count/3';
+  }
+
+  @override
+  String get postPreview => 'プレビュー';
+
+  @override
+  String get postImageUploadPreparing => '画像をアップロード中です...';
 
   @override
   String get postCreated => '投稿が登録されました。';

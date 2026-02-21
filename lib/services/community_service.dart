@@ -187,9 +187,11 @@ class CommunityService {
         .select(_postListSelect(includeAvatar, includeProfiles));
 
     if (searchQuery != null && searchQuery.isNotEmpty) {
-      query = query.or(
-        'title.ilike.%$searchQuery%,content.ilike.%$searchQuery%',
-      );
+      final sanitizedQuery = _sanitizeSearchQuery(searchQuery);
+      if (sanitizedQuery.isNotEmpty) {
+        final pattern = '%$sanitizedQuery%';
+        query = query.or('title.ilike.$pattern,content.ilike.$pattern');
+      }
     }
 
     final orderColumn = sortBy ?? 'created_at';
@@ -210,6 +212,19 @@ class CommunityService {
     return (response as List)
         .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  String _sanitizeSearchQuery(String query) {
+    final withoutControl = query.replaceAll(RegExp(r'[\r\n\t]'), ' ');
+    final withoutOperators = withoutControl.replaceAll(
+      RegExp(r'''[,()"';]'''),
+      ' ',
+    );
+    final normalized = withoutOperators.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= 100) {
+      return normalized;
+    }
+    return normalized.substring(0, 100);
   }
 
   Future<Map<String, dynamic>?> _getPostInternal({

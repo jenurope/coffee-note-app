@@ -9,6 +9,7 @@ import '../../cubits/community/post_filters.dart';
 import '../../cubits/community/post_list_cubit.dart';
 import '../../cubits/community/post_list_state.dart';
 import '../../l10n/l10n.dart';
+import 'post_markdown_utils.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/common/user_avatar.dart';
 
@@ -276,7 +277,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               ),
                                               const SizedBox(height: 8),
                                               Text(
-                                                post.content,
+                                                markdownToPlainTextSnippet(
+                                                  post.content,
+                                                ),
                                                 style: theme
                                                     .textTheme
                                                     .bodyMedium

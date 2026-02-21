@@ -5,6 +5,66 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
 void main() {
+  group('ImageUploadService.isPhotoBucket', () {
+    test('community 버킷을 사진 리사이즈 대상으로 포함한다', () {
+      expect(ImageUploadService.isPhotoBucket('beans'), isTrue);
+      expect(ImageUploadService.isPhotoBucket('logs'), isTrue);
+      expect(ImageUploadService.isPhotoBucket('community'), isTrue);
+      expect(ImageUploadService.isPhotoBucket('avatars'), isFalse);
+    });
+  });
+
+  group('ImageUploadService.isPrivateBucket', () {
+    test('beans/logs 버킷만 private 대상으로 판단한다', () {
+      expect(ImageUploadService.isPrivateBucket('beans'), isTrue);
+      expect(ImageUploadService.isPrivateBucket('logs'), isTrue);
+      expect(ImageUploadService.isPrivateBucket('community'), isFalse);
+      expect(ImageUploadService.isPrivateBucket('avatars'), isFalse);
+    });
+  });
+
+  group('ImageUploadService.extractFilePathFromReference', () {
+    test('public URL에서 파일 경로를 추출한다', () {
+      const reference =
+          'https://example.supabase.co/storage/v1/object/public/beans/user-id/123.jpg';
+      final result = ImageUploadService.extractFilePathFromReference(
+        bucket: 'beans',
+        imageReference: reference,
+      );
+
+      expect(result, 'user-id/123.jpg');
+    });
+
+    test('상대 경로를 그대로 반환한다', () {
+      final result = ImageUploadService.extractFilePathFromReference(
+        bucket: 'logs',
+        imageReference: 'user-id/456.webp',
+      );
+
+      expect(result, 'user-id/456.webp');
+    });
+
+    test('버킷이 다르면 null을 반환한다', () {
+      const reference =
+          'https://example.supabase.co/storage/v1/object/public/community/user-id/123.jpg';
+      final result = ImageUploadService.extractFilePathFromReference(
+        bucket: 'beans',
+        imageReference: reference,
+      );
+
+      expect(result, isNull);
+    });
+
+    test('경로 역참조가 포함되면 null을 반환한다', () {
+      final result = ImageUploadService.extractFilePathFromReference(
+        bucket: 'beans',
+        imageReference: '../evil.jpg',
+      );
+
+      expect(result, isNull);
+    });
+  });
+
   group('resizePhotoToMaxBytesIfNeeded', () {
     test('이미 제한 이하인 이미지는 그대로 반환한다', () {
       final source = Uint8List.fromList(

@@ -1,7 +1,5 @@
 begin;
 
--- 앱 업로드 경로는 "<user_id>/<timestamp>.<ext>" 형식을 사용합니다.
--- 버킷/정책을 환경 간 동일하게 유지하기 위해 idempotent하게 적용합니다.
 insert into storage.buckets (
   id,
   name,
@@ -9,28 +7,13 @@ insert into storage.buckets (
   file_size_limit,
   allowed_mime_types
 )
-values
-  (
-    'beans',
-    'beans',
-    false,
-    1048576,
-    array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
-  ),
-  (
-    'logs',
-    'logs',
-    false,
-    1048576,
-    array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
-  ),
-  (
-    'avatars',
-    'avatars',
-    true,
-    1048576,
-    array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
-  )
+values (
+  'community',
+  'community',
+  true,
+  1048576,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
+)
 on conflict (id) do update
 set
   name = excluded.name,
@@ -38,9 +21,12 @@ set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
--- storage.objects는 Supabase 관리 테이블이며,
--- RLS 설정 변경(alter table ... enable row level security)은
--- 소유자 권한이 필요하므로 여기서는 수행하지 않습니다.
+update storage.buckets
+set
+  public = false,
+  file_size_limit = 1048576,
+  allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
+where id in ('beans', 'logs');
 
 drop policy if exists "public_read_media_buckets" on storage.objects;
 drop policy if exists "authenticated_read_private_media_buckets" on storage.objects;
@@ -52,7 +38,7 @@ create policy "public_read_media_buckets"
 on storage.objects
 for select
 to public
-using (bucket_id in ('avatars'));
+using (bucket_id in ('avatars', 'community'));
 
 create policy "authenticated_read_private_media_buckets"
 on storage.objects
@@ -68,7 +54,7 @@ on storage.objects
 for insert
 to authenticated
 with check (
-  bucket_id in ('beans', 'logs', 'avatars')
+  bucket_id in ('beans', 'logs', 'avatars', 'community')
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
@@ -77,11 +63,11 @@ on storage.objects
 for update
 to authenticated
 using (
-  bucket_id in ('beans', 'logs', 'avatars')
+  bucket_id in ('beans', 'logs', 'avatars', 'community')
   and (storage.foldername(name))[1] = auth.uid()::text
 )
 with check (
-  bucket_id in ('beans', 'logs', 'avatars')
+  bucket_id in ('beans', 'logs', 'avatars', 'community')
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
@@ -90,7 +76,7 @@ on storage.objects
 for delete
 to authenticated
 using (
-  bucket_id in ('beans', 'logs', 'avatars')
+  bucket_id in ('beans', 'logs', 'avatars', 'community')
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 

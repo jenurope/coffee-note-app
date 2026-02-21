@@ -12,6 +12,7 @@ import '../../cubits/community/post_list_cubit.dart';
 import '../../l10n/l10n.dart';
 import '../../models/community_post.dart';
 import '../../services/community_service.dart';
+import 'widgets/post_markdown_view.dart';
 import '../../widgets/common/user_avatar.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -123,9 +124,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         ? [
                             IconButton(
                               icon: const Icon(Icons.edit),
-                              onPressed: () => context.push(
-                                '/community/${widget.postId}/edit',
-                              ),
+                              onPressed: () async {
+                                final updated = await context.push<bool>(
+                                  '/community/${widget.postId}/edit',
+                                );
+                                if (!context.mounted) return;
+                                if (updated == true) {
+                                  context.read<PostDetailCubit>().load(
+                                    widget.postId,
+                                  );
+                                }
+                              },
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete),
@@ -184,11 +193,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              const SizedBox(height: 10),
+                              const Divider(height: 1),
                               const SizedBox(height: 16),
-                              Text(
-                                post.content,
-                                style: theme.textTheme.bodyLarge,
-                              ),
+                              PostMarkdownView(content: post.content),
                               const Divider(height: 32),
                               Row(
                                 children: [

@@ -4,9 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/coffee_bean.dart';
 import '../models/bean_detail.dart';
 import '../models/brew_detail.dart';
+import 'image_upload_service.dart';
 
 class CoffeeBeanService {
   final SupabaseClient _client;
+  static const int _signedUrlExpiresInSeconds = 60 * 60;
 
   CoffeeBeanService(this._client);
 
@@ -35,9 +37,13 @@ class CoffeeBeanService {
 
       // 검색어 필터
       if (searchQuery != null && searchQuery.isNotEmpty) {
-        query = query.or(
-          'name.ilike.%$searchQuery%,roastery.ilike.%$searchQuery%,tasting_notes.ilike.%$searchQuery%',
-        );
+        final sanitizedQuery = _sanitizeSearchQuery(searchQuery);
+        if (sanitizedQuery.isNotEmpty) {
+          final pattern = '%$sanitizedQuery%';
+          query = query.or(
+            'name.ilike.$pattern,roastery.ilike.$pattern,tasting_notes.ilike.$pattern',
+          );
+        }
       }
 
       // 평점 필터
@@ -66,9 +72,10 @@ class CoffeeBeanService {
         response = await query.order(orderColumn, ascending: ascending);
       }
 
-      return (response as List)
+      final beans = (response as List)
           .map((e) => CoffeeBean.fromJson(e as Map<String, dynamic>))
           .toList();
+      return _resolveBeanImageUrls(beans);
     } catch (e) {
       debugPrint('Get beans error: $e');
       rethrow;
@@ -89,7 +96,8 @@ class CoffeeBeanService {
           .maybeSingle();
 
       if (response != null) {
-        return CoffeeBean.fromJson(response);
+        final bean = CoffeeBean.fromJson(response);
+        return _resolveBeanImageUrl(bean);
       }
       return null;
     } catch (e) {
@@ -107,7 +115,8 @@ class CoffeeBeanService {
           .select()
           .single();
 
-      return CoffeeBean.fromJson(response);
+      final createdBean = CoffeeBean.fromJson(response);
+      return _resolveBeanImageUrl(createdBean);
     } catch (e) {
       debugPrint('Create bean error: $e');
       rethrow;
@@ -127,7 +136,8 @@ class CoffeeBeanService {
           .select()
           .single();
 
-      return CoffeeBean.fromJson(response);
+      final updatedBean = CoffeeBean.fromJson(response);
+      return _resolveBeanImageUrl(updatedBean);
     } catch (e) {
       debugPrint('Update bean error: $e');
       rethrow;
@@ -215,6 +225,61 @@ class CoffeeBeanService {
     } catch (e) {
       debugPrint('Get user bean stats error: $e');
       return {'totalCount': 0, 'averageRating': 0.0};
+    }
+  }
+
+  String _sanitizeSearchQuery(String query) {
+    final withoutControl = query.replaceAll(RegExp(r'[\r\n\t]'), ' ');
+    final withoutOperators = withoutControl.replaceAll(
+      RegExp(r'''[,()"';]'''),
+      ' ',
+    );
+    final normalized = withoutOperators.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= 100) {
+      return normalized;
+    }
+    return normalized.substring(0, 100);
+  }
+
+  Future<List<CoffeeBean>> _resolveBeanImageUrls(List<CoffeeBean> beans) {
+    return Future.wait(beans.map(_resolveBeanImageUrl));
+  }
+
+  Future<CoffeeBean> _resolveBeanImageUrl(CoffeeBean bean) async {
+    final resolvedUrl = await _createSignedImageUrl(
+      bucket: 'beans',
+      imageReference: bean.imageUrl,
+    );
+    if (resolvedUrl == null || resolvedUrl == bean.imageUrl) {
+      return bean;
+    }
+    return bean.copyWith(imageUrl: resolvedUrl);
+  }
+
+  Future<String?> _createSignedImageUrl({
+    required String bucket,
+    String? imageReference,
+  }) async {
+    final trimmed = imageReference?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return imageReference;
+    }
+
+    final filePath = ImageUploadService.extractFilePathFromReference(
+      bucket: bucket,
+      imageReference: trimmed,
+    );
+    if (filePath == null || filePath.isEmpty) {
+      return imageReference;
+    }
+
+    try {
+      return await _client.storage
+          .from(bucket)
+          .createSignedUrl(filePath, _signedUrlExpiresInSeconds);
+    } catch (e) {
+      debugPrint('Create signed image url error($bucket): $e');
+      return imageReference;
     }
   }
 }

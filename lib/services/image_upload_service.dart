@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 const int _photoUploadMaxBytes = 1024 * 1024;
 const Set<String> _unsupportedResizeExtensions = {'heic', 'heif'};
+const Set<String> _privateBuckets = {'beans', 'logs'};
 
 class ImageUploadException implements Exception {
   const ImageUploadException(this.message);
@@ -149,9 +150,12 @@ class ImageUploadService {
   }
 
   /// Supabase Storage에 이미지 업로드
-  /// [bucket] - 스토리지 버킷 이름 ('beans', 'logs', 'avatars')
+  /// [bucket] - 스토리지 버킷 이름 ('beans', 'logs', 'community', 'avatars')
   /// [userId] - 사용자 ID (폴더 구분용)
   /// [file] - 업로드할 파일
+  ///
+  /// private 버킷(beans/logs)은 DB에 저장할 스토리지 상대 경로를 반환하고,
+  /// public 버킷(community/avatars)은 공개 URL을 반환합니다.
   Future<String?> uploadImage({
     required String bucket,
     required String userId,
@@ -165,7 +169,7 @@ class ImageUploadService {
       _ProcessedImage? processedImage;
       if (bucket == 'avatars') {
         processedImage = _processAvatarImage(originalBytes);
-      } else if (bucket == 'beans' || bucket == 'logs') {
+      } else if (_isPhotoBucket(bucket)) {
         processedImage = _processPhotoImage(
           bytes: originalBytes,
           originalExtension: originalExtension,
@@ -185,7 +189,10 @@ class ImageUploadService {
             fileOptions: FileOptions(contentType: contentType, upsert: true),
           );
 
-      // 공개 URL 반환
+      if (_isPrivateBucket(bucket)) {
+        return fileName;
+      }
+
       final publicUrl = _client.storage.from(bucket).getPublicUrl(fileName);
       return publicUrl;
     } catch (e) {
@@ -249,6 +256,53 @@ class ImageUploadService {
     );
   }
 
+  @visibleForTesting
+  static bool isPhotoBucket(String bucket) => _isPhotoBucket(bucket);
+
+  static bool isPrivateBucket(String bucket) => _isPrivateBucket(bucket);
+
+  static String? extractFilePathFromReference({
+    required String bucket,
+    required String imageReference,
+  }) {
+    final trimmed = imageReference.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null || !uri.hasScheme) {
+      final relativePath = trimmed.startsWith('/')
+          ? trimmed.substring(1)
+          : trimmed;
+      return _isSafeStoragePath(relativePath) ? relativePath : null;
+    }
+
+    final pathSegments = uri.pathSegments;
+    final bucketIndex = pathSegments.indexOf(bucket);
+    if (bucketIndex == -1 || bucketIndex + 1 >= pathSegments.length) {
+      return null;
+    }
+
+    final relativePath = pathSegments.sublist(bucketIndex + 1).join('/');
+    return _isSafeStoragePath(relativePath) ? relativePath : null;
+  }
+
+  static bool _isPhotoBucket(String bucket) {
+    return bucket == 'beans' || bucket == 'logs' || bucket == 'community';
+  }
+
+  static bool _isPrivateBucket(String bucket) {
+    return _privateBuckets.contains(bucket);
+  }
+
+  static bool _isSafeStoragePath(String value) {
+    if (value.isEmpty || value.contains('..')) {
+      return false;
+    }
+    return !value.split('/').any((segment) => segment.isEmpty);
+  }
+
   String _resolveContentType(String extension) {
     switch (extension.toLowerCase()) {
       case 'jpg':
@@ -275,15 +329,13 @@ class ImageUploadService {
     required String imageUrl,
   }) async {
     try {
-      // URL에서 파일 경로 추출
-      final uri = Uri.parse(imageUrl);
-      final pathSegments = uri.pathSegments;
-
-      // storage/v1/object/public/bucket/path 형식에서 path 추출
-      final bucketIndex = pathSegments.indexOf(bucket);
-      if (bucketIndex == -1) return false;
-
-      final filePath = pathSegments.sublist(bucketIndex + 1).join('/');
+      final filePath = extractFilePathFromReference(
+        bucket: bucket,
+        imageReference: imageUrl,
+      );
+      if (filePath == null || filePath.isEmpty) {
+        return false;
+      }
 
       await _client.storage.from(bucket).remove([filePath]);
       return true;
