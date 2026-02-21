@@ -193,6 +193,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              const SizedBox(height: 10),
+                              const Divider(height: 1),
                               const SizedBox(height: 16),
                               PostMarkdownView(content: post.content),
                               const Divider(height: 32),
