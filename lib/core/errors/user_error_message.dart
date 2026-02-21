@@ -43,6 +43,13 @@ class UserErrorMessage {
       ])) {
         return 'errPostHourlyLimitExceeded';
       }
+      if (_containsAny(message, [
+        'community_comment_hourly_limit_exceeded',
+        'comment_hourly_limit_exceeded',
+        '시간당 댓글 작성 제한',
+      ])) {
+        return 'errCommentHourlyLimitExceeded';
+      }
 
       switch (error.code) {
         case '23503':
@@ -129,6 +136,7 @@ class UserErrorMessage {
       'errPermissionDenied' => l10n.errPermissionDenied,
       'errNotFound' => l10n.errNotFound,
       'errPostHourlyLimitExceeded' => l10n.errPostHourlyLimitExceeded,
+      'errCommentHourlyLimitExceeded' => l10n.errCommentHourlyLimitExceeded,
       'errReauthRequired' => l10n.errReauthRequired,
       'errGoogleLoginCanceled' => l10n.errGoogleLoginCanceled,
       'errGoogleTokenUnavailable' => l10n.errGoogleTokenUnavailable,

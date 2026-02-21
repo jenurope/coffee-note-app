@@ -630,6 +630,10 @@ class AppLocalizationsJa extends AppLocalizations {
       '時間あたりの投稿作成上限を超えました。しばらくしてから再試行してください。';
 
   @override
+  String get errCommentHourlyLimitExceeded =>
+      '時間あたりのコメント作成上限を超えました。しばらくしてから再試行してください。';
+
+  @override
   String get errNetwork => 'ネットワーク接続を確認してください。';
 
   @override

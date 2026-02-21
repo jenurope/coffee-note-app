@@ -289,6 +289,7 @@
   "takeFromCamera": "Take with Camera",
   "errRequestFailed": "Unable to process request. Please try again later.",
   "errPostHourlyLimitExceeded": "You have exceeded the hourly post creation limit. Please try again later.",
+  "errCommentHourlyLimitExceeded": "You have exceeded the hourly comment creation limit. Please try again later.",
   "errNetwork": "Please check your network connection.",
   "errCanceled": "Operation has been canceled.",
   "errAuthExpired": "Authentication has expired. Please log in again.",
