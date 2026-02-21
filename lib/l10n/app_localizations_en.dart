@@ -676,6 +676,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'You do not have permission for this action.';
 
   @override
+  String get errCommunityPostHourlyLimit =>
+      'You have reached the hourly post limit. Please try again later.';
+
+  @override
+  String get errCommunityCommentHourlyLimit =>
+      'You have reached the hourly comment limit. Please try again later.';
+
+  @override
   String get errNotFound => 'Requested data was not found.';
 
   @override

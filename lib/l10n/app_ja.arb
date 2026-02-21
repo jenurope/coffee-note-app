@@ -298,6 +298,8 @@
   "errAlreadyExists": "すでに登録されたデータです。",
   "errInvalidInput": "入力内容を確認してください。",
   "errPermissionDenied": "この操作を実行する権限がありません。",
+  "errCommunityPostHourlyLimit": "1時間あたりの投稿上限に達しました。しばらくしてから再試行してください。",
+  "errCommunityCommentHourlyLimit": "1時間あたりのコメント上限に達しました。しばらくしてから再試行してください。",
   "errNotFound": "要求したデータが見つかりません。",
   "errReauthRequired": "リクエストを処理できません。再度ログインしてください。",
   "errGoogleLoginCanceled": "Googleログインがキャンセルされました。",

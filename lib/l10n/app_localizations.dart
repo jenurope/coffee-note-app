@@ -1342,6 +1342,18 @@ abstract class AppLocalizations {
   /// **'You do not have permission for this action.'**
   String get errPermissionDenied;
 
+  /// No description provided for @errCommunityPostHourlyLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached the hourly post limit. Please try again later.'**
+  String get errCommunityPostHourlyLimit;
+
+  /// No description provided for @errCommunityCommentHourlyLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached the hourly comment limit. Please try again later.'**
+  String get errCommunityCommentHourlyLimit;
+
   /// No description provided for @errNotFound.
   ///
   /// In en, this message translates to:

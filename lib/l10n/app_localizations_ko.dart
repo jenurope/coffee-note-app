@@ -656,6 +656,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errPermissionDenied => '이 작업을 수행할 권한이 없습니다.';
 
   @override
+  String get errCommunityPostHourlyLimit =>
+      '시간당 게시글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get errCommunityCommentHourlyLimit =>
+      '시간당 댓글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
   String get errNotFound => '요청한 데이터를 찾을 수 없습니다.';
 
   @override
