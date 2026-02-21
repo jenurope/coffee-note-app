@@ -79,6 +79,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewMore => 'View More';
 
   @override
+  String get showAll => 'Show all';
+
+  @override
   String get filter => 'Filter';
 
   @override

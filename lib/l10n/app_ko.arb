@@ -23,6 +23,7 @@
   "reset": "초기화",
   "retry": "다시 시도",
   "viewMore": "더보기",
+  "showAll": "전체보기",
   "filter": "필터",
   "sort": "정렬",
   "minRating": "최소 평점",

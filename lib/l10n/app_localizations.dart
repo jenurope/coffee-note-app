@@ -238,6 +238,12 @@ abstract class AppLocalizations {
   /// **'View More'**
   String get viewMore;
 
+  /// No description provided for @showAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get showAll;
+
   /// No description provided for @filter.
   ///
   /// In en, this message translates to:
