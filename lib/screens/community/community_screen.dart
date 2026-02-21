@@ -56,7 +56,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
-    final materialL10n = MaterialLocalizations.of(context);
     final dateFormat = DateFormat.Md(
       Localizations.localeOf(context).toString(),
     ).add_Hm();
@@ -175,10 +174,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        FilledButton.icon(
-                          onPressed: _search,
-                          icon: const Icon(Icons.search),
-                          label: Text(materialL10n.searchFieldLabel),
+                        SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: FilledButton(
+                            onPressed: _search,
+                            style: FilledButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: const Icon(Icons.search),
+                          ),
                         ),
                       ],
                     ),
