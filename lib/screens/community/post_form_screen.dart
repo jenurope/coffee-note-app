@@ -503,15 +503,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    context.l10n.postContent,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
