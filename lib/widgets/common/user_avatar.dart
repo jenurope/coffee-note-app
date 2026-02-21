@@ -1,4 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import '../../core/image/app_image_cache_policy.dart';
 
 class UserAvatar extends StatelessWidget {
   final String? nickname;
@@ -27,7 +30,8 @@ class UserAvatar extends StatelessWidget {
     final effectiveBackground =
         backgroundColor ?? theme.colorScheme.primary.withValues(alpha: 0.1);
     final effectiveForeground = foregroundColor ?? theme.colorScheme.primary;
-    final hasAvatar = avatarUrl != null && avatarUrl!.trim().isNotEmpty;
+    final avatarImageUrl = avatarUrl?.trim();
+    final hasAvatar = avatarImageUrl != null && avatarImageUrl.isNotEmpty;
 
     if (!hasAvatar) {
       return CircleAvatar(
@@ -46,10 +50,19 @@ class UserAvatar extends StatelessWidget {
       backgroundColor: effectiveBackground,
       child: ClipOval(
         child: SizedBox.expand(
-          child: Image.network(
-            avatarUrl!,
+          child: CachedNetworkImage(
+            imageUrl: avatarImageUrl,
+            cacheManager: AppImageCachePolicy.cacheManager,
+            cacheKey: AppImageCachePolicy.cacheKeyFor(avatarImageUrl),
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Center(
+            placeholder: (context, url) => Center(
+              child: _FallbackInitial(
+                initial: initial,
+                color: effectiveForeground,
+                fontSize: radius * 0.75,
+              ),
+            ),
+            errorWidget: (context, url, error) => Center(
               child: _FallbackInitial(
                 initial: initial,
                 color: effectiveForeground,

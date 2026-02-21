@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
+import '../../core/image/app_image_cache_policy.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/bean/bean_detail_cubit.dart';
@@ -46,7 +47,8 @@ class BeanDetailScreen extends StatelessWidget {
               ),
               BeanDetailLoaded(bean: final bean) => () {
                 final isOwner = currentUserId == bean.userId;
-                final hasImage = _hasValidImageUrl(bean.imageUrl);
+                final imageUrl = bean.imageUrl?.trim();
+                final hasImage = _hasValidImageUrl(imageUrl);
                 return Scaffold(
                   body: CustomScrollView(
                     slivers: [
@@ -56,7 +58,12 @@ class BeanDetailScreen extends StatelessWidget {
                         flexibleSpace: FlexibleSpaceBar(
                           background: hasImage
                               ? CachedNetworkImage(
-                                  imageUrl: bean.imageUrl!.trim(),
+                                  imageUrl: imageUrl!,
+                                  cacheManager:
+                                      AppImageCachePolicy.cacheManager,
+                                  cacheKey: AppImageCachePolicy.cacheKeyFor(
+                                    imageUrl,
+                                  ),
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
                                     color: theme.colorScheme.primary.withValues(

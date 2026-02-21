@@ -1,7 +1,10 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+
+import '../../../core/image/app_image_cache_policy.dart';
 
 class PostMarkdownView extends StatelessWidget {
   const PostMarkdownView({
@@ -93,25 +96,32 @@ class PostMarkdownView extends StatelessWidget {
     }
 
     if (uri.scheme == 'http' || uri.scheme == 'https') {
+      final imageUrl = uri.toString();
       return _buildTappableImageFrame(
         context: context,
         onTap: () => _openFullscreenImage(
           context,
-          Image.network(
-            uri.toString(),
+          CachedNetworkImage(
+            imageUrl: imageUrl,
+            cacheManager: AppImageCachePolicy.cacheManager,
+            cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
             fit: BoxFit.contain,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
+            progressIndicatorBuilder: (context, url, downloadProgress) {
               return const Center(child: CircularProgressIndicator());
             },
-            errorBuilder: (context, error, stackTrace) =>
+            errorWidget: (context, url, error) =>
                 _fullscreenPlaceholder(context),
           ),
         ),
-        child: Image.network(
-          uri.toString(),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          cacheManager: AppImageCachePolicy.cacheManager,
+          cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => padding,
+          placeholder: (context, url) =>
+              const ColoredBox(color: Colors.black12),
+          errorWidget: (context, url, error) =>
+              const ColoredBox(color: Colors.black12),
         ),
       );
     }
