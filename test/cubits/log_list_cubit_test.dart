@@ -65,8 +65,8 @@ void main() {
           ascending: false,
           minRating: null,
           coffeeType: null,
-          limit: null,
-          offset: null,
+          limit: 20,
+          offset: 0,
         ),
       ).thenAnswer((_) async => [serverLog]);
 
@@ -89,8 +89,79 @@ void main() {
           ascending: false,
           minRating: null,
           coffeeType: null,
-          limit: null,
-          offset: null,
+          limit: 20,
+          offset: 0,
+        ),
+      ).called(1);
+    });
+
+    test('인증 사용자에서 loadMore 호출 시 다음 페이지를 이어서 로드한다', () async {
+      final user = _testUser('auth-log-page');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final firstPage = List.generate(
+        20,
+        (index) => _testLog(id: 'log-$index', userId: user.id),
+      );
+      final nextPage = <CoffeeLog>[_testLog(id: 'log-20', userId: user.id)];
+      when(
+        () => logService.getLogs(
+          userId: user.id,
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          minRating: null,
+          coffeeType: null,
+          limit: 20,
+          offset: 0,
+        ),
+      ).thenAnswer((_) async => firstPage);
+      when(
+        () => logService.getLogs(
+          userId: user.id,
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          minRating: null,
+          coffeeType: null,
+          limit: 20,
+          offset: 20,
+        ),
+      ).thenAnswer((_) async => nextPage);
+
+      final cubit = LogListCubit(
+        service: logService,
+        authCubit: authCubit,
+        sampleService: sampleService,
+      );
+
+      await cubit.load();
+      await cubit.loadMore();
+
+      final state = cubit.state as LogListLoaded;
+      expect(state.logs.length, 21);
+      expect(state.logs.last.id, 'log-20');
+      verify(
+        () => logService.getLogs(
+          userId: user.id,
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          minRating: null,
+          coffeeType: null,
+          limit: 20,
+          offset: 0,
+        ),
+      ).called(1);
+      verify(
+        () => logService.getLogs(
+          userId: user.id,
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          minRating: null,
+          coffeeType: null,
+          limit: 20,
+          offset: 20,
         ),
       ).called(1);
     });

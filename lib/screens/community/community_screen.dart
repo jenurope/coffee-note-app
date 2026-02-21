@@ -62,16 +62,34 @@ class _CommunityScreenState extends State<CommunityScreen> {
         curve: Curves.easeOut,
       );
     }
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      return;
+    }
     final cubit = context.read<PostListCubit>();
-    final currentFilters = switch (cubit.state) {
+    final currentFilters = _currentFilters(cubit.state);
+    cubit.updateFilters(currentFilters.copyWith(searchQuery: query));
+  }
+
+  void _showAll() {
+    final cubit = context.read<PostListCubit>();
+    final currentFilters = _currentFilters(cubit.state);
+    final hasSearchQuery =
+        (currentFilters.searchQuery?.trim().isNotEmpty ?? false);
+    if (!hasSearchQuery) {
+      return;
+    }
+    _searchController.clear();
+    cubit.updateFilters(currentFilters.copyWith(searchQuery: null));
+  }
+
+  PostFilters _currentFilters(PostListState state) {
+    return switch (state) {
       PostListLoaded(filters: final f) => f,
       PostListLoading(filters: final f) => f,
       PostListError(filters: final f) => f,
       _ => const PostFilters(),
     };
-    cubit.updateFilters(
-      currentFilters.copyWith(searchQuery: _searchController.text),
-    );
   }
 
   @override
@@ -177,28 +195,57 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
         return BlocBuilder<PostListCubit, PostListState>(
           builder: (context, postState) {
+            final currentFilters = _currentFilters(postState);
+            final isSearchApplied =
+                (currentFilters.searchQuery?.trim().isNotEmpty ?? false);
+
             return Scaffold(
               appBar: AppBar(title: Text(l10n.communityScreenTitle)),
               body: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      controller: _searchController,
-                      onSubmitted: (_) => _search(),
-                      decoration: InputDecoration(
-                        hintText: l10n.postSearchHint,
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _search();
-                                },
-                              )
-                            : null,
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            textInputAction: TextInputAction.search,
+                            onSubmitted: (_) => _search(),
+                            decoration: InputDecoration(
+                              hintText: l10n.postSearchHint,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _searchController,
+                          builder: (context, value, _) {
+                            final hasQuery = value.text.trim().isNotEmpty;
+                            return SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: FilledButton(
+                                onPressed: hasQuery ? _search : null,
+                                style: FilledButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: const Icon(Icons.search),
+                              ),
+                            );
+                          },
+                        ),
+                        if (isSearchApplied) ...[
+                          const SizedBox(width: 4),
+                          TextButton(
+                            onPressed: _showAll,
+                            child: Text(l10n.showAll),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   Expanded(

@@ -238,6 +238,12 @@ abstract class AppLocalizations {
   /// **'View More'**
   String get viewMore;
 
+  /// No description provided for @showAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get showAll;
+
   /// No description provided for @filter.
   ///
   /// In en, this message translates to:
@@ -717,6 +723,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Record Coffee'**
   String get logsRecordButton;
+
+  /// No description provided for @listLoadingMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading more items...'**
+  String get listLoadingMore;
 
   /// No description provided for @logFormNewTitle.
   ///
@@ -1353,6 +1365,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You do not have permission for this action.'**
   String get errPermissionDenied;
+
+  /// No description provided for @errCommunityPostHourlyLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached the hourly post limit. Please try again later.'**
+  String get errCommunityPostHourlyLimit;
+
+  /// No description provided for @errCommunityCommentHourlyLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached the hourly comment limit. Please try again later.'**
+  String get errCommunityCommentHourlyLimit;
 
   /// No description provided for @errNotFound.
   ///

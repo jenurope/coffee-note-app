@@ -58,6 +58,28 @@ void main() {
       expect(message, 'errPermissionDenied');
     });
 
+    test('PostgrestException 게시글 시간당 제한 오류를 사용자 메시지로 변환한다', () {
+      const error = PostgrestException(
+        message: 'community_post_hourly_limit_exceeded',
+        code: 'P0001',
+      );
+
+      final message = UserErrorMessage.from(error);
+
+      expect(message, 'errCommunityPostHourlyLimit');
+    });
+
+    test('PostgrestException 댓글 시간당 제한 오류를 사용자 메시지로 변환한다', () {
+      const error = PostgrestException(
+        message: 'community_comment_hourly_limit_exceeded',
+        code: 'P0001',
+      );
+
+      final message = UserErrorMessage.from(error);
+
+      expect(message, 'errCommunityCommentHourlyLimit');
+    });
+
     test('PostgrestException 코드가 없어도 foreign key 문구를 변환한다', () {
       const error = PostgrestException(
         message: 'insert violates foreign key constraint',
@@ -80,7 +102,7 @@ void main() {
 
       final message = UserErrorMessage.from(error);
 
-      expect(message, 'errPostHourlyLimitExceeded');
+      expect(message, 'errCommunityPostHourlyLimit');
     });
 
     test('PostgrestException 댓글 시간당 제한 오류를 전용 메시지로 변환한다', () {
@@ -93,7 +115,7 @@ void main() {
 
       final message = UserErrorMessage.from(error);
 
-      expect(message, 'errCommentHourlyLimitExceeded');
+      expect(message, 'errCommunityCommentHourlyLimit');
     });
 
     test('PostgrestException 미분류 오류는 fallback 메시지를 사용한다', () {
@@ -153,11 +175,11 @@ void main() {
       expect(UserErrorMessage.localize(ko, 'errNetwork'), contains('네트워크'));
       expect(UserErrorMessage.localize(ja, 'errNetwork'), contains('ネットワーク'));
       expect(
-        UserErrorMessage.localize(ko, 'errPostHourlyLimitExceeded'),
+        UserErrorMessage.localize(ko, 'errCommunityPostHourlyLimit'),
         contains('시간당'),
       );
       expect(
-        UserErrorMessage.localize(ko, 'errCommentHourlyLimitExceeded'),
+        UserErrorMessage.localize(ko, 'errCommunityCommentHourlyLimit'),
         contains('댓글'),
       );
     });

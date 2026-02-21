@@ -78,6 +78,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get viewMore => 'もっと見る';
 
   @override
+  String get showAll => 'すべて表示';
+
+  @override
   String get filter => 'フィルター';
 
   @override
@@ -332,6 +335,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get logsRecordButton => 'コーヒーを記録';
+
+  @override
+  String get listLoadingMore => '追加項目を読み込み中...';
 
   @override
   String get logFormNewTitle => '新しいコーヒー記録';
@@ -662,6 +668,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errPermissionDenied => 'この操作を実行する権限がありません。';
+
+  @override
+  String get errCommunityPostHourlyLimit =>
+      '1時間あたりの投稿上限に達しました。しばらくしてから再試行してください。';
+
+  @override
+  String get errCommunityCommentHourlyLimit =>
+      '1時間あたりのコメント上限に達しました。しばらくしてから再試行してください。';
 
   @override
   String get errNotFound => '要求したデータが見つかりません。';

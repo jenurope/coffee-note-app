@@ -22,12 +22,15 @@ class BeanListScreen extends StatefulWidget {
 
 class _BeanListScreenState extends State<BeanListScreen> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   BeanFilters _filters = const BeanFilters();
   bool _isGridView = true;
+  bool _isPagingLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_handleScroll);
     final cubit = context.read<BeanListCubit>();
     if (cubit.state is BeanListInitial) {
       cubit.load();
@@ -36,14 +39,41 @@ class _BeanListScreenState extends State<BeanListScreen> {
 
   @override
   void dispose() {
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_isPagingLoading) return;
+
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 240) {
+      final cubit = context.read<BeanListCubit>();
+      if (!cubit.hasMore) return;
+      _loadMore(cubit);
+    }
+  }
+
+  Future<void> _loadMore(BeanListCubit cubit) async {
+    setState(() {
+      _isPagingLoading = true;
+    });
+    await cubit.loadMore();
+    if (!mounted) return;
+    setState(() {
+      _isPagingLoading = false;
+    });
   }
 
   void _search() {
     final newFilters = _filters.copyWith(searchQuery: _searchController.text);
     setState(() {
       _filters = newFilters;
+      _isPagingLoading = false;
     });
     context.read<BeanListCubit>().updateFilters(newFilters);
   }
@@ -56,6 +86,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
         onApply: (filters) {
           setState(() {
             _filters = filters;
+            _isPagingLoading = false;
           });
           context.read<BeanListCubit>().updateFilters(filters);
           Navigator.pop(ctx);
@@ -168,46 +199,94 @@ class _BeanListScreenState extends State<BeanListScreen> {
   }
 
   Widget _buildBeanList(List<CoffeeBean> beans) {
-    if (_isGridView) {
-      return RefreshIndicator(
-        onRefresh: () async => context.read<BeanListCubit>().reload(),
-        child: GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.7,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: beans.length,
-          itemBuilder: (context, index) {
-            final bean = beans[index];
-            return BeanCard(
-              bean: bean,
-              onTap: () => context.push('/beans/${bean.id}'),
-            );
-          },
-        ),
-      );
-    } else {
-      return RefreshIndicator(
-        onRefresh: () async => context.read<BeanListCubit>().reload(),
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: beans.length,
-          itemBuilder: (context, index) {
-            final bean = beans[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: BeanListTile(
-                bean: bean,
-                onTap: () => context.push('/beans/${bean.id}'),
+    final listWidget = _isGridView
+        ? RefreshIndicator(
+            onRefresh: () async => context.read<BeanListCubit>().reload(),
+            child: GridView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.7,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
               ),
-            );
-          },
+              itemCount: beans.length,
+              itemBuilder: (context, index) {
+                final bean = beans[index];
+                return BeanCard(
+                  bean: bean,
+                  onTap: () => context.push('/beans/${bean.id}'),
+                );
+              },
+            ),
+          )
+        : RefreshIndicator(
+            onRefresh: () async => context.read<BeanListCubit>().reload(),
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: beans.length,
+              itemBuilder: (context, index) {
+                final bean = beans[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: BeanListTile(
+                    bean: bean,
+                    onTap: () => context.push('/beans/${bean.id}'),
+                  ),
+                );
+              },
+            ),
+          );
+
+    return Stack(
+      children: [
+        Positioned.fill(child: listWidget),
+        if (_isPagingLoading)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: IgnorePointer(
+              child: _PaginationLoadingIndicator(
+                backgroundColor: Theme.of(context).colorScheme.surface,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PaginationLoadingIndicator extends StatelessWidget {
+  final Color backgroundColor;
+
+  const _PaginationLoadingIndicator({required this.backgroundColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: backgroundColor.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2.4),
+            ),
+            const SizedBox(width: 10),
+            Text(context.l10n.listLoadingMore),
+          ],
         ),
-      );
-    }
+      ),
+    );
   }
 }
 

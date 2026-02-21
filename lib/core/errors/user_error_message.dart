@@ -41,14 +41,14 @@ class UserErrorMessage {
         'community_post_hourly_limit_exceeded',
         '시간당 게시글 작성 제한',
       ])) {
-        return 'errPostHourlyLimitExceeded';
+        return 'errCommunityPostHourlyLimit';
       }
       if (_containsAny(message, [
         'community_comment_hourly_limit_exceeded',
         'comment_hourly_limit_exceeded',
         '시간당 댓글 작성 제한',
       ])) {
-        return 'errCommentHourlyLimitExceeded';
+        return 'errCommunityCommentHourlyLimit';
       }
 
       switch (error.code) {
@@ -65,7 +65,6 @@ class UserErrorMessage {
         case 'PGRST116':
           return 'errNotFound';
       }
-
       if (_containsAny(message, ['foreign key', '23503'])) {
         return 'errAccountInvalid';
       }
@@ -134,9 +133,9 @@ class UserErrorMessage {
       'errAlreadyExists' => l10n.errAlreadyExists,
       'errInvalidInput' => l10n.errInvalidInput,
       'errPermissionDenied' => l10n.errPermissionDenied,
+      'errCommunityPostHourlyLimit' => l10n.errCommunityPostHourlyLimit,
+      'errCommunityCommentHourlyLimit' => l10n.errCommunityCommentHourlyLimit,
       'errNotFound' => l10n.errNotFound,
-      'errPostHourlyLimitExceeded' => l10n.errPostHourlyLimitExceeded,
-      'errCommentHourlyLimitExceeded' => l10n.errCommentHourlyLimitExceeded,
       'errReauthRequired' => l10n.errReauthRequired,
       'errGoogleLoginCanceled' => l10n.errGoogleLoginCanceled,
       'errGoogleTokenUnavailable' => l10n.errGoogleTokenUnavailable,

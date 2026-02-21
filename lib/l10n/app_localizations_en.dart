@@ -79,6 +79,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewMore => 'View More';
 
   @override
+  String get showAll => 'Show all';
+
+  @override
   String get filter => 'Filter';
 
   @override
@@ -338,6 +341,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logsRecordButton => 'Record Coffee';
+
+  @override
+  String get listLoadingMore => 'Loading more items...';
 
   @override
   String get logFormNewTitle => 'New Coffee Record';
@@ -682,6 +688,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errPermissionDenied =>
       'You do not have permission for this action.';
+
+  @override
+  String get errCommunityPostHourlyLimit =>
+      'You have reached the hourly post limit. Please try again later.';
+
+  @override
+  String get errCommunityCommentHourlyLimit =>
+      'You have reached the hourly comment limit. Please try again later.';
 
   @override
   String get errNotFound => 'Requested data was not found.';
