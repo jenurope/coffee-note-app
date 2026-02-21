@@ -350,7 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       backgroundColor: theme.colorScheme.error,
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
 
                     // 회원탈퇴 텍스트 액션
                     Align(
