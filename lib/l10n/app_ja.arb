@@ -288,6 +288,7 @@
   "pickFromGallery": "ギャラリーから選択",
   "takeFromCamera": "カメラで撮影",
   "errRequestFailed": "リクエストを処理できませんでした。しばらくしてから再試行してください。",
+  "errPostHourlyLimitExceeded": "時間あたりの投稿作成上限を超えました。しばらくしてから再試行してください。",
   "errNetwork": "ネットワーク接続を確認してください。",
   "errCanceled": "操作がキャンセルされました。",
   "errAuthExpired": "認証の有効期限が切れました。再度ログインしてください。",

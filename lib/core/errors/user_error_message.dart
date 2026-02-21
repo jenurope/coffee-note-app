@@ -34,6 +34,16 @@ class UserErrorMessage {
     }
 
     if (error is PostgrestException) {
+      final message =
+          '${error.message} ${error.details ?? ''} ${error.hint ?? ''}'
+              .toLowerCase();
+      if (_containsAny(message, [
+        'community_post_hourly_limit_exceeded',
+        '시간당 게시글 작성 제한',
+      ])) {
+        return 'errPostHourlyLimitExceeded';
+      }
+
       switch (error.code) {
         case '23503':
           return 'errAccountInvalid';
@@ -49,9 +59,6 @@ class UserErrorMessage {
           return 'errNotFound';
       }
 
-      final message =
-          '${error.message} ${error.details ?? ''} ${error.hint ?? ''}'
-              .toLowerCase();
       if (_containsAny(message, ['foreign key', '23503'])) {
         return 'errAccountInvalid';
       }
@@ -121,6 +128,7 @@ class UserErrorMessage {
       'errInvalidInput' => l10n.errInvalidInput,
       'errPermissionDenied' => l10n.errPermissionDenied,
       'errNotFound' => l10n.errNotFound,
+      'errPostHourlyLimitExceeded' => l10n.errPostHourlyLimitExceeded,
       'errReauthRequired' => l10n.errReauthRequired,
       'errGoogleLoginCanceled' => l10n.errGoogleLoginCanceled,
       'errGoogleTokenUnavailable' => l10n.errGoogleTokenUnavailable,

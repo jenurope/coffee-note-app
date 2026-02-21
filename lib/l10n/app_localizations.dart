@@ -1282,6 +1282,12 @@ abstract class AppLocalizations {
   /// **'Unable to process request. Please try again later.'**
   String get errRequestFailed;
 
+  /// No description provided for @errPostHourlyLimitExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'You have exceeded the hourly post creation limit. Please try again later.'**
+  String get errPostHourlyLimitExceeded;
+
   /// No description provided for @errNetwork.
   ///
   /// In en, this message translates to:

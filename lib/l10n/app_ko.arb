@@ -288,6 +288,7 @@
   "pickFromGallery": "갤러리에서 선택",
   "takeFromCamera": "카메라로 촬영",
   "errRequestFailed": "요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.",
+  "errPostHourlyLimitExceeded": "시간당 게시글 작성 제한을 초과했습니다. 잠시 후 다시 시도해주세요.",
   "errNetwork": "네트워크 연결을 확인해주세요.",
   "errCanceled": "작업이 취소되었습니다.",
   "errAuthExpired": "인증이 만료되었습니다. 다시 로그인해주세요.",

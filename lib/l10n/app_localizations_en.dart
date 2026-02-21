@@ -644,6 +644,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Unable to process request. Please try again later.';
 
   @override
+  String get errPostHourlyLimitExceeded =>
+      'You have exceeded the hourly post creation limit. Please try again later.';
+
+  @override
   String get errNetwork => 'Please check your network connection.';
 
   @override
