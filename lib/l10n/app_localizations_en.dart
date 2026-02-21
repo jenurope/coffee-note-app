@@ -343,6 +343,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logsRecordButton => 'Record Coffee';
 
   @override
+  String get listLoadingMore => 'Loading more items...';
+
+  @override
   String get logFormNewTitle => 'New Coffee Record';
 
   @override
