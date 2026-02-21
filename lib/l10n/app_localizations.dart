@@ -910,6 +910,12 @@ abstract class AppLocalizations {
   /// **'Title must be at least 2 characters'**
   String get postTitleMinLength;
 
+  /// No description provided for @postTitleMaxLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Title must be 50 characters or fewer'**
+  String get postTitleMaxLength;
+
   /// No description provided for @postContent.
   ///
   /// In en, this message translates to:
@@ -931,8 +937,14 @@ abstract class AppLocalizations {
   /// No description provided for @postContentMinLength.
   ///
   /// In en, this message translates to:
-  /// **'Content must be at least 10 characters'**
+  /// **'Content must be at least 2 characters'**
   String get postContentMinLength;
+
+  /// No description provided for @postContentMaxLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Content must be 500 characters or fewer'**
+  String get postContentMaxLength;
 
   /// No description provided for @postImageInsert.
   ///

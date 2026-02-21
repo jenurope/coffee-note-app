@@ -430,6 +430,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postTitleMinLength => 'タイトルは2文字以上で入力してください';
 
   @override
+  String get postTitleMaxLength => 'タイトルは50文字以内で入力してください';
+
+  @override
   String get postContent => '内容';
 
   @override
@@ -439,7 +442,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postContentRequired => '内容を入力してください';
 
   @override
-  String get postContentMinLength => '内容は10文字以上で入力してください';
+  String get postContentMinLength => '内容は2文字以上で入力してください';
+
+  @override
+  String get postContentMaxLength => '内容は500文字以内で入力してください';
 
   @override
   String get postImageInsert => '画像を挿入';

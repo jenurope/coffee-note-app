@@ -430,6 +430,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postTitleMinLength => '제목은 2자 이상이어야 합니다';
 
   @override
+  String get postTitleMaxLength => '제목은 50자 이하여야 합니다';
+
+  @override
   String get postContent => '내용';
 
   @override
@@ -439,7 +442,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postContentRequired => '내용을 입력해주세요';
 
   @override
-  String get postContentMinLength => '내용은 10자 이상이어야 합니다';
+  String get postContentMinLength => '내용은 2자 이상이어야 합니다';
+
+  @override
+  String get postContentMaxLength => '내용은 500자 이하여야 합니다';
 
   @override
   String get postImageInsert => '이미지 삽입';

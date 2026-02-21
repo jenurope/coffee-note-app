@@ -32,6 +32,10 @@ class PostFormScreen extends StatefulWidget {
 }
 
 class _PostFormScreenState extends State<PostFormScreen> {
+  static const int _minTitleLength = 2;
+  static const int _maxTitleLength = 50;
+  static const int _minContentLength = 2;
+  static const int _maxContentLength = 500;
   static const int _maxImagesPerPost = 3;
 
   final _formKey = GlobalKey<FormState>();
@@ -57,6 +61,14 @@ class _PostFormScreenState extends State<PostFormScreen> {
       _quillController.document.toDelta(),
     );
     return trim ? markdown.trim() : markdown;
+  }
+
+  String _currentPlainTextContent({bool trim = false}) {
+    final text = _quillController.document.toPlainText().replaceAll(
+      '\u{fffc}',
+      '',
+    );
+    return trim ? text.trim() : text;
   }
 
   int get _imageCount => countMarkdownImages(_currentMarkdownContent());
@@ -223,15 +235,19 @@ class _PostFormScreenState extends State<PostFormScreen> {
   }
 
   String? _validateContent(String? _) {
-    final content = _currentMarkdownContent(trim: true);
+    final plainText = _currentPlainTextContent(trim: true);
+    final markdownContent = _currentMarkdownContent(trim: true);
 
-    if (content.isEmpty) {
+    if (plainText.isEmpty) {
       return context.l10n.postContentRequired;
     }
-    if (content.length < 10) {
+    if (plainText.length < _minContentLength) {
       return context.l10n.postContentMinLength;
     }
-    if (countMarkdownImages(content) > _maxImagesPerPost) {
+    if (plainText.length > _maxContentLength) {
+      return context.l10n.postContentMaxLength;
+    }
+    if (countMarkdownImages(markdownContent) > _maxImagesPerPost) {
       return context.l10n.postImageLimitReached;
     }
     return null;
@@ -496,8 +512,12 @@ class _PostFormScreenState extends State<PostFormScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return context.l10n.postTitleRequired;
                     }
-                    if (value.trim().length < 2) {
+                    final title = value.trim();
+                    if (title.length < _minTitleLength) {
                       return context.l10n.postTitleMinLength;
+                    }
+                    if (title.length > _maxTitleLength) {
+                      return context.l10n.postTitleMaxLength;
                     }
                     return null;
                   },
@@ -559,6 +579,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   validator: _validateContent,
                   initialValue: _currentMarkdownContent(),
                   builder: (state) {
+                    final borderColor = state.hasError
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.outline.withValues(alpha: 0.3);
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -566,9 +589,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                           constraints: const BoxConstraints(minHeight: 280),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: theme.colorScheme.outline.withValues(
-                                alpha: 0.3,
-                              ),
+                              color: borderColor,
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),

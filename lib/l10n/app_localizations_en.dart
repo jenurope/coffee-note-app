@@ -439,6 +439,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postTitleMinLength => 'Title must be at least 2 characters';
 
   @override
+  String get postTitleMaxLength => 'Title must be 50 characters or fewer';
+
+  @override
   String get postContent => 'Content';
 
   @override
@@ -448,7 +451,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postContentRequired => 'Please enter content';
 
   @override
-  String get postContentMinLength => 'Content must be at least 10 characters';
+  String get postContentMinLength => 'Content must be at least 2 characters';
+
+  @override
+  String get postContentMaxLength => 'Content must be 500 characters or fewer';
 
   @override
   String get postImageInsert => 'Insert Image';
