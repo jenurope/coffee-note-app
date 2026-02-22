@@ -588,6 +588,124 @@ class AppLocalizationsEn extends AppLocalizations {
       'Contact/Report feature is in preparation.';
 
   @override
+  String get inquiryGuestEntryAction => 'Contact Us';
+
+  @override
+  String get inquiryFormTitleGuest => 'Service Inquiry';
+
+  @override
+  String get inquiryFormTitleUser => 'New Inquiry';
+
+  @override
+  String get inquiryListTitle => 'My Inquiries';
+
+  @override
+  String get inquiryTypeLabel => 'Inquiry Type';
+
+  @override
+  String get inquiryTypeGeneral => 'General';
+
+  @override
+  String get inquiryTypeBug => 'Bug Report';
+
+  @override
+  String get inquiryTypeFeature => 'Feature Request';
+
+  @override
+  String get inquiryTypeAccount => 'Account';
+
+  @override
+  String get inquiryTypeTechnical => 'Technical Support';
+
+  @override
+  String get inquiryTitleLabel => 'Title';
+
+  @override
+  String get inquiryTitleHint => 'Enter inquiry title';
+
+  @override
+  String get inquiryTitleRequired => 'Please enter a title.';
+
+  @override
+  String get inquiryTitleLength => 'Title must be at least 2 characters.';
+
+  @override
+  String get inquiryContentLabel => 'Content';
+
+  @override
+  String get inquiryContentHint => 'Describe your inquiry in detail';
+
+  @override
+  String get inquiryContentRequired => 'Please enter content.';
+
+  @override
+  String get inquiryContentLength => 'Content must be at least 5 characters.';
+
+  @override
+  String get inquiryEmailLabel => 'Email for Reply';
+
+  @override
+  String get inquiryEmailHint => 'example@email.com';
+
+  @override
+  String get inquiryEmailRequired => 'Please enter an email.';
+
+  @override
+  String get inquiryEmailInvalid => 'Please enter a valid email address.';
+
+  @override
+  String get inquiryGuestConsentLabel =>
+      'I agree to collect my email to receive a reply.';
+
+  @override
+  String get inquiryGuestConsentRequired => 'Privacy consent is required.';
+
+  @override
+  String get inquirySubmitAction => 'Submit Inquiry';
+
+  @override
+  String get inquirySubmitSuccess => 'Your inquiry has been submitted.';
+
+  @override
+  String get inquirySubmitFailed =>
+      'An error occurred while submitting inquiry. Please try again later.';
+
+  @override
+  String get inquiryLoadFailed =>
+      'Failed to load inquiries. Please try again later.';
+
+  @override
+  String get inquiryNewAction => 'New Inquiry';
+
+  @override
+  String get inquiryEmptyTitle => 'No inquiries yet.';
+
+  @override
+  String get inquiryEmptySubtitle => 'Leave a question, suggestion, or report.';
+
+  @override
+  String get inquiryListLoginRequired =>
+      'Only signed-in users can view inquiry history.';
+
+  @override
+  String get inquiryAnswerLabel => 'Support Team Reply';
+
+  @override
+  String get inquiryAnswerPending => 'No reply has been registered yet.';
+
+  @override
+  String get inquiryStatusPending => 'Received';
+
+  @override
+  String get inquiryStatusInProgress => 'In Progress';
+
+  @override
+  String get inquiryStatusResolved => 'Resolved';
+
+  @override
+  String get inquiryStatusClosed => 'Closed';
+
+  @override
   String get preparing => 'In preparation.';
 
   @override

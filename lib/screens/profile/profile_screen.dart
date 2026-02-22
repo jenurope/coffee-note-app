@@ -332,13 +332,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _buildMenuTile(
                             context,
                             title: l10n.contactReport,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l10n.contactReportPreparing),
-                                ),
-                              );
-                            },
+                            onTap: () => context.push('/profile/inquiries'),
                           ),
                           const Divider(height: 1),
                           _buildAppInfoTile(theme),

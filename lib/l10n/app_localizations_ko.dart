@@ -570,6 +570,120 @@ class AppLocalizationsKo extends AppLocalizations {
   String get contactReportPreparing => '문의/제보 기능은 준비 중입니다.';
 
   @override
+  String get inquiryGuestEntryAction => '문의하기';
+
+  @override
+  String get inquiryFormTitleGuest => '서비스 문의';
+
+  @override
+  String get inquiryFormTitleUser => '문의 작성';
+
+  @override
+  String get inquiryListTitle => '내 문의 내역';
+
+  @override
+  String get inquiryTypeLabel => '문의 유형';
+
+  @override
+  String get inquiryTypeGeneral => '일반 문의';
+
+  @override
+  String get inquiryTypeBug => '버그 신고';
+
+  @override
+  String get inquiryTypeFeature => '기능 요청';
+
+  @override
+  String get inquiryTypeAccount => '계정 문의';
+
+  @override
+  String get inquiryTypeTechnical => '기술 지원';
+
+  @override
+  String get inquiryTitleLabel => '제목';
+
+  @override
+  String get inquiryTitleHint => '문의 제목을 입력하세요';
+
+  @override
+  String get inquiryTitleRequired => '제목을 입력해주세요.';
+
+  @override
+  String get inquiryTitleLength => '제목은 2자 이상 입력해주세요.';
+
+  @override
+  String get inquiryContentLabel => '내용';
+
+  @override
+  String get inquiryContentHint => '문의 내용을 자세히 입력해주세요';
+
+  @override
+  String get inquiryContentRequired => '내용을 입력해주세요.';
+
+  @override
+  String get inquiryContentLength => '내용은 5자 이상 입력해주세요.';
+
+  @override
+  String get inquiryEmailLabel => '답변 받을 이메일';
+
+  @override
+  String get inquiryEmailHint => 'example@email.com';
+
+  @override
+  String get inquiryEmailRequired => '이메일을 입력해주세요.';
+
+  @override
+  String get inquiryEmailInvalid => '올바른 이메일 형식을 입력해주세요.';
+
+  @override
+  String get inquiryGuestConsentLabel => '문의 답변을 위해 이메일을 수집하는 것에 동의합니다.';
+
+  @override
+  String get inquiryGuestConsentRequired => '개인정보 수집 동의가 필요합니다.';
+
+  @override
+  String get inquirySubmitAction => '문의 등록';
+
+  @override
+  String get inquirySubmitSuccess => '문의가 등록되었습니다.';
+
+  @override
+  String get inquirySubmitFailed => '문의 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get inquiryLoadFailed => '문의 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get inquiryNewAction => '문의 작성';
+
+  @override
+  String get inquiryEmptyTitle => '등록된 문의가 없습니다.';
+
+  @override
+  String get inquiryEmptySubtitle => '궁금한 점이나 제안, 제보를 남겨보세요.';
+
+  @override
+  String get inquiryListLoginRequired => '로그인한 사용자만 문의 내역을 확인할 수 있습니다.';
+
+  @override
+  String get inquiryAnswerLabel => '운영팀 답변';
+
+  @override
+  String get inquiryAnswerPending => '아직 답변이 등록되지 않았습니다.';
+
+  @override
+  String get inquiryStatusPending => '접수';
+
+  @override
+  String get inquiryStatusInProgress => '처리중';
+
+  @override
+  String get inquiryStatusResolved => '해결';
+
+  @override
+  String get inquiryStatusClosed => '종료';
+
+  @override
   String get preparing => '준비 중입니다.';
 
   @override

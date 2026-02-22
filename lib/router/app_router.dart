@@ -24,6 +24,8 @@ import '../screens/logs/coffee_log_detail_screen.dart';
 import '../screens/logs/coffee_log_form_screen.dart';
 import '../screens/logs/coffee_log_list_screen.dart';
 import '../screens/main/main_screen.dart';
+import '../screens/inquiries/service_inquiry_form_screen.dart';
+import '../screens/inquiries/service_inquiry_list_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/profile_edit_screen.dart';
 import '../screens/splash/splash_screen.dart';
@@ -32,12 +34,15 @@ import '../widgets/navigation/guest_tab_root_back_guard.dart';
 abstract final class AppRoutePath {
   static const splash = '/splash';
   static const login = '/auth/login';
+  static const authInquiry = '/auth/inquiry';
   static const terms = '/auth/terms';
   static const dashboard = '/';
   static const beans = '/beans';
   static const logs = '/logs';
   static const community = '/community';
   static const profile = '/profile';
+  static const profileInquiries = '/profile/inquiries';
+  static const profileInquiriesNew = '/profile/inquiries/new';
   static const profileEdit = '/profile/edit';
 }
 
@@ -160,6 +165,18 @@ class AppRouteBuilders {
 
   Widget buildProfile(BuildContext context, GoRouterState state) {
     return const ProfileScreen();
+  }
+
+  Widget buildServiceInquiryList(BuildContext context, GoRouterState state) {
+    return const ServiceInquiryListScreen();
+  }
+
+  Widget buildServiceInquiryForm(
+    BuildContext context,
+    GoRouterState state, {
+    required bool allowGuest,
+  }) {
+    return ServiceInquiryFormScreen(allowGuest: allowGuest);
   }
 
   Widget buildProfileEdit(BuildContext context, GoRouterState state) {
@@ -425,6 +442,24 @@ GoRouter createAppRouter({
                 ),
                 routes: [
                   GoRoute(
+                    path: 'inquiries',
+                    name: 'profile-inquiries',
+                    builder: (context, state) =>
+                        routeBuilders.buildServiceInquiryList(context, state),
+                    routes: [
+                      GoRoute(
+                        path: 'new',
+                        name: 'profile-inquiry-new',
+                        builder: (context, state) =>
+                            routeBuilders.buildServiceInquiryForm(
+                              context,
+                              state,
+                              allowGuest: false,
+                            ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
                     path: 'edit',
                     name: 'profile-edit',
                     builder: (context, state) =>
@@ -440,6 +475,15 @@ GoRouter createAppRouter({
         path: AppRoutePath.login,
         name: 'login',
         builder: (context, state) => routeBuilders.buildLogin(context, state),
+      ),
+      GoRoute(
+        path: AppRoutePath.authInquiry,
+        name: 'auth-inquiry',
+        builder: (context, state) => routeBuilders.buildServiceInquiryForm(
+          context,
+          state,
+          allowGuest: true,
+        ),
       ),
       GoRoute(
         path: AppRoutePath.terms,

@@ -9,6 +9,8 @@
 - `20260221_remove_legacy_bean_and_brew_details.sql`
 - `20260221_terms_catalog_and_consents.sql`
 - `20260222_withdraw_storage_cleanup_via_storage_api.sql`
+- `20260222_service_inquiries_guest_support.sql`
+- `20260222_service_inquiries_customer_type_preserve_on_withdraw.sql`
 
 ## 실행 목적
 - 개발환경 데이터를 초기화합니다.
@@ -21,6 +23,8 @@
 - 더 이상 사용하지 않는 레거시 테이블(`bean_details`, `brew_details`)을 제거합니다.
 - 약관 카탈로그/본문/사용자 동의 이력 테이블과 RLS 정책을 생성하고 초기 약관 데이터를 적재합니다.
 - 회원 탈퇴 시 스토리지 삭제를 Storage API 경로(best-effort)로 처리하고, 실패는 RPC로 로그 테이블에 기록합니다.
+- 서비스 문의 테이블을 비로그인 문의까지 수용하도록 정비하고(`user_id` nullable), `phone` 컬럼 제거 및 문의 RLS 정책(로그인 본인 조회/등록, 비로그인 등록)을 적용합니다.
+- 서비스 문의에 고객 타입(`member`, `guest`, `withdrawn`)을 도입하고, 회원 탈퇴 시 문의 데이터는 삭제하지 않고 `user_id = null`, `customer_type = withdrawn`으로 전환합니다.
 
 ## 실행 방법
 1. Supabase SQL Editor에서 Role을 `postgres`(owner 권한)로 선택한 뒤 스크립트를 실행합니다.

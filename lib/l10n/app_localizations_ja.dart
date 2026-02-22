@@ -570,6 +570,120 @@ class AppLocalizationsJa extends AppLocalizations {
   String get contactReportPreparing => 'お問い合わせ/報告機能は準備中です。';
 
   @override
+  String get inquiryGuestEntryAction => 'お問い合わせ';
+
+  @override
+  String get inquiryFormTitleGuest => 'サービスお問い合わせ';
+
+  @override
+  String get inquiryFormTitleUser => 'お問い合わせ作成';
+
+  @override
+  String get inquiryListTitle => 'お問い合わせ履歴';
+
+  @override
+  String get inquiryTypeLabel => 'お問い合わせ種別';
+
+  @override
+  String get inquiryTypeGeneral => '一般お問い合わせ';
+
+  @override
+  String get inquiryTypeBug => '不具合報告';
+
+  @override
+  String get inquiryTypeFeature => '機能要望';
+
+  @override
+  String get inquiryTypeAccount => 'アカウント';
+
+  @override
+  String get inquiryTypeTechnical => '技術サポート';
+
+  @override
+  String get inquiryTitleLabel => 'タイトル';
+
+  @override
+  String get inquiryTitleHint => 'お問い合わせタイトルを入力してください';
+
+  @override
+  String get inquiryTitleRequired => 'タイトルを入力してください。';
+
+  @override
+  String get inquiryTitleLength => 'タイトルは2文字以上で入力してください。';
+
+  @override
+  String get inquiryContentLabel => '内容';
+
+  @override
+  String get inquiryContentHint => 'お問い合わせ内容を詳しく入力してください';
+
+  @override
+  String get inquiryContentRequired => '内容を入力してください。';
+
+  @override
+  String get inquiryContentLength => '内容は5文字以上で入力してください。';
+
+  @override
+  String get inquiryEmailLabel => '返信先メール';
+
+  @override
+  String get inquiryEmailHint => 'example@email.com';
+
+  @override
+  String get inquiryEmailRequired => 'メールアドレスを入力してください。';
+
+  @override
+  String get inquiryEmailInvalid => '正しいメールアドレス形式を入力してください。';
+
+  @override
+  String get inquiryGuestConsentLabel => '返信のためにメールアドレスを収集することに同意します。';
+
+  @override
+  String get inquiryGuestConsentRequired => '個人情報収集への同意が必要です。';
+
+  @override
+  String get inquirySubmitAction => 'お問い合わせ送信';
+
+  @override
+  String get inquirySubmitSuccess => 'お問い合わせを登録しました。';
+
+  @override
+  String get inquirySubmitFailed => 'お問い合わせ登録中にエラーが発生しました。しばらくしてから再試行してください。';
+
+  @override
+  String get inquiryLoadFailed => 'お問い合わせ履歴を読み込めませんでした。しばらくしてから再試行してください。';
+
+  @override
+  String get inquiryNewAction => 'お問い合わせ作成';
+
+  @override
+  String get inquiryEmptyTitle => '登録されたお問い合わせはありません。';
+
+  @override
+  String get inquiryEmptySubtitle => 'ご質問・ご提案・ご報告をお寄せください。';
+
+  @override
+  String get inquiryListLoginRequired => 'お問い合わせ履歴はログイン後に確認できます。';
+
+  @override
+  String get inquiryAnswerLabel => '運営チーム回答';
+
+  @override
+  String get inquiryAnswerPending => 'まだ回答は登録されていません。';
+
+  @override
+  String get inquiryStatusPending => '受付';
+
+  @override
+  String get inquiryStatusInProgress => '対応中';
+
+  @override
+  String get inquiryStatusResolved => '解決';
+
+  @override
+  String get inquiryStatusClosed => '終了';
+
+  @override
   String get preparing => '準備中です。';
 
   @override

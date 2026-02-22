@@ -152,6 +152,8 @@ class UserErrorMessage {
       'errLoadPosts' => l10n.errLoadPosts,
       'errLoadPostDetail' => l10n.errLoadPostDetail,
       'errLoadDashboard' => l10n.errLoadDashboard,
+      'inquirySubmitFailed' => l10n.inquirySubmitFailed,
+      'inquiryLoadFailed' => l10n.inquiryLoadFailed,
       'errBeanNotFound' => l10n.errBeanNotFound,
       'errSampleBeanNotFound' => l10n.errSampleBeanNotFound,
       'errLogNotFound' => l10n.errLogNotFound,
