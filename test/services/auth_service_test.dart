@@ -26,6 +26,74 @@ class _TestableAuthService extends AuthService {
   }
 }
 
+class _TermsAwareAuthService extends AuthService {
+  _TermsAwareAuthService(
+    super.client, {
+    this.onFetchActiveRequiredTermVersions,
+    this.onFetchUserAgreedTermsConsents,
+    this.onFetchActiveTermsWithContents,
+    this.onFetchActiveTermsMeta,
+    this.onUpsertUserTermsConsents,
+  });
+
+  final Future<List<Map<String, dynamic>>> Function()?
+  onFetchActiveRequiredTermVersions;
+  final Future<List<Map<String, dynamic>>> Function(String userId)?
+  onFetchUserAgreedTermsConsents;
+  final Future<List<Map<String, dynamic>>> Function()?
+  onFetchActiveTermsWithContents;
+  final Future<List<Map<String, dynamic>>> Function()? onFetchActiveTermsMeta;
+  final Future<void> Function(List<Map<String, dynamic>> rows)?
+  onUpsertUserTermsConsents;
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchActiveRequiredTermVersions() {
+    final handler = onFetchActiveRequiredTermVersions;
+    if (handler == null) {
+      return super.fetchActiveRequiredTermVersions();
+    }
+    return handler();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchUserAgreedTermsConsents(
+    String userId,
+  ) {
+    final handler = onFetchUserAgreedTermsConsents;
+    if (handler == null) {
+      return super.fetchUserAgreedTermsConsents(userId);
+    }
+    return handler(userId);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchActiveTermsWithContents() {
+    final handler = onFetchActiveTermsWithContents;
+    if (handler == null) {
+      return super.fetchActiveTermsWithContents();
+    }
+    return handler();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchActiveTermsMeta() {
+    final handler = onFetchActiveTermsMeta;
+    if (handler == null) {
+      return super.fetchActiveTermsMeta();
+    }
+    return handler();
+  }
+
+  @override
+  Future<void> upsertUserTermsConsents(List<Map<String, dynamic>> rows) {
+    final handler = onUpsertUserTermsConsents;
+    if (handler == null) {
+      return super.upsertUserTermsConsents(rows);
+    }
+    return handler(rows);
+  }
+}
+
 void main() {
   group('AuthService.getValidatedCurrentUser', () {
     late _MockSupabaseClient client;
@@ -170,6 +238,149 @@ void main() {
 
       expect(rpcCalled, isTrue);
       verify(() => authClient.signOut(scope: SignOutScope.local)).called(1);
+    });
+  });
+
+  group('AuthService terms consent', () {
+    late _MockSupabaseClient client;
+    late _MockGoTrueClient authClient;
+
+    setUp(() {
+      client = _MockSupabaseClient();
+      authClient = _MockGoTrueClient();
+      when(() => client.auth).thenReturn(authClient);
+    });
+
+    test('활성 필수 약관 동의가 누락되면 pending=true를 반환한다', () async {
+      final service = _TermsAwareAuthService(
+        client,
+        onFetchActiveRequiredTermVersions: () async => <Map<String, dynamic>>[
+          <String, dynamic>{'code': 'service_terms', 'current_version': 1},
+          <String, dynamic>{'code': 'privacy_policy', 'current_version': 2},
+        ],
+        onFetchUserAgreedTermsConsents: (_) async => <Map<String, dynamic>>[
+          <String, dynamic>{
+            'term_code': 'service_terms',
+            'version': 1,
+            'agreed': true,
+          },
+        ],
+      );
+
+      final pending = await service.hasPendingRequiredTerms('user-1');
+
+      expect(pending, isTrue);
+    });
+
+    test('활성 필수 약관 최신 버전에 모두 동의했으면 pending=false를 반환한다', () async {
+      final service = _TermsAwareAuthService(
+        client,
+        onFetchActiveRequiredTermVersions: () async => <Map<String, dynamic>>[
+          <String, dynamic>{'code': 'service_terms', 'current_version': 1},
+          <String, dynamic>{'code': 'privacy_policy', 'current_version': 2},
+        ],
+        onFetchUserAgreedTermsConsents: (_) async => <Map<String, dynamic>>[
+          <String, dynamic>{
+            'term_code': 'service_terms',
+            'version': 1,
+            'agreed': true,
+          },
+          <String, dynamic>{
+            'term_code': 'privacy_policy',
+            'version': 2,
+            'agreed': true,
+          },
+        ],
+      );
+
+      final pending = await service.hasPendingRequiredTerms('user-2');
+
+      expect(pending, isFalse);
+    });
+
+    test('fetchActiveTerms는 locale과 current_version에 맞는 본문을 반환한다', () async {
+      final service = _TermsAwareAuthService(
+        client,
+        onFetchActiveTermsWithContents: () async => <Map<String, dynamic>>[
+          <String, dynamic>{
+            'code': 'service_terms',
+            'is_required': true,
+            'current_version': 2,
+            'sort_order': 10,
+            'terms_contents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'locale': 'ko',
+                'version': 2,
+                'title': '서비스 이용약관',
+                'content': 'ko-content',
+              },
+              <String, dynamic>{
+                'locale': 'en',
+                'version': 2,
+                'title': 'Terms of Service',
+                'content': 'en-content',
+              },
+            ],
+          },
+        ],
+      );
+
+      final terms = await service.fetchActiveTerms(localeCode: 'en');
+
+      expect(terms, hasLength(1));
+      expect(terms.first.code, 'service_terms');
+      expect(terms.first.version, 2);
+      expect(terms.first.title, 'Terms of Service');
+      expect(terms.first.content, 'en-content');
+    });
+
+    test('saveTermsConsents는 활성 약관을 버전 단위로 upsert한다', () async {
+      List<Map<String, dynamic>>? savedRows;
+      final service = _TermsAwareAuthService(
+        client,
+        onFetchActiveTermsMeta: () async => <Map<String, dynamic>>[
+          <String, dynamic>{
+            'code': 'service_terms',
+            'is_required': true,
+            'current_version': 1,
+            'sort_order': 10,
+          },
+          <String, dynamic>{
+            'code': 'privacy_policy',
+            'is_required': true,
+            'current_version': 2,
+            'sort_order': 20,
+          },
+          <String, dynamic>{
+            'code': 'marketing_opt_in',
+            'is_required': false,
+            'current_version': 1,
+            'sort_order': 30,
+          },
+        ],
+        onUpsertUserTermsConsents: (rows) async {
+          savedRows = rows;
+        },
+      );
+
+      await service.saveTermsConsents(
+        userId: 'user-3',
+        decisions: const <String, bool>{
+          'service_terms': true,
+          'privacy_policy': true,
+          'marketing_opt_in': false,
+        },
+      );
+
+      expect(savedRows, isNotNull);
+      expect(savedRows, hasLength(3));
+      expect(savedRows![0]['term_code'], 'service_terms');
+      expect(savedRows![0]['version'], 1);
+      expect(savedRows![0]['agreed'], true);
+      expect(savedRows![1]['term_code'], 'privacy_policy');
+      expect(savedRows![1]['version'], 2);
+      expect(savedRows![2]['term_code'], 'marketing_opt_in');
+      expect(savedRows![2]['agreed'], false);
     });
   });
 }

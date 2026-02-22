@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/terms/term_policy.dart';
 import '../models/user_profile.dart';
 
 class AuthService {
@@ -264,6 +265,147 @@ class AuthService {
     }
   }
 
+  Future<bool> hasPendingRequiredTerms(String userId) async {
+    final requiredTerms = await fetchActiveRequiredTermVersions();
+    if (requiredTerms.isEmpty) {
+      return false;
+    }
+
+    final agreedRows = await fetchUserAgreedTermsConsents(userId);
+    final agreedVersionByCode = <String, int>{};
+    for (final row in agreedRows) {
+      final termCode = row['term_code']?.toString();
+      final version = row['version'];
+      if (termCode == null || termCode.isEmpty || version is! int) {
+        continue;
+      }
+      final previous = agreedVersionByCode[termCode] ?? 0;
+      if (version > previous) {
+        agreedVersionByCode[termCode] = version;
+      }
+    }
+
+    for (final requiredTerm in requiredTerms) {
+      final code = requiredTerm['code']?.toString();
+      final currentVersion = requiredTerm['current_version'];
+      if (code == null || code.isEmpty || currentVersion is! int) {
+        throw StateError('invalid_required_term_row');
+      }
+      final agreedVersion = agreedVersionByCode[code] ?? 0;
+      if (agreedVersion < currentVersion) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  Future<List<TermPolicy>> fetchActiveTerms({
+    required String localeCode,
+  }) async {
+    final activeTermsRows = await fetchActiveTermsWithContents();
+    final normalizedLocale = _normalizeLocaleCode(localeCode);
+    final terms = <TermPolicy>[];
+
+    for (final row in activeTermsRows) {
+      final code = row['code']?.toString();
+      final isRequired = row['is_required'];
+      final version = row['current_version'];
+      final sortOrder = row['sort_order'];
+      final contents = row['terms_contents'];
+
+      if (code == null ||
+          code.isEmpty ||
+          isRequired is! bool ||
+          version is! int ||
+          sortOrder is! int ||
+          contents is! List) {
+        throw StateError('invalid_active_term_row');
+      }
+
+      final contentRows = contents.whereType<Map<String, dynamic>>().toList(
+        growable: false,
+      );
+
+      Map<String, dynamic>? selectedContent = _findTermContent(
+        contentRows: contentRows,
+        locale: normalizedLocale,
+        version: version,
+      );
+      selectedContent ??= _findTermContent(
+        contentRows: contentRows,
+        locale: 'ko',
+        version: version,
+      );
+      selectedContent ??= contentRows.firstWhere(
+        (contentRow) => contentRow['version'] == version,
+        orElse: () => <String, dynamic>{},
+      );
+
+      final title = selectedContent['title']?.toString();
+      final content = selectedContent['content']?.toString();
+      if (title == null ||
+          title.isEmpty ||
+          content == null ||
+          content.isEmpty) {
+        throw StateError('missing_term_content:$code:$version');
+      }
+
+      terms.add(
+        TermPolicy(
+          code: code,
+          title: title,
+          content: content,
+          version: version,
+          isRequired: isRequired,
+          sortOrder: sortOrder,
+        ),
+      );
+    }
+
+    return terms;
+  }
+
+  Future<void> saveTermsConsents({
+    required String userId,
+    required Map<String, bool> decisions,
+  }) async {
+    final activeTermsRows = await fetchActiveTermsMeta();
+    if (activeTermsRows.isEmpty) {
+      return;
+    }
+
+    for (final row in activeTermsRows) {
+      final code = row['code']?.toString();
+      final isRequired = row['is_required'];
+      if (code == null || code.isEmpty || isRequired is! bool) {
+        throw StateError('invalid_active_term_meta_row');
+      }
+      if (isRequired && decisions[code] != true) {
+        throw Exception('required_terms_not_agreed');
+      }
+    }
+
+    final nowIso = DateTime.now().toIso8601String();
+    final upsertRows = activeTermsRows
+        .map((row) {
+          final code = row['code'] as String;
+          final version = row['current_version'] as int;
+          final agreed = decisions[code] == true;
+          return <String, dynamic>{
+            'user_id': userId,
+            'term_code': code,
+            'version': version,
+            'agreed': agreed,
+            'agreed_at': agreed ? nowIso : null,
+            'updated_at': nowIso,
+          };
+        })
+        .toList(growable: false);
+
+    await upsertUserTermsConsents(upsertRows);
+  }
+
   // 로그인 에러 메시지 한글 변환
   String getSignInErrorMessage(dynamic error) {
     final message = error.toString().toLowerCase();
@@ -281,6 +423,118 @@ class AuthService {
     }
 
     return 'errLoginFailed';
+  }
+
+  String getTermsErrorMessage(
+    dynamic error, {
+    String fallback = 'errTermsConsentFailed',
+  }) {
+    final message = error.toString().toLowerCase();
+    if (message.contains('required_terms_not_agreed')) {
+      return 'errTermsRequiredNotAgreed';
+    }
+    if (message.contains('network') ||
+        message.contains('socket') ||
+        message.contains('timeout')) {
+      return 'errNetwork';
+    }
+    if (message.contains('permission') ||
+        message.contains('forbidden') ||
+        message.contains('rls')) {
+      return 'errPermissionDenied';
+    }
+    return fallback;
+  }
+
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchActiveRequiredTermVersions() async {
+    final rows = await _client
+        .from('terms_catalog')
+        .select('code,current_version')
+        .eq('is_active', true)
+        .eq('is_required', true)
+        .order('sort_order', ascending: true)
+        .order('code', ascending: true);
+    return rows
+        .map<Map<String, dynamic>>(
+          (row) => Map<String, dynamic>.from(row as Map),
+        )
+        .toList(growable: false);
+  }
+
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchUserAgreedTermsConsents(
+    String userId,
+  ) async {
+    final rows = await _client
+        .from('user_terms_consents')
+        .select('term_code,version,agreed')
+        .eq('user_id', userId)
+        .eq('agreed', true);
+    return rows
+        .map<Map<String, dynamic>>(
+          (row) => Map<String, dynamic>.from(row as Map),
+        )
+        .toList(growable: false);
+  }
+
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchActiveTermsMeta() async {
+    final rows = await _client
+        .from('terms_catalog')
+        .select('code,is_required,current_version,sort_order')
+        .eq('is_active', true)
+        .order('sort_order', ascending: true)
+        .order('code', ascending: true);
+    return rows
+        .map<Map<String, dynamic>>(
+          (row) => Map<String, dynamic>.from(row as Map),
+        )
+        .toList(growable: false);
+  }
+
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchActiveTermsWithContents() async {
+    final rows = await _client
+        .from('terms_catalog')
+        .select(
+          'code,is_required,current_version,sort_order,terms_contents(locale,version,title,content)',
+        )
+        .eq('is_active', true)
+        .order('sort_order', ascending: true)
+        .order('code', ascending: true);
+    return rows
+        .map<Map<String, dynamic>>(
+          (row) => Map<String, dynamic>.from(row as Map),
+        )
+        .toList(growable: false);
+  }
+
+  @visibleForTesting
+  Future<void> upsertUserTermsConsents(List<Map<String, dynamic>> rows) async {
+    await _client
+        .from('user_terms_consents')
+        .upsert(rows, onConflict: 'user_id,term_code,version');
+  }
+
+  String _normalizeLocaleCode(String localeCode) {
+    final normalized = localeCode.toLowerCase();
+    if (normalized.startsWith('ko')) return 'ko';
+    if (normalized.startsWith('ja')) return 'ja';
+    return 'en';
+  }
+
+  Map<String, dynamic>? _findTermContent({
+    required List<Map<String, dynamic>> contentRows,
+    required String locale,
+    required int version,
+  }) {
+    for (final row in contentRows) {
+      if (row['locale'] == locale && row['version'] == version) {
+        return row;
+      }
+    }
+    return null;
   }
 
   Future<void> _clearLocalSession() async {

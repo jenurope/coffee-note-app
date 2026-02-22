@@ -124,6 +124,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginTagline => 'Record your coffee journey';
 
   @override
+  String get termsConsentTitle => 'Terms Consent';
+
+  @override
+  String get termsConsentSubtitle =>
+      'Please review and agree to the following terms to continue.';
+
+  @override
+  String get termsRequiredHint =>
+      'You must agree to all required terms to proceed.';
+
+  @override
+  String get termsRequiredLabel => 'Required';
+
+  @override
+  String get termsOptionalLabel => 'Optional';
+
+  @override
+  String get termsAgreeAndContinue => 'Agree and Continue';
+
+  @override
+  String get termsDeclineAndLogout => 'Decline and Exit';
+
+  @override
+  String get termsEmpty =>
+      'No terms are available right now. Please try again later.';
+
+  @override
   String get loginFailedGeneric => 'An error occurred during login.';
 
   @override
@@ -739,6 +766,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errLoginFailed =>
       'An error occurred during login. Please try again.';
+
+  @override
+  String get errTermsLoadFailed =>
+      'Unable to load terms information. Please try again later.';
+
+  @override
+  String get errTermsConsentFailed =>
+      'An error occurred while processing terms consent. Please try again later.';
+
+  @override
+  String get errTermsRequiredNotAgreed =>
+      'You must agree to required terms to continue.';
 
   @override
   String get errServiceNotInitialized => 'Required service is not initialized.';
