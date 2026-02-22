@@ -21,6 +21,7 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
   String? _errorMessage;
   List<TermPolicy> _terms = const <TermPolicy>[];
   final Map<String, bool> _decisions = <String, bool>{};
+  final Map<String, bool> _expandedByCode = <String, bool>{};
 
   @override
   void didChangeDependencies() {
@@ -46,8 +47,10 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
       if (!mounted) return;
 
       final nextDecisions = <String, bool>{};
+      final nextExpanded = <String, bool>{};
       for (final term in terms) {
         nextDecisions[term.code] = _decisions[term.code] ?? false;
+        nextExpanded[term.code] = _expandedByCode[term.code] ?? true;
       }
 
       setState(() {
@@ -55,6 +58,9 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
         _decisions
           ..clear()
           ..addAll(nextDecisions);
+        _expandedByCode
+          ..clear()
+          ..addAll(nextExpanded);
         _isLoading = false;
       });
     } catch (_) {
@@ -206,12 +212,20 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
                           itemBuilder: (context, index) {
                             final term = _terms[index];
                             final agreed = _decisions[term.code] ?? false;
+                            final isExpanded =
+                                _expandedByCode[term.code] ?? true;
                             return _TermConsentCard(
                               term: term,
                               agreed: agreed,
+                              isExpanded: isExpanded,
                               onChanged: (checked) {
                                 setState(() {
                                   _decisions[term.code] = checked;
+                                });
+                              },
+                              onToggleExpanded: () {
+                                setState(() {
+                                  _expandedByCode[term.code] = !isExpanded;
                                 });
                               },
                             );
@@ -252,12 +266,16 @@ class _TermConsentCard extends StatelessWidget {
   const _TermConsentCard({
     required this.term,
     required this.agreed,
+    required this.isExpanded,
     required this.onChanged,
+    required this.onToggleExpanded,
   });
 
   final TermPolicy term;
   final bool agreed;
+  final bool isExpanded;
   final ValueChanged<bool> onChanged;
+  final VoidCallback onToggleExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -269,24 +287,46 @@ class _TermConsentCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CheckboxListTile(
-              key: Key('term-checkbox-${term.code}'),
-              value: agreed,
-              onChanged: (value) => onChanged(value ?? false),
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text('($agreementTypeLabel) ${term.title}'),
+            Row(
+              children: [
+                Checkbox(
+                  key: Key('term-checkbox-${term.code}'),
+                  value: agreed,
+                  onChanged: (value) => onChanged(value ?? false),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: onToggleExpanded,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text('($agreementTypeLabel) ${term.title}'),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  key: Key('term-toggle-${term.code}'),
+                  onPressed: onToggleExpanded,
+                  icon: Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: SelectableText(
-                term.content,
-                style: theme.textTheme.bodySmall,
+            if (isExpanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                child: SelectableText(
+                  term.content,
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
-            ),
           ],
         ),
       ),

@@ -93,6 +93,20 @@ void main() {
 
       verify(() => authCubit.declineTerms()).called(1);
     });
+
+    testWidgets('약관 본문은 기본 펼침 상태이며 토글로 접기/펼치기가 가능하다', (tester) async {
+      await _pumpScreen(tester, authCubit: authCubit);
+
+      expect(find.text('약관 본문 1'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('term-toggle-service_terms')));
+      await tester.pumpAndSettle();
+      expect(find.text('약관 본문 1'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('term-toggle-service_terms')));
+      await tester.pumpAndSettle();
+      expect(find.text('약관 본문 1'), findsOneWidget);
+    });
   });
 }
 
