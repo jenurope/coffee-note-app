@@ -304,8 +304,17 @@ class AuthService {
 
   Future<List<TermPolicy>> fetchActiveTerms({
     required String localeCode,
+    String? userId,
   }) async {
     final activeTermsRows = await fetchActiveTermsWithContents();
+    Set<String>? pendingTermCodes;
+    if (userId != null && userId.isNotEmpty) {
+      final userConsents = await fetchUserTermsConsents(userId);
+      pendingTermCodes = _resolvePendingTermCodes(
+        activeTermsRows: activeTermsRows,
+        userConsentRows: userConsents,
+      );
+    }
     final normalizedLocale = _normalizeLocaleCode(localeCode);
     final terms = <TermPolicy>[];
 
@@ -323,6 +332,9 @@ class AuthService {
           sortOrder is! int ||
           contents is! List) {
         throw StateError('invalid_active_term_row');
+      }
+      if (pendingTermCodes != null && !pendingTermCodes.contains(code)) {
+        continue;
       }
 
       final contentRows = contents.whereType<Map<String, dynamic>>().toList(
@@ -377,22 +389,39 @@ class AuthService {
       return;
     }
 
+    final userConsents = await fetchUserTermsConsents(userId);
+    final pendingTermCodes = _resolvePendingTermCodes(
+      activeTermsRows: activeTermsRows,
+      userConsentRows: userConsents,
+    );
+    if (pendingTermCodes.isEmpty) {
+      return;
+    }
+
+    final pendingRows = <Map<String, dynamic>>[];
     for (final row in activeTermsRows) {
       final code = row['code']?.toString();
       final isRequired = row['is_required'];
       if (code == null || code.isEmpty || isRequired is! bool) {
         throw StateError('invalid_active_term_meta_row');
       }
+      if (!pendingTermCodes.contains(code)) {
+        continue;
+      }
       if (isRequired && decisions[code] != true) {
         throw Exception('required_terms_not_agreed');
       }
+      pendingRows.add(row);
     }
 
     final nowIso = DateTime.now().toIso8601String();
-    final upsertRows = activeTermsRows
+    final upsertRows = pendingRows
         .map((row) {
-          final code = row['code'] as String;
-          final version = row['current_version'] as int;
+          final code = row['code']?.toString();
+          final version = row['current_version'];
+          if (code == null || code.isEmpty || version is! int) {
+            throw StateError('invalid_active_term_meta_row');
+          }
           final agreed = decisions[code] == true;
           return <String, dynamic>{
             'user_id': userId,
@@ -481,6 +510,21 @@ class AuthService {
   }
 
   @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchUserTermsConsents(
+    String userId,
+  ) async {
+    final rows = await _client
+        .from('user_terms_consents')
+        .select('term_code,version,agreed')
+        .eq('user_id', userId);
+    return rows
+        .map<Map<String, dynamic>>(
+          (row) => Map<String, dynamic>.from(row as Map),
+        )
+        .toList(growable: false);
+  }
+
+  @visibleForTesting
   Future<List<Map<String, dynamic>>> fetchActiveTermsMeta() async {
     final rows = await _client
         .from('terms_catalog')
@@ -537,6 +581,56 @@ class AuthService {
       }
     }
     return null;
+  }
+
+  Set<String> _resolvePendingTermCodes({
+    required List<Map<String, dynamic>> activeTermsRows,
+    required List<Map<String, dynamic>> userConsentRows,
+  }) {
+    final currentVersionByCode = <String, int>{};
+    final isRequiredByCode = <String, bool>{};
+
+    for (final row in activeTermsRows) {
+      final code = row['code']?.toString();
+      final currentVersion = row['current_version'];
+      final isRequired = row['is_required'];
+      if (code == null ||
+          code.isEmpty ||
+          currentVersion is! int ||
+          isRequired is! bool) {
+        throw StateError('invalid_active_term_meta_row');
+      }
+      currentVersionByCode[code] = currentVersion;
+      isRequiredByCode[code] = isRequired;
+    }
+
+    final currentConsentByCode = <String, bool>{};
+    for (final row in userConsentRows) {
+      final code = row['term_code']?.toString();
+      final version = row['version'];
+      final agreed = row['agreed'];
+      if (code == null || code.isEmpty || version is! int || agreed is! bool) {
+        continue;
+      }
+
+      final currentVersion = currentVersionByCode[code];
+      if (currentVersion == null || version != currentVersion) {
+        continue;
+      }
+      currentConsentByCode[code] = agreed;
+    }
+
+    final pendingCodes = <String>{};
+    for (final entry in isRequiredByCode.entries) {
+      final code = entry.key;
+      final isRequired = entry.value;
+      final agreed = currentConsentByCode[code];
+      final needsConsent = isRequired ? agreed != true : agreed == null;
+      if (needsConsent) {
+        pendingCodes.add(code);
+      }
+    }
+    return pendingCodes;
   }
 
   Future<void> _clearLocalSession() async {

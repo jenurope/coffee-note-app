@@ -31,6 +31,7 @@ class _TermsAwareAuthService extends AuthService {
     super.client, {
     this.onFetchActiveRequiredTermVersions,
     this.onFetchUserAgreedTermsConsents,
+    this.onFetchUserTermsConsents,
     this.onFetchActiveTermsWithContents,
     this.onFetchActiveTermsMeta,
     this.onUpsertUserTermsConsents,
@@ -40,6 +41,8 @@ class _TermsAwareAuthService extends AuthService {
   onFetchActiveRequiredTermVersions;
   final Future<List<Map<String, dynamic>>> Function(String userId)?
   onFetchUserAgreedTermsConsents;
+  final Future<List<Map<String, dynamic>>> Function(String userId)?
+  onFetchUserTermsConsents;
   final Future<List<Map<String, dynamic>>> Function()?
   onFetchActiveTermsWithContents;
   final Future<List<Map<String, dynamic>>> Function()? onFetchActiveTermsMeta;
@@ -62,6 +65,17 @@ class _TermsAwareAuthService extends AuthService {
     final handler = onFetchUserAgreedTermsConsents;
     if (handler == null) {
       return super.fetchUserAgreedTermsConsents(userId);
+    }
+    return handler(userId);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchUserTermsConsents(String userId) {
+    final handler = onFetchUserTermsConsents;
+    if (handler == null) {
+      return Future<List<Map<String, dynamic>>>.value(
+        const <Map<String, dynamic>>[],
+      );
     }
     return handler(userId);
   }
@@ -367,6 +381,96 @@ void main() {
       expect(terms.first.content, 'en-content');
     });
 
+    test('fetchActiveTerms(userId)는 현재 사용자 기준 pending 약관만 반환한다', () async {
+      final service = _TermsAwareAuthService(
+        client,
+        onFetchActiveTermsWithContents: () async => <Map<String, dynamic>>[
+          <String, dynamic>{
+            'code': 'service_terms',
+            'is_required': true,
+            'current_version': 1,
+            'sort_order': 10,
+            'terms_contents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'locale': 'ko',
+                'version': 1,
+                'title': '서비스 약관',
+                'content': 'service',
+              },
+            ],
+          },
+          <String, dynamic>{
+            'code': 'privacy_policy',
+            'is_required': true,
+            'current_version': 1,
+            'sort_order': 20,
+            'terms_contents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'locale': 'ko',
+                'version': 1,
+                'title': '개인정보',
+                'content': 'privacy',
+              },
+            ],
+          },
+          <String, dynamic>{
+            'code': 'marketing_opt_in',
+            'is_required': false,
+            'current_version': 1,
+            'sort_order': 30,
+            'terms_contents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'locale': 'ko',
+                'version': 1,
+                'title': '마케팅 수신',
+                'content': 'marketing',
+              },
+            ],
+          },
+          <String, dynamic>{
+            'code': 'location_opt_in',
+            'is_required': false,
+            'current_version': 1,
+            'sort_order': 40,
+            'terms_contents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'locale': 'ko',
+                'version': 1,
+                'title': '위치 정보',
+                'content': 'location',
+              },
+            ],
+          },
+        ],
+        onFetchUserTermsConsents: (_) async => <Map<String, dynamic>>[
+          <String, dynamic>{
+            'term_code': 'service_terms',
+            'version': 1,
+            'agreed': true,
+          },
+          <String, dynamic>{
+            'term_code': 'privacy_policy',
+            'version': 1,
+            'agreed': false,
+          },
+          <String, dynamic>{
+            'term_code': 'marketing_opt_in',
+            'version': 1,
+            'agreed': false,
+          },
+        ],
+      );
+
+      final terms = await service.fetchActiveTerms(
+        localeCode: 'ko',
+        userId: 'user-terms',
+      );
+
+      expect(terms, hasLength(2));
+      expect(terms[0].code, 'privacy_policy');
+      expect(terms[1].code, 'location_opt_in');
+    });
+
     test('saveTermsConsents는 활성 약관을 버전 단위로 upsert한다', () async {
       List<Map<String, dynamic>>? savedRows;
       final service = _TermsAwareAuthService(
@@ -414,6 +518,74 @@ void main() {
       expect(savedRows![1]['version'], 2);
       expect(savedRows![2]['term_code'], 'marketing_opt_in');
       expect(savedRows![2]['agreed'], false);
+    });
+
+    test('saveTermsConsents는 pending 약관만 upsert하고 기존 동의 약관은 건너뛴다', () async {
+      List<Map<String, dynamic>>? savedRows;
+      final service = _TermsAwareAuthService(
+        client,
+        onFetchActiveTermsMeta: () async => <Map<String, dynamic>>[
+          <String, dynamic>{
+            'code': 'service_terms',
+            'is_required': true,
+            'current_version': 1,
+            'sort_order': 10,
+          },
+          <String, dynamic>{
+            'code': 'privacy_policy',
+            'is_required': true,
+            'current_version': 1,
+            'sort_order': 20,
+          },
+          <String, dynamic>{
+            'code': 'marketing_opt_in',
+            'is_required': false,
+            'current_version': 1,
+            'sort_order': 30,
+          },
+          <String, dynamic>{
+            'code': 'location_opt_in',
+            'is_required': false,
+            'current_version': 1,
+            'sort_order': 40,
+          },
+        ],
+        onFetchUserTermsConsents: (_) async => <Map<String, dynamic>>[
+          <String, dynamic>{
+            'term_code': 'service_terms',
+            'version': 1,
+            'agreed': true,
+          },
+          <String, dynamic>{
+            'term_code': 'privacy_policy',
+            'version': 1,
+            'agreed': false,
+          },
+          <String, dynamic>{
+            'term_code': 'marketing_opt_in',
+            'version': 1,
+            'agreed': false,
+          },
+        ],
+        onUpsertUserTermsConsents: (rows) async {
+          savedRows = rows;
+        },
+      );
+
+      await service.saveTermsConsents(
+        userId: 'user-4',
+        decisions: const <String, bool>{
+          'privacy_policy': true,
+          'location_opt_in': false,
+        },
+      );
+
+      expect(savedRows, isNotNull);
+      expect(savedRows, hasLength(2));
+      expect(savedRows![0]['term_code'], 'privacy_policy');
+      expect(savedRows![0]['agreed'], true);
+      expect(savedRows![1]['term_code'], 'location_opt_in');
+      expect(savedRows![1]['agreed'], false);
     });
   });
 }

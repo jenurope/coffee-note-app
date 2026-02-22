@@ -96,7 +96,12 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     final service = _authService;
     if (service == null) return const <TermPolicy>[];
-    return service.fetchActiveTerms(localeCode: localeCode);
+    final currentState = state;
+    final userId = switch (currentState) {
+      AuthTermsRequired(user: final user) => user.id,
+      _ => null,
+    };
+    return service.fetchActiveTerms(localeCode: localeCode, userId: userId);
   }
 
   Future<String?> acceptTermsConsents(Map<String, bool> decisions) async {
