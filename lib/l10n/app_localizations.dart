@@ -190,6 +190,12 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancel;
 
+  /// No description provided for @leave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get leave;
+
   /// No description provided for @delete.
   ///
   /// In en, this message translates to:
@@ -639,6 +645,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Update'**
   String get saveAsEdit;
+
+  /// No description provided for @formLeaveConfirmCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Your draft will be lost. Do you want to leave?'**
+  String get formLeaveConfirmCreate;
+
+  /// No description provided for @formLeaveConfirmEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes will be lost. Do you want to leave?'**
+  String get formLeaveConfirmEdit;
 
   /// No description provided for @beanCreated.
   ///

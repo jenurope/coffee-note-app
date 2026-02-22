@@ -17,6 +17,7 @@ import '../../services/coffee_log_service.dart';
 import '../../services/image_upload_service.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/image_picker_widget.dart';
+import '../../widgets/navigation/form_leave_confirm_dialog.dart';
 
 class CoffeeLogFormScreen extends StatefulWidget {
   final String? logId;
@@ -38,12 +39,17 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
   double _rating = 3.0;
   bool _isLoading = false;
   bool _isInitialized = false;
+  bool _allowPop = false;
+  bool _isLeaveDialogOpen = false;
+  _CoffeeLogFormSnapshot? _initialSnapshot;
 
   @override
   void initState() {
     super.initState();
     if (widget.logId != null) {
       _loadLog();
+    } else {
+      _captureInitialSnapshot();
     }
   }
 
@@ -84,6 +90,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
     _coffeeType = log.coffeeType;
     _rating = log.rating;
     _existingImageUrl = log.imageUrl;
+    _captureInitialSnapshot();
   }
 
   Future<void> _selectDate() async {
@@ -178,6 +185,79 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
     return filePath ?? existing;
   }
 
+  DateTime _normalizedDate(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+
+  String _normalizedText(String value) => value.trim();
+
+  _CoffeeLogFormSnapshot _currentSnapshot() {
+    return _CoffeeLogFormSnapshot(
+      coffeeName: _normalizedText(_coffeeNameController.text),
+      cafeName: _normalizedText(_cafeNameController.text),
+      notes: _normalizedText(_notesController.text),
+      visitDate: _normalizedDate(_visitDate),
+      coffeeType: _coffeeType,
+      rating: _rating,
+      imageReference: _normalizedExistingImageReference(),
+      selectedImagePath: _selectedImage?.path,
+    );
+  }
+
+  void _captureInitialSnapshot() {
+    _initialSnapshot = _currentSnapshot();
+  }
+
+  bool get _hasUnsavedChanges {
+    if (_allowPop) return false;
+    if (isEditing && !_isInitialized) return false;
+    final initialSnapshot = _initialSnapshot;
+    if (initialSnapshot == null) return false;
+    return _currentSnapshot() != initialSnapshot;
+  }
+
+  Future<bool> _confirmLeaveIfNeeded() async {
+    if (!_hasUnsavedChanges) {
+      return true;
+    }
+    if (_isLeaveDialogOpen) {
+      return false;
+    }
+
+    _isLeaveDialogOpen = true;
+    final shouldLeave = await showFormLeaveConfirmDialog(
+      context,
+      isEditing: isEditing,
+    );
+    _isLeaveDialogOpen = false;
+    return shouldLeave;
+  }
+
+  void _popSafely() {
+    if (_allowPop) {
+      if (mounted) {
+        context.pop();
+      }
+      return;
+    }
+
+    setState(() {
+      _allowPop = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.pop();
+    });
+  }
+
+  Future<void> _handlePopInvoked() async {
+    if (_isLoading || _isUploadingImage) return;
+
+    final shouldLeave = await _confirmLeaveIfNeeded();
+    if (!mounted || !shouldLeave) return;
+
+    _popSafely();
+  }
+
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -231,8 +311,10 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
       }
 
       if (mounted) {
-        context.pop();
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        _captureInitialSnapshot();
+        _popSafely();
+        messenger.showSnackBar(
           SnackBar(
             content: Text(
               isEditing ? context.l10n.logUpdated : context.l10n.logCreated,
@@ -269,217 +351,274 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
 
     // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isEditing
-              ? context.l10n.logFormEditTitle
-              : context.l10n.logFormNewTitle,
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handlePopInvoked();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            isEditing
+                ? context.l10n.logFormEditTitle
+                : context.l10n.logFormNewTitle,
+          ),
+          actions: [
+            TextButton(
+              onPressed: _isLoading || _isUploadingImage ? null : _handleSubmit,
+              child: Text(context.l10n.save),
+            ),
+          ],
         ),
-      ),
-      body: LoadingOverlay(
-        isLoading: _isLoading,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 이미지 선택
-                Text(
-                  context.l10n.coffeePhoto,
-                  style: theme.textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 8),
-                if (_selectedImage != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      children: [
-                        Image.file(
-                          File(_selectedImage!.path),
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: GestureDetector(
-                            onTap: _pickImage,
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withValues(alpha: 0.7),
+        body: LoadingOverlay(
+          isLoading: _isLoading,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 이미지 선택
+                  Text(
+                    context.l10n.coffeePhoto,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  if (_selectedImage != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
+                        children: [
+                          Image.file(
+                            File(_selectedImage!.path),
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.7),
+                                    ],
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      context.l10n.photoChange,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ],
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    context.l10n.photoChange,
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    )
+                  else
+                    ImagePickerWidget(
+                      imageUrl: _existingImageUrl,
+                      onTap: _pickImage,
+                      height: 200,
+                      placeholderIcon: Icons.local_cafe,
                     ),
-                  )
-                else
-                  ImagePickerWidget(
-                    imageUrl: _existingImageUrl,
-                    onTap: _pickImage,
-                    height: 200,
-                    placeholderIcon: Icons.local_cafe,
+                  const SizedBox(height: 16),
+
+                  // 커피 종류
+                  Text(
+                    context.l10n.coffeeType,
+                    style: theme.textTheme.bodyLarge,
                   ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: CoffeeLog.coffeeTypes.map((type) {
+                      return ChoiceChip(
+                        label: Text(
+                          CoffeeTypeCatalog.label(context.l10n, type),
+                        ),
+                        selected: _coffeeType == type,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _coffeeType = type;
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
 
-                // 커피 종류
-                Text(context.l10n.coffeeType, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: CoffeeLog.coffeeTypes.map((type) {
-                    return ChoiceChip(
-                      label: Text(CoffeeTypeCatalog.label(context.l10n, type)),
-                      selected: _coffeeType == type,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            _coffeeType = type;
-                          });
-                        }
-                      },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
+                  // 커피 이름
+                  CustomTextField(
+                    label: context.l10n.coffeeName,
+                    hint: context.l10n.coffeeNameHint,
+                    controller: _coffeeNameController,
+                    prefixIcon: Icons.local_cafe,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
 
-                // 커피 이름
-                CustomTextField(
-                  label: context.l10n.coffeeName,
-                  hint: context.l10n.coffeeNameHint,
-                  controller: _coffeeNameController,
-                  prefixIcon: Icons.local_cafe,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 16),
+                  // 카페 이름
+                  CustomTextField(
+                    label: context.l10n.cafeName,
+                    hint: context.l10n.cafeNameHint,
+                    controller: _cafeNameController,
+                    prefixIcon: Icons.storefront,
+                    textInputAction: TextInputAction.next,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return context.l10n.cafeNameRequired;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // 카페 이름
-                CustomTextField(
-                  label: context.l10n.cafeName,
-                  hint: context.l10n.cafeNameHint,
-                  controller: _cafeNameController,
-                  prefixIcon: Icons.storefront,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return context.l10n.cafeNameRequired;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  // 방문일
+                  Text(
+                    context.l10n.visitDate,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _selectDate,
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(localizations.formatMediumDate(_visitDate)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
-                // 방문일
-                Text(context.l10n.visitDate, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: _selectDate,
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.calendar_today),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  // 평점
+                  Text(context.l10n.rating, style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 8),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          RatingBar.builder(
+                            initialRating: _rating,
+                            minRating: 0.5,
+                            direction: Axis.horizontal,
+                            allowHalfRating: true,
+                            itemCount: 5,
+                            itemSize: 40,
+                            itemPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                            ),
+                            itemBuilder: (context, _) =>
+                                const Icon(Icons.star, color: Colors.amber),
+                            onRatingUpdate: (rating) {
+                              setState(() {
+                                _rating = rating;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _rating.toStringAsFixed(1),
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Text(localizations.formatMediumDate(_visitDate)),
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // 평점
-                Text(context.l10n.rating, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 8),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        RatingBar.builder(
-                          initialRating: _rating,
-                          minRating: 0.5,
-                          direction: Axis.horizontal,
-                          allowHalfRating: true,
-                          itemCount: 5,
-                          itemSize: 40,
-                          itemPadding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                          ),
-                          itemBuilder: (context, _) =>
-                              const Icon(Icons.star, color: Colors.amber),
-                          onRatingUpdate: (rating) {
-                            setState(() {
-                              _rating = rating;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _rating.toStringAsFixed(1),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                  // 메모
+                  CustomTextField(
+                    label: context.l10n.memo,
+                    hint: context.l10n.memoHint,
+                    controller: _notesController,
+                    maxLines: 4,
+                    textInputAction: TextInputAction.done,
                   ),
-                ),
-                const SizedBox(height: 16),
-
-                // 메모
-                CustomTextField(
-                  label: context.l10n.memo,
-                  hint: context.l10n.memoHint,
-                  controller: _notesController,
-                  maxLines: 4,
-                  textInputAction: TextInputAction.done,
-                ),
-
-                const SizedBox(height: 32),
-
-                // 저장 버튼
-                CustomButton(
-                  text: isEditing
-                      ? context.l10n.saveAsEdit
-                      : context.l10n.saveAsNew,
-                  onPressed: _handleSubmit,
-                  isLoading: _isLoading || _isUploadingImage,
-                ),
-                const SizedBox(height: 16),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+class _CoffeeLogFormSnapshot {
+  const _CoffeeLogFormSnapshot({
+    required this.coffeeName,
+    required this.cafeName,
+    required this.notes,
+    required this.visitDate,
+    required this.coffeeType,
+    required this.rating,
+    required this.imageReference,
+    required this.selectedImagePath,
+  });
+
+  final String coffeeName;
+  final String cafeName;
+  final String notes;
+  final DateTime visitDate;
+  final String coffeeType;
+  final double rating;
+  final String? imageReference;
+  final String? selectedImagePath;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is _CoffeeLogFormSnapshot &&
+        other.coffeeName == coffeeName &&
+        other.cafeName == cafeName &&
+        other.notes == notes &&
+        other.visitDate == visitDate &&
+        other.coffeeType == coffeeType &&
+        other.rating == rating &&
+        other.imageReference == imageReference &&
+        other.selectedImagePath == selectedImagePath;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    coffeeName,
+    cafeName,
+    notes,
+    visitDate,
+    coffeeType,
+    rating,
+    imageReference,
+    selectedImagePath,
+  );
 }

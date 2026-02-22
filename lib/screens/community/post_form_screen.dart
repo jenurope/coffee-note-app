@@ -22,6 +22,7 @@ import '../../services/community_service.dart';
 import '../../services/image_upload_service.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/image_picker_widget.dart';
+import '../../widgets/navigation/form_leave_confirm_dialog.dart';
 import 'post_markdown_utils.dart';
 
 class PostFormScreen extends StatefulWidget {
@@ -55,6 +56,10 @@ class _PostFormScreenState extends State<PostFormScreen> {
   bool _isLoading = false;
   bool _isInitialized = false;
   String _originalContent = '';
+  String _initialTitle = '';
+  String _initialContent = '';
+  bool _allowPop = false;
+  bool _isLeaveDialogOpen = false;
 
   bool get isEditing => widget.postId != null;
 
@@ -101,6 +106,8 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
     if (isEditing) {
       _loadPost();
+    } else {
+      _captureInitialSnapshot();
     }
   }
 
@@ -133,6 +140,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
     _originalContent = post.content;
     _setEditorMarkdown(post.content);
     _prunePendingImages();
+    _captureInitialSnapshot();
   }
 
   void _setEditorMarkdown(String markdownContent) {
@@ -307,6 +315,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       _originalContent = content;
       _pendingImages.clear();
+      _captureInitialSnapshot();
 
       if (mounted) {
         context.read<PostListCubit>().reload();
@@ -314,7 +323,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
       if (mounted) {
         final messenger = ScaffoldMessenger.of(context);
-        context.pop(true);
+        _popSafely();
         messenger.showSnackBar(
           SnackBar(
             content: Text(
@@ -475,197 +484,257 @@ class _PostFormScreenState extends State<PostFormScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  String get _currentTitle => _titleController.text.trim();
+
+  String get _currentContent => _currentMarkdownContent(trim: true);
+
+  void _captureInitialSnapshot() {
+    _initialTitle = _currentTitle;
+    _initialContent = _currentContent;
+  }
+
+  bool get _hasUnsavedChanges {
+    if (_allowPop) return false;
+    if (isEditing && !_isInitialized) return false;
+    return _currentTitle != _initialTitle || _currentContent != _initialContent;
+  }
+
+  Future<bool> _confirmLeaveIfNeeded() async {
+    if (!_hasUnsavedChanges) {
+      return true;
+    }
+    if (_isLeaveDialogOpen) {
+      return false;
+    }
+
+    _isLeaveDialogOpen = true;
+    final shouldLeave = await showFormLeaveConfirmDialog(
+      context,
+      isEditing: isEditing,
+    );
+    _isLeaveDialogOpen = false;
+    return shouldLeave;
+  }
+
+  void _popSafely() {
+    if (_allowPop) {
+      if (mounted) {
+        context.pop(true);
+      }
+      return;
+    }
+
+    setState(() {
+      _allowPop = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.pop(true);
+    });
+  }
+
+  Future<void> _handlePopInvoked() async {
+    if (_isLoading) return;
+
+    final shouldLeave = await _confirmLeaveIfNeeded();
+    if (!mounted || !shouldLeave) return;
+
+    _popSafely();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final submitText = isEditing ? context.l10n.update : '작성완료';
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isEditing
-              ? context.l10n.postFormEditTitle
-              : context.l10n.postFormNewTitle,
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handlePopInvoked();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            isEditing
+                ? context.l10n.postFormEditTitle
+                : context.l10n.postFormNewTitle,
+          ),
+          actions: [
+            TextButton(
+              onPressed: _isLoading ? null : _handleSubmit,
+              child: Text(context.l10n.save),
+            ),
+          ],
         ),
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: CustomButton(
-          text: submitText,
-          onPressed: _isLoading ? null : _handleSubmit,
+        body: LoadingOverlay(
           isLoading: _isLoading,
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
-      body: LoadingOverlay(
-        isLoading: _isLoading,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CustomTextField(
-                  label: context.l10n.postTitle,
-                  hint: context.l10n.postTitleHint,
-                  controller: _titleController,
-                  textInputAction: TextInputAction.next,
-                  onChanged: (_) {
-                    if (mounted) {
-                      setState(() {});
-                    }
-                  },
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return context.l10n.postTitleRequired;
-                    }
-                    final title = value.trim();
-                    if (title.length < _minTitleLength) {
-                      return context.l10n.postTitleMinLength;
-                    }
-                    if (title.length > _maxTitleLength) {
-                      return context.l10n.postTitleMaxLength;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    context.l10n.postTitleCount(
-                      _titleController.text.trim().length,
-                    ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CustomTextField(
+                    label: context.l10n.postTitle,
+                    hint: context.l10n.postTitleHint,
+                    controller: _titleController,
+                    textInputAction: TextInputAction.next,
+                    onChanged: (_) {
+                      if (mounted) {
+                        setState(() {});
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return context.l10n.postTitleRequired;
+                      }
+                      final title = value.trim();
+                      if (title.length < _minTitleLength) {
+                        return context.l10n.postTitleMinLength;
+                      }
+                      if (title.length > _maxTitleLength) {
+                        return context.l10n.postTitleMaxLength;
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: 16),
-                QuillSimpleToolbar(
-                  controller: _quillController,
-                  config: QuillSimpleToolbarConfig(
-                    showDividers: false,
-                    showFontFamily: false,
-                    showFontSize: false,
-                    showBoldButton: true,
-                    showItalicButton: true,
-                    showUnderLineButton: true,
-                    showStrikeThrough: true,
-                    showLink: true,
-                    showInlineCode: false,
-                    showColorButton: false,
-                    showBackgroundColorButton: false,
-                    showClearFormat: false,
-                    showHeaderStyle: false,
-                    showListNumbers: false,
-                    showListBullets: false,
-                    showListCheck: false,
-                    showCodeBlock: false,
-                    showQuote: false,
-                    showUndo: false,
-                    showRedo: false,
-                    showSearchButton: false,
-                    showSubscript: false,
-                    showSuperscript: false,
-                    showSmallButton: false,
-                    showAlignmentButtons: false,
-                    showIndent: false,
-                    showDirection: false,
-                    showLineHeightButton: false,
-                    showClipboardCut: false,
-                    showClipboardCopy: false,
-                    showClipboardPaste: false,
-                    customButtons: [
-                      QuillToolbarCustomButtonOptions(
-                        icon: const Icon(Icons.image_outlined),
-                        tooltip: context.l10n.postImageInsert,
-                        onPressed: _isLoading ? null : _insertImageEmbed,
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      context.l10n.postTitleCount(
+                        _titleController.text.trim().length,
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                FormField<String>(
-                  key: _contentFieldKey,
-                  validator: _validateContent,
-                  initialValue: _currentMarkdownContent(),
-                  builder: (state) {
-                    final borderColor = state.hasError
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.outline.withValues(alpha: 0.3);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Container(
-                          constraints: const BoxConstraints(minHeight: 280),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: borderColor),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: QuillEditor(
-                            focusNode: _editorFocusNode,
-                            scrollController: _editorScrollController,
-                            controller: _quillController,
-                            config: QuillEditorConfig(
-                              scrollable: false,
-                              placeholder: context.l10n.postContentHint,
-                              padding: const EdgeInsets.all(12),
-                              embedBuilders: [
-                                _PostImageEmbedBuilder(
-                                  pendingImagePathsByUrl:
-                                      _pendingImagePathsByUrl,
-                                ),
-                                const _HorizontalRuleEmbedBuilder(),
-                              ],
-                              unknownEmbedBuilder: const _UnknownEmbedBuilder(),
-                            ),
-                          ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
                         ),
-                        if (state.hasError)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                            child: Text(
-                              state.errorText!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.error,
-                              ),
-                            ),
-                          ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                context.l10n.postImageCount(_imageCount),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.7,
-                                  ),
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                context.l10n.postContentCount(
-                                  _currentPlainTextContent(trim: true).length,
-                                ),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.7,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  QuillSimpleToolbar(
+                    controller: _quillController,
+                    config: QuillSimpleToolbarConfig(
+                      showDividers: false,
+                      showFontFamily: false,
+                      showFontSize: false,
+                      showBoldButton: true,
+                      showItalicButton: true,
+                      showUnderLineButton: true,
+                      showStrikeThrough: true,
+                      showLink: true,
+                      showInlineCode: false,
+                      showColorButton: false,
+                      showBackgroundColorButton: false,
+                      showClearFormat: false,
+                      showHeaderStyle: false,
+                      showListNumbers: false,
+                      showListBullets: false,
+                      showListCheck: false,
+                      showCodeBlock: false,
+                      showQuote: false,
+                      showUndo: false,
+                      showRedo: false,
+                      showSearchButton: false,
+                      showSubscript: false,
+                      showSuperscript: false,
+                      showSmallButton: false,
+                      showAlignmentButtons: false,
+                      showIndent: false,
+                      showDirection: false,
+                      showLineHeightButton: false,
+                      showClipboardCut: false,
+                      showClipboardCopy: false,
+                      showClipboardPaste: false,
+                      customButtons: [
+                        QuillToolbarCustomButtonOptions(
+                          icon: const Icon(Icons.image_outlined),
+                          tooltip: context.l10n.postImageInsert,
+                          onPressed: _isLoading ? null : _insertImageEmbed,
                         ),
                       ],
-                    );
-                  },
-                ),
-              ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FormField<String>(
+                    key: _contentFieldKey,
+                    validator: _validateContent,
+                    initialValue: _currentMarkdownContent(),
+                    builder: (state) {
+                      final borderColor = state.hasError
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.outline.withValues(alpha: 0.3);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            constraints: const BoxConstraints(minHeight: 280),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: borderColor),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: QuillEditor(
+                              focusNode: _editorFocusNode,
+                              scrollController: _editorScrollController,
+                              controller: _quillController,
+                              config: QuillEditorConfig(
+                                scrollable: false,
+                                placeholder: context.l10n.postContentHint,
+                                padding: const EdgeInsets.all(12),
+                                embedBuilders: [
+                                  _PostImageEmbedBuilder(
+                                    pendingImagePathsByUrl:
+                                        _pendingImagePathsByUrl,
+                                  ),
+                                  const _HorizontalRuleEmbedBuilder(),
+                                ],
+                                unknownEmbedBuilder:
+                                    const _UnknownEmbedBuilder(),
+                              ),
+                            ),
+                          ),
+                          if (state.hasError)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                              child: Text(
+                                state.errorText!,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  context.l10n.postImageCount(_imageCount),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  context.l10n.postContentCount(
+                                    _currentPlainTextContent(trim: true).length,
+                                  ),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
