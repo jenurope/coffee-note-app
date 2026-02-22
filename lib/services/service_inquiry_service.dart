@@ -10,12 +10,10 @@ class ServiceInquiryService {
 
   Future<ServiceInquiry> createInquiry(ServiceInquiry inquiry) async {
     try {
-      final response = await _client
-          .from('service_inquiries')
-          .insert(inquiry.toInsertJson())
-          .select()
-          .single();
-      return ServiceInquiry.fromJson(response);
+      // Guest(anon) users have insert-only policy. Chaining select() would
+      // require extra read permission and can fail with RLS permission errors.
+      await _client.from('service_inquiries').insert(inquiry.toInsertJson());
+      return inquiry;
     } catch (e) {
       debugPrint('Create service inquiry error: $e');
       rethrow;
