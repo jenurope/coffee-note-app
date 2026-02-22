@@ -377,6 +377,17 @@ class AuthService {
       );
     }
 
+    terms.sort((a, b) {
+      if (a.isRequired != b.isRequired) {
+        return a.isRequired ? -1 : 1;
+      }
+      final sortOrderCompare = a.sortOrder.compareTo(b.sortOrder);
+      if (sortOrderCompare != 0) {
+        return sortOrderCompare;
+      }
+      return a.code.compareTo(b.code);
+    });
+
     return terms;
   }
 
@@ -623,10 +634,8 @@ class AuthService {
     final pendingCodes = <String>{};
     for (final entry in isRequiredByCode.entries) {
       final code = entry.key;
-      final isRequired = entry.value;
       final agreed = currentConsentByCode[code];
-      final needsConsent = isRequired ? agreed != true : agreed == null;
-      if (needsConsent) {
+      if (agreed != true) {
         pendingCodes.add(code);
       }
     }

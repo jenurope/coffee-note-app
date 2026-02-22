@@ -417,7 +417,7 @@ void main() {
             'code': 'marketing_opt_in',
             'is_required': false,
             'current_version': 1,
-            'sort_order': 30,
+            'sort_order': 5,
             'terms_contents': <Map<String, dynamic>>[
               <String, dynamic>{
                 'locale': 'ko',
@@ -431,7 +431,7 @@ void main() {
             'code': 'location_opt_in',
             'is_required': false,
             'current_version': 1,
-            'sort_order': 40,
+            'sort_order': 6,
             'terms_contents': <Map<String, dynamic>>[
               <String, dynamic>{
                 'locale': 'ko',
@@ -466,9 +466,10 @@ void main() {
         userId: 'user-terms',
       );
 
-      expect(terms, hasLength(2));
+      expect(terms, hasLength(3));
       expect(terms[0].code, 'privacy_policy');
-      expect(terms[1].code, 'location_opt_in');
+      expect(terms[1].code, 'marketing_opt_in');
+      expect(terms[2].code, 'location_opt_in');
     });
 
     test('saveTermsConsents는 활성 약관을 버전 단위로 upsert한다', () async {
@@ -520,7 +521,7 @@ void main() {
       expect(savedRows![2]['agreed'], false);
     });
 
-    test('saveTermsConsents는 pending 약관만 upsert하고 기존 동의 약관은 건너뛴다', () async {
+    test('saveTermsConsents는 기존 동의 완료 약관만 제외하고 미동의 약관을 upsert한다', () async {
       List<Map<String, dynamic>>? savedRows;
       final service = _TermsAwareAuthService(
         client,
@@ -581,11 +582,13 @@ void main() {
       );
 
       expect(savedRows, isNotNull);
-      expect(savedRows, hasLength(2));
+      expect(savedRows, hasLength(3));
       expect(savedRows![0]['term_code'], 'privacy_policy');
       expect(savedRows![0]['agreed'], true);
-      expect(savedRows![1]['term_code'], 'location_opt_in');
+      expect(savedRows![1]['term_code'], 'marketing_opt_in');
       expect(savedRows![1]['agreed'], false);
+      expect(savedRows![2]['term_code'], 'location_opt_in');
+      expect(savedRows![2]['agreed'], false);
     });
   });
 }
