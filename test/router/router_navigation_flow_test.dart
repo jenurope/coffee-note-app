@@ -333,17 +333,80 @@ void main() {
         expect(find.text('LOG_NEW'), findsOneWidget);
       },
     );
+
+    testWidgets('비허용 locale에서는 커뮤니티 탭을 숨긴다', (WidgetTester tester) async {
+      final authController = _TestAuthController(AppAuthSnapshot.guest);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        deviceLocaleProvider: () => const Locale('en', 'US'),
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(router, isGuestMode: true, locale: const Locale('ja')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.forum), findsNothing);
+      expect(find.byIcon(Icons.person), findsOneWidget);
+    });
+
+    testWidgets('en + KR 조합에서는 커뮤니티 탭을 노출한다', (WidgetTester tester) async {
+      final authController = _TestAuthController(AppAuthSnapshot.guest);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        deviceLocaleProvider: () => const Locale('en', 'KR'),
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(router, isGuestMode: true, locale: const Locale('en')),
+      );
+      await tester.pumpAndSettle();
+
+      await _tapBottomTab(tester, _TabTarget.community);
+      await tester.pumpAndSettle();
+
+      expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+    });
+
+    testWidgets('비허용 locale에서 /community 초기 진입 시 대시보드로 리다이렉트한다', (
+      WidgetTester tester,
+    ) async {
+      final authController = _TestAuthController(AppAuthSnapshot.guest);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        initialLocation: AppRoutePath.community,
+        deviceLocaleProvider: () => const Locale('en', 'US'),
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(router, isGuestMode: true, locale: const Locale('ja')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(find.text('COMMUNITY_ROOT'), findsNothing);
+    });
   });
 }
 
-Widget _buildTestApp(GoRouter router, {bool isGuestMode = false}) {
+Widget _buildTestApp(
+  GoRouter router, {
+  bool isGuestMode = false,
+  Locale locale = const Locale('ko'),
+}) {
   return BlocProvider<AuthCubit>(
     create: (_) => AuthCubit.test(
       isGuestMode ? const AuthState.guest() : const AuthState.unauthenticated(),
     ),
     child: MaterialApp.router(
       routerConfig: router,
-      locale: const Locale('ko'),
+      locale: locale,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
