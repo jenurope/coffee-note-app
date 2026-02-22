@@ -55,12 +55,13 @@ extension AuthStatePatterns on AuthState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AuthInitial value)?  initial,TResult Function( AuthLoading value)?  loading,TResult Function( AuthAuthenticated value)?  authenticated,TResult Function( AuthGuest value)?  guest,TResult Function( AuthUnauthenticated value)?  unauthenticated,TResult Function( AuthError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AuthInitial value)?  initial,TResult Function( AuthLoading value)?  loading,TResult Function( AuthTermsRequired value)?  termsRequired,TResult Function( AuthAuthenticated value)?  authenticated,TResult Function( AuthGuest value)?  guest,TResult Function( AuthUnauthenticated value)?  unauthenticated,TResult Function( AuthError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case AuthInitial() when initial != null:
 return initial(_that);case AuthLoading() when loading != null:
-return loading(_that);case AuthAuthenticated() when authenticated != null:
+return loading(_that);case AuthTermsRequired() when termsRequired != null:
+return termsRequired(_that);case AuthAuthenticated() when authenticated != null:
 return authenticated(_that);case AuthGuest() when guest != null:
 return guest(_that);case AuthUnauthenticated() when unauthenticated != null:
 return unauthenticated(_that);case AuthError() when error != null:
@@ -82,12 +83,13 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AuthInitial value)  initial,required TResult Function( AuthLoading value)  loading,required TResult Function( AuthAuthenticated value)  authenticated,required TResult Function( AuthGuest value)  guest,required TResult Function( AuthUnauthenticated value)  unauthenticated,required TResult Function( AuthError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AuthInitial value)  initial,required TResult Function( AuthLoading value)  loading,required TResult Function( AuthTermsRequired value)  termsRequired,required TResult Function( AuthAuthenticated value)  authenticated,required TResult Function( AuthGuest value)  guest,required TResult Function( AuthUnauthenticated value)  unauthenticated,required TResult Function( AuthError value)  error,}){
 final _that = this;
 switch (_that) {
 case AuthInitial():
 return initial(_that);case AuthLoading():
-return loading(_that);case AuthAuthenticated():
+return loading(_that);case AuthTermsRequired():
+return termsRequired(_that);case AuthAuthenticated():
 return authenticated(_that);case AuthGuest():
 return guest(_that);case AuthUnauthenticated():
 return unauthenticated(_that);case AuthError():
@@ -105,12 +107,13 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AuthInitial value)?  initial,TResult? Function( AuthLoading value)?  loading,TResult? Function( AuthAuthenticated value)?  authenticated,TResult? Function( AuthGuest value)?  guest,TResult? Function( AuthUnauthenticated value)?  unauthenticated,TResult? Function( AuthError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AuthInitial value)?  initial,TResult? Function( AuthLoading value)?  loading,TResult? Function( AuthTermsRequired value)?  termsRequired,TResult? Function( AuthAuthenticated value)?  authenticated,TResult? Function( AuthGuest value)?  guest,TResult? Function( AuthUnauthenticated value)?  unauthenticated,TResult? Function( AuthError value)?  error,}){
 final _that = this;
 switch (_that) {
 case AuthInitial() when initial != null:
 return initial(_that);case AuthLoading() when loading != null:
-return loading(_that);case AuthAuthenticated() when authenticated != null:
+return loading(_that);case AuthTermsRequired() when termsRequired != null:
+return termsRequired(_that);case AuthAuthenticated() when authenticated != null:
 return authenticated(_that);case AuthGuest() when guest != null:
 return guest(_that);case AuthUnauthenticated() when unauthenticated != null:
 return unauthenticated(_that);case AuthError() when error != null:
@@ -131,11 +134,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( User user)?  authenticated,TResult Function()?  guest,TResult Function()?  unauthenticated,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( User user)?  termsRequired,TResult Function( User user)?  authenticated,TResult Function()?  guest,TResult Function()?  unauthenticated,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AuthInitial() when initial != null:
 return initial();case AuthLoading() when loading != null:
-return loading();case AuthAuthenticated() when authenticated != null:
+return loading();case AuthTermsRequired() when termsRequired != null:
+return termsRequired(_that.user);case AuthAuthenticated() when authenticated != null:
 return authenticated(_that.user);case AuthGuest() when guest != null:
 return guest();case AuthUnauthenticated() when unauthenticated != null:
 return unauthenticated();case AuthError() when error != null:
@@ -157,11 +161,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( User user)  authenticated,required TResult Function()  guest,required TResult Function()  unauthenticated,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( User user)  termsRequired,required TResult Function( User user)  authenticated,required TResult Function()  guest,required TResult Function()  unauthenticated,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case AuthInitial():
 return initial();case AuthLoading():
-return loading();case AuthAuthenticated():
+return loading();case AuthTermsRequired():
+return termsRequired(_that.user);case AuthAuthenticated():
 return authenticated(_that.user);case AuthGuest():
 return guest();case AuthUnauthenticated():
 return unauthenticated();case AuthError():
@@ -179,11 +184,12 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( User user)?  authenticated,TResult? Function()?  guest,TResult? Function()?  unauthenticated,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( User user)?  termsRequired,TResult? Function( User user)?  authenticated,TResult? Function()?  guest,TResult? Function()?  unauthenticated,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case AuthInitial() when initial != null:
 return initial();case AuthLoading() when loading != null:
-return loading();case AuthAuthenticated() when authenticated != null:
+return loading();case AuthTermsRequired() when termsRequired != null:
+return termsRequired(_that.user);case AuthAuthenticated() when authenticated != null:
 return authenticated(_that.user);case AuthGuest() when guest != null:
 return guest();case AuthUnauthenticated() when unauthenticated != null:
 return unauthenticated();case AuthError() when error != null:
@@ -258,6 +264,72 @@ String toString() {
 
 
 
+
+/// @nodoc
+
+
+class AuthTermsRequired implements AuthState {
+  const AuthTermsRequired({required this.user});
+  
+
+ final  User user;
+
+/// Create a copy of AuthState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AuthTermsRequiredCopyWith<AuthTermsRequired> get copyWith => _$AuthTermsRequiredCopyWithImpl<AuthTermsRequired>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthTermsRequired&&(identical(other.user, user) || other.user == user));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,user);
+
+@override
+String toString() {
+  return 'AuthState.termsRequired(user: $user)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AuthTermsRequiredCopyWith<$Res> implements $AuthStateCopyWith<$Res> {
+  factory $AuthTermsRequiredCopyWith(AuthTermsRequired value, $Res Function(AuthTermsRequired) _then) = _$AuthTermsRequiredCopyWithImpl;
+@useResult
+$Res call({
+ User user
+});
+
+
+
+
+}
+/// @nodoc
+class _$AuthTermsRequiredCopyWithImpl<$Res>
+    implements $AuthTermsRequiredCopyWith<$Res> {
+  _$AuthTermsRequiredCopyWithImpl(this._self, this._then);
+
+  final AuthTermsRequired _self;
+  final $Res Function(AuthTermsRequired) _then;
+
+/// Create a copy of AuthState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? user = null,}) {
+  return _then(AuthTermsRequired(
+user: null == user ? _self.user : user // ignore: cast_nullable_to_non_nullable
+as User,
+  ));
+}
+
+
+}
 
 /// @nodoc
 

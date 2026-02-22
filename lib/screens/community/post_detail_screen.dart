@@ -90,6 +90,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       _commentController.clear();
       if (mounted) {
         context.read<PostDetailCubit>().load(widget.postId);
+        _reloadPostList();
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(context.l10n.commentCreated)));
@@ -135,9 +136,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   String _resolvePostContent(AppLocalizations l10n, CommunityPost post) {
     if (post.isWithdrawnContent) {
-      return l10n.withdrawnPostMessage;
+      return '';
     }
     return post.content;
+  }
+
+  void _reloadPostList() {
+    try {
+      context.read<PostListCubit>().reload();
+    } catch (_) {
+      // 목록 Cubit이 없는 컨텍스트(예: 딥링크 단독 진입)에서는 무시합니다.
+    }
   }
 
   String _resolveCommentContent(
@@ -261,7 +270,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 const SizedBox(height: 10),
                                 const Divider(height: 1),
                                 const SizedBox(height: 16),
-                                PostMarkdownView(content: postContent),
+                                if (postContent.isNotEmpty)
+                                  PostMarkdownView(content: postContent),
                                 const Divider(height: 32),
                                 Row(
                                   children: [
@@ -472,6 +482,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           );
                           if (context.mounted) {
                             context.read<PostDetailCubit>().load(widget.postId);
+                            _reloadPostList();
                           }
                         } catch (e) {
                           if (context.mounted) {

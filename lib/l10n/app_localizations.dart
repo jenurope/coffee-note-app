@@ -322,6 +322,54 @@ abstract class AppLocalizations {
   /// **'Record your coffee journey'**
   String get loginTagline;
 
+  /// No description provided for @termsConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms Consent'**
+  String get termsConsentTitle;
+
+  /// No description provided for @termsConsentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please review and agree to the following terms to continue.'**
+  String get termsConsentSubtitle;
+
+  /// No description provided for @termsRequiredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You must agree to all required terms to proceed.'**
+  String get termsRequiredHint;
+
+  /// No description provided for @termsRequiredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get termsRequiredLabel;
+
+  /// No description provided for @termsOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get termsOptionalLabel;
+
+  /// No description provided for @termsAgreeAndContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree and Continue'**
+  String get termsAgreeAndContinue;
+
+  /// No description provided for @termsDeclineAndLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline and Exit'**
+  String get termsDeclineAndLogout;
+
+  /// No description provided for @termsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No terms are available right now. Please try again later.'**
+  String get termsEmpty;
+
   /// No description provided for @loginFailedGeneric.
   ///
   /// In en, this message translates to:
@@ -1449,6 +1497,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An error occurred during login. Please try again.'**
   String get errLoginFailed;
+
+  /// No description provided for @errTermsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load terms information. Please try again later.'**
+  String get errTermsLoadFailed;
+
+  /// No description provided for @errTermsConsentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while processing terms consent. Please try again later.'**
+  String get errTermsConsentFailed;
+
+  /// No description provided for @errTermsRequiredNotAgreed.
+  ///
+  /// In en, this message translates to:
+  /// **'You must agree to required terms to continue.'**
+  String get errTermsRequiredNotAgreed;
 
   /// No description provided for @errServiceNotInitialized.
   ///

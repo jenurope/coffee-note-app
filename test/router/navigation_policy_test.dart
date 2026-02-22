@@ -85,5 +85,32 @@ void main() {
 
       expect(redirect, AppRoutePath.dashboard);
     });
+
+    test('redirects terms-required users to terms route', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.termsRequired,
+        location: AppRoutePath.dashboard,
+      );
+
+      expect(redirect, AppRoutePath.terms);
+    });
+
+    test('allows terms-required users to stay on terms route', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.termsRequired,
+        location: AppRoutePath.terms,
+      );
+
+      expect(redirect, isNull);
+    });
+
+    test('redirects unauthenticated users away from terms route', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.unauthenticated,
+        location: AppRoutePath.terms,
+      );
+
+      expect(redirect, AppRoutePath.login);
+    });
   });
 }

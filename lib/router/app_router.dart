@@ -12,6 +12,7 @@ import '../cubits/community/post_detail_cubit.dart';
 import '../cubits/log/log_detail_cubit.dart';
 
 import '../screens/auth/login_screen.dart';
+import '../screens/auth/terms_consent_screen.dart';
 import '../screens/beans/bean_detail_screen.dart';
 import '../screens/beans/bean_form_screen.dart';
 import '../screens/beans/bean_list_screen.dart';
@@ -31,6 +32,7 @@ import '../widgets/navigation/guest_tab_root_back_guard.dart';
 abstract final class AppRoutePath {
   static const splash = '/splash';
   static const login = '/auth/login';
+  static const terms = '/auth/terms';
   static const dashboard = '/';
   static const beans = '/beans';
   static const logs = '/logs';
@@ -39,7 +41,13 @@ abstract final class AppRoutePath {
   static const profileEdit = '/profile/edit';
 }
 
-enum AppAuthStatus { resolving, unauthenticated, guest, authenticated }
+enum AppAuthStatus {
+  resolving,
+  unauthenticated,
+  guest,
+  termsRequired,
+  authenticated,
+}
 
 class AppAuthSnapshot {
   final AppAuthStatus status;
@@ -49,11 +57,13 @@ class AppAuthSnapshot {
   static const resolving = AppAuthSnapshot(AppAuthStatus.resolving);
   static const unauthenticated = AppAuthSnapshot(AppAuthStatus.unauthenticated);
   static const guest = AppAuthSnapshot(AppAuthStatus.guest);
+  static const termsRequired = AppAuthSnapshot(AppAuthStatus.termsRequired);
   static const authenticated = AppAuthSnapshot(AppAuthStatus.authenticated);
 
   bool get isResolving => status == AppAuthStatus.resolving;
   bool get isUnauthenticated => status == AppAuthStatus.unauthenticated;
   bool get isGuest => status == AppAuthStatus.guest;
+  bool get isTermsRequired => status == AppAuthStatus.termsRequired;
   bool get isAuthenticated => status == AppAuthStatus.authenticated;
 }
 
@@ -66,6 +76,10 @@ class AppRouteBuilders {
 
   Widget buildLogin(BuildContext context, GoRouterState state) {
     return const LoginScreen();
+  }
+
+  Widget buildTermsConsent(BuildContext context, GoRouterState state) {
+    return const TermsConsentScreen();
   }
 
   Widget buildDashboard(BuildContext context, GoRouterState state) {
@@ -160,6 +174,7 @@ String? resolveAppRedirect({
   bool communityVisible = true,
 }) {
   final isAuthRoute = location.startsWith('/auth');
+  final isTermsRoute = location == AppRoutePath.terms;
 
   if (authSnapshot.isResolving) {
     return location == AppRoutePath.splash ? null : AppRoutePath.splash;
@@ -169,6 +184,18 @@ String? resolveAppRedirect({
     if (authSnapshot.isAuthenticated || authSnapshot.isGuest) {
       return AppRoutePath.dashboard;
     }
+    if (authSnapshot.isTermsRequired) {
+      return AppRoutePath.terms;
+    }
+    return AppRoutePath.login;
+  }
+
+  if (authSnapshot.isTermsRequired) {
+    return isTermsRoute ? null : AppRoutePath.terms;
+  }
+
+  if ((authSnapshot.isUnauthenticated || authSnapshot.isGuest) &&
+      isTermsRoute) {
     return AppRoutePath.login;
   }
 
@@ -414,6 +441,12 @@ GoRouter createAppRouter({
         name: 'login',
         builder: (context, state) => routeBuilders.buildLogin(context, state),
       ),
+      GoRoute(
+        path: AppRoutePath.terms,
+        name: 'terms-consent',
+        builder: (context, state) =>
+            routeBuilders.buildTermsConsent(context, state),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -462,6 +495,10 @@ GoRouter createRouterFromCubit(AuthCubit authCubit) {
 
     if (state is AuthAuthenticated) {
       return AppAuthSnapshot.authenticated;
+    }
+
+    if (state is AuthTermsRequired) {
+      return AppAuthSnapshot.termsRequired;
     }
 
     if (state is AuthGuest) {

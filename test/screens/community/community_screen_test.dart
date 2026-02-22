@@ -103,7 +103,55 @@ void main() {
       expect(find.text('전체보기'), findsNothing);
     });
 
-    testWidgets('탈퇴 사용자 게시글은 작성자와 본문을 안내 문구로 표시한다', (tester) async {
+    testWidgets('댓글이 0개인 게시글은 댓글 수를 표시하지 않는다', (tester) async {
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: _loadedState(commentCount: 0),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      expect(find.text('댓글 0'), findsNothing);
+    });
+
+    testWidgets('댓글이 1개 이상인 게시글은 댓글 수를 표시한다', (tester) async {
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: _loadedState(commentCount: 1),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      expect(find.text('댓글 1'), findsOneWidget);
+    });
+
+    testWidgets('댓글 수가 null이면 댓글 수를 표시하지 않는다', (tester) async {
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: _loadedState(commentCount: null),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      expect(find.textContaining('댓글 '), findsNothing);
+    });
+
+    testWidgets('탈퇴 사용자 게시글은 작성자와 제목만 안내 문구로 표시한다', (tester) async {
       final now = DateTime(2026, 2, 21, 14);
       final withdrawnPost = CommunityPost(
         id: 'post-withdrawn',
@@ -139,7 +187,7 @@ void main() {
       );
 
       expect(find.text('탈퇴한 사용자'), findsOneWidget);
-      expect(find.text('탈퇴한 사용자의 게시글입니다.'), findsWidgets);
+      expect(find.text('탈퇴한 사용자의 게시글입니다.'), findsOneWidget);
       expect(find.text('원문 제목'), findsNothing);
       expect(find.text('원문 내용'), findsNothing);
     });
@@ -194,7 +242,7 @@ void _bindStates({
   );
 }
 
-PostListState _loadedState({String? searchQuery}) {
+PostListState _loadedState({String? searchQuery, int? commentCount}) {
   final now = DateTime(2026, 2, 21, 14);
   return PostListState.loaded(
     posts: [
@@ -205,6 +253,7 @@ PostListState _loadedState({String? searchQuery}) {
         content: '테스트 내용',
         createdAt: now,
         updatedAt: now,
+        commentCount: commentCount,
       ),
     ],
     filters: PostFilters(searchQuery: searchQuery),
