@@ -1,6 +1,6 @@
 #!/bin/bash
 # 커피 노트 앱 실행 스크립트
-# 사용법: ./run.sh [device] (예: ./run.sh, ./run.sh chrome)
+# 사용법: ./run_local.sh [device] (예: ./run_local.sh, ./run_local.sh emulator-5554)
 
 # 디바이스 인자 처리
 DEVICE_ARG=""

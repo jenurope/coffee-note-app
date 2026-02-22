@@ -6,6 +6,11 @@ name = "coffee-note-app"
 script = ""
 
 [[actions]]
-name = "Run"
+name = "Run(local)"
 icon = "run"
-command = "./run.sh"
+command = "./run_local.sh"
+
+[[actions]]
+name = "Run(worktree)"
+icon = "run"
+command = "./run_worktree.sh"
