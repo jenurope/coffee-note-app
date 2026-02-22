@@ -177,10 +177,12 @@ class AuthService {
   // 로그아웃
   Future<void> signOut() async {
     try {
-      await _auth.signOut();
+      // local scope는 로컬 세션을 즉시 제거하고, accessToken이 있으면 서버 로그아웃도 시도한다.
+      await _auth.signOut(scope: SignOutScope.local);
     } catch (e) {
-      debugPrint('SignOut error: $e');
-      rethrow;
+      if (kDebugMode) {
+        debugPrint('SignOut remote sync skipped: $e');
+      }
     }
   }
 
@@ -541,7 +543,9 @@ class AuthService {
     try {
       await _auth.signOut(scope: SignOutScope.local);
     } catch (e) {
-      debugPrint('Clear local session error: $e');
+      if (kDebugMode) {
+        debugPrint('Clear local session error: $e');
+      }
     }
   }
 

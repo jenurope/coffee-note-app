@@ -95,6 +95,39 @@ class _TermsAwareAuthService extends AuthService {
 }
 
 void main() {
+  group('AuthService.signOut', () {
+    late _MockSupabaseClient client;
+    late _MockGoTrueClient authClient;
+    late AuthService authService;
+
+    setUp(() {
+      client = _MockSupabaseClient();
+      authClient = _MockGoTrueClient();
+      when(() => client.auth).thenReturn(authClient);
+      authService = AuthService(client);
+    });
+
+    test('로컬 로그아웃을 수행하고 예외 없이 종료한다', () async {
+      when(
+        () => authClient.signOut(scope: SignOutScope.local),
+      ).thenAnswer((_) async {});
+
+      await authService.signOut();
+
+      verify(() => authClient.signOut(scope: SignOutScope.local)).called(1);
+    });
+
+    test('서버 로그아웃 실패가 발생해도 예외를 전파하지 않는다', () async {
+      when(
+        () => authClient.signOut(scope: SignOutScope.local),
+      ).thenThrow(Exception('network offline'));
+
+      await expectLater(authService.signOut(), completes);
+
+      verify(() => authClient.signOut(scope: SignOutScope.local)).called(1);
+    });
+  });
+
   group('AuthService.getValidatedCurrentUser', () {
     late _MockSupabaseClient client;
     late _MockGoTrueClient authClient;
