@@ -16,6 +16,9 @@ void main() {
       when(
         () => authService.authStateChanges,
       ).thenAnswer((_) => const Stream.empty());
+      when(
+        () => authService.hasPendingRequiredTerms(any()),
+      ).thenAnswer((_) async => false);
     });
 
     test('시작 시 검증된 사용자가 있으면 authenticated 상태가 된다', () async {
@@ -32,6 +35,7 @@ void main() {
       expect(cubit.state, isA<AuthAuthenticated>());
       expect((cubit.state as AuthAuthenticated).user.id, user.id);
       verify(() => authService.getValidatedCurrentUser()).called(1);
+      verify(() => authService.hasPendingRequiredTerms(user.id)).called(1);
 
       await cubit.close();
     });
@@ -48,6 +52,81 @@ void main() {
 
       expect(cubit.state, isA<AuthUnauthenticated>());
       verify(() => authService.getValidatedCurrentUser()).called(1);
+
+      await cubit.close();
+    });
+
+    test('필수 약관 동의가 필요하면 termsRequired 상태가 된다', () async {
+      final user = _testUser('terms-required-user');
+      when(
+        () => authService.getValidatedCurrentUser(),
+      ).thenAnswer((_) async => user);
+      when(
+        () => authService.hasPendingRequiredTerms(user.id),
+      ).thenAnswer((_) async => true);
+
+      final cubit = AuthCubit(authService: authService);
+
+      await untilCalled(() => authService.getValidatedCurrentUser());
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state, isA<AuthTermsRequired>());
+      expect((cubit.state as AuthTermsRequired).user.id, user.id);
+
+      await cubit.close();
+    });
+
+    test('필수 약관 동의 저장 성공 시 authenticated 상태가 된다', () async {
+      final user = _testUser('terms-submit-user');
+      when(
+        () => authService.getValidatedCurrentUser(),
+      ).thenAnswer((_) async => user);
+      var pendingChecks = 0;
+      when(
+        () => authService.hasPendingRequiredTerms(user.id),
+      ).thenAnswer((_) async {
+        pendingChecks += 1;
+        return pendingChecks == 1;
+      });
+      when(
+        () => authService.saveTermsConsents(
+          userId: user.id,
+          decisions: any(named: 'decisions'),
+        ),
+      ).thenAnswer((_) async {});
+
+      final cubit = AuthCubit(authService: authService);
+
+      await untilCalled(() => authService.getValidatedCurrentUser());
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state, isA<AuthTermsRequired>());
+
+      await cubit.acceptTermsConsents(const <String, bool>{
+        'service_terms': true,
+        'privacy_policy': true,
+      });
+
+      expect(cubit.state, isA<AuthAuthenticated>());
+
+      await cubit.close();
+    });
+
+    test('필수 약관 상태 조회 실패 시 error 상태가 된다', () async {
+      final user = _testUser('terms-error-user');
+      when(
+        () => authService.getValidatedCurrentUser(),
+      ).thenAnswer((_) async => user);
+      when(
+        () => authService.hasPendingRequiredTerms(user.id),
+      ).thenThrow(Exception('terms query failed'));
+
+      final cubit = AuthCubit(authService: authService);
+
+      await untilCalled(() => authService.getValidatedCurrentUser());
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state, isA<AuthError>());
+      expect((cubit.state as AuthError).message, 'errTermsLoadFailed');
 
       await cubit.close();
     });

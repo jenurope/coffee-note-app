@@ -122,6 +122,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loginTagline => 'あなたのコーヒー体験を記録しましょう';
 
   @override
+  String get termsConsentTitle => '規約同意';
+
+  @override
+  String get termsConsentSubtitle => 'サービス利用のため、以下の規約内容を確認して同意してください。';
+
+  @override
+  String get termsRequiredHint => '必須規約にすべて同意すると続行できます。';
+
+  @override
+  String get termsRequiredLabel => '必須';
+
+  @override
+  String get termsOptionalLabel => '任意';
+
+  @override
+  String get termsAgreeAndContinue => '同意して続行';
+
+  @override
+  String get termsDeclineAndLogout => '同意せずに終了';
+
+  @override
+  String get termsEmpty => '表示できる規約がありません。しばらくしてから再試行してください。';
+
+  @override
   String get loginFailedGeneric => 'ログイン中にエラーが発生しました。';
 
   @override
@@ -713,6 +737,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errLoginFailed => 'ログイン中にエラーが発生しました。再試行してください。';
+
+  @override
+  String get errTermsLoadFailed => '規約情報を読み込めませんでした。しばらくしてから再試行してください。';
+
+  @override
+  String get errTermsConsentFailed => '規約同意の処理中にエラーが発生しました。しばらくしてから再試行してください。';
+
+  @override
+  String get errTermsRequiredNotAgreed => '必須規約に同意すると続行できます。';
 
   @override
   String get errServiceNotInitialized => '必須サービスが初期化されていません。';

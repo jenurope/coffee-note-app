@@ -122,6 +122,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get loginTagline => '당신의 커피 여정을 기록하세요';
 
   @override
+  String get termsConsentTitle => '약관 동의';
+
+  @override
+  String get termsConsentSubtitle => '서비스 이용을 위해 아래 약관 내용을 확인하고 동의해주세요.';
+
+  @override
+  String get termsRequiredHint => '필수 약관에 모두 동의해야 계속할 수 있습니다.';
+
+  @override
+  String get termsRequiredLabel => '필수';
+
+  @override
+  String get termsOptionalLabel => '선택';
+
+  @override
+  String get termsAgreeAndContinue => '동의하고 계속';
+
+  @override
+  String get termsDeclineAndLogout => '동의하지 않고 나가기';
+
+  @override
+  String get termsEmpty => '표시할 약관이 없습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
   String get loginFailedGeneric => '로그인 중 오류가 발생했습니다.';
 
   @override
@@ -713,6 +737,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errLoginFailed => '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
+
+  @override
+  String get errTermsLoadFailed => '약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get errTermsConsentFailed => '약관 동의 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get errTermsRequiredNotAgreed => '필수 약관에 동의해야 계속할 수 있습니다.';
 
   @override
   String get errServiceNotInitialized => '필수 서비스가 초기화되지 않았습니다.';

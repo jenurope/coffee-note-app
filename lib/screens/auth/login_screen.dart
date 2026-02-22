@@ -33,8 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
           setState(() {
             _errorMessage = state.message;
           });
-        } else {
-          context.go('/');
         }
       }
     } catch (e) {
