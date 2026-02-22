@@ -1,6 +1,9 @@
+import 'dart:ui' show Locale, PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../core/locale/community_visibility_policy.dart';
 import '../l10n/l10n.dart';
 import '../cubits/auth/auth_cubit.dart';
 import '../cubits/auth/auth_state.dart';
@@ -168,6 +171,7 @@ class AppRouteBuilders {
 String? resolveAppRedirect({
   required AppAuthSnapshot authSnapshot,
   required String location,
+  bool communityVisible = true,
 }) {
   final isAuthRoute = location.startsWith('/auth');
   final isTermsRoute = location == AppRoutePath.terms;
@@ -203,6 +207,10 @@ String? resolveAppRedirect({
     return AppRoutePath.dashboard;
   }
 
+  if (!communityVisible && isCommunityPath(location)) {
+    return AppRoutePath.dashboard;
+  }
+
   return null;
 }
 
@@ -214,7 +222,10 @@ GoRouter createAppRouter({
   List<GlobalKey<NavigatorState>>? branchNavigatorKeys,
   GlobalKey<NavigatorState>? rootNavigatorKey,
   String initialLocation = AppRoutePath.splash,
+  DeviceLocaleProvider? deviceLocaleProvider,
 }) {
+  final resolvedDeviceLocaleProvider =
+      deviceLocaleProvider ?? _defaultDeviceLocaleProvider;
   final branchKeys =
       branchNavigatorKeys ??
       List.generate(
@@ -234,10 +245,18 @@ GoRouter createAppRouter({
     navigatorKey: rootNavigatorKey,
     initialLocation: initialLocation,
     refreshListenable: refreshListenable,
-    redirect: (context, state) => resolveAppRedirect(
-      authSnapshot: authSnapshot(),
-      location: state.uri.path,
-    ),
+    redirect: (context, state) {
+      final appLocale = Localizations.maybeLocaleOf(context);
+      final communityVisible = isCommunityVisible(
+        appLocale: appLocale,
+        deviceLocale: resolvedDeviceLocaleProvider(),
+      );
+      return resolveAppRedirect(
+        authSnapshot: authSnapshot(),
+        location: state.uri.path,
+        communityVisible: communityVisible,
+      );
+    },
     routes: [
       GoRoute(
         path: AppRoutePath.splash,
@@ -248,6 +267,7 @@ GoRouter createAppRouter({
         builder: (context, state, navigationShell) => MainScreen(
           navigationShell: navigationShell,
           branchNavigatorKeys: branchKeys,
+          deviceLocaleProvider: resolvedDeviceLocaleProvider,
         ),
         branches: [
           StatefulShellBranch(
@@ -450,6 +470,8 @@ GoRouter createAppRouter({
     ),
   );
 }
+
+Locale? _defaultDeviceLocaleProvider() => PlatformDispatcher.instance.locale;
 
 String _requiredPathParameter(GoRouterState state, String key) {
   final value = state.pathParameters[key];

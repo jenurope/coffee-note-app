@@ -66,6 +66,26 @@ void main() {
       expect(redirect, AppRoutePath.dashboard);
     });
 
+    test('커뮤니티 비노출 상태에서는 /community 를 대시보드로 리다이렉트한다', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.authenticated,
+        location: AppRoutePath.community,
+        communityVisible: false,
+      );
+
+      expect(redirect, AppRoutePath.dashboard);
+    });
+
+    test('커뮤니티 비노출 상태에서는 /community/new 를 대시보드로 리다이렉트한다', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.authenticated,
+        location: '${AppRoutePath.community}/new',
+        communityVisible: false,
+      );
+
+      expect(redirect, AppRoutePath.dashboard);
+    });
+
     test('redirects terms-required users to terms route', () {
       final redirect = resolveAppRedirect(
         authSnapshot: AppAuthSnapshot.termsRequired,

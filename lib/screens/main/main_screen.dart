@@ -1,11 +1,16 @@
+import 'dart:ui' show Locale, PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../l10n/l10n.dart';
 
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
+import '../../core/locale/community_visibility_policy.dart';
+import '../../l10n/l10n.dart';
+
+Locale? _defaultDeviceLocaleProvider() => PlatformDispatcher.instance.locale;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({
@@ -13,17 +18,24 @@ class MainScreen extends StatefulWidget {
     required this.navigationShell,
     required this.branchNavigatorKeys,
     this.loginPath = '/auth/login',
+    this.deviceLocaleProvider = _defaultDeviceLocaleProvider,
   });
 
   final StatefulNavigationShell navigationShell;
   final List<GlobalKey<NavigatorState>> branchNavigatorKeys;
   final String loginPath;
+  final DeviceLocaleProvider deviceLocaleProvider;
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
+  static const int _dashboardBranchIndex = 0;
+  static const int _communityBranchIndex = 3;
+  static const List<int> _branchIndicesWithCommunity = [0, 1, 2, 3, 4];
+  static const List<int> _branchIndicesWithoutCommunity = [0, 1, 2, 4];
+
   late int _activeIndex;
 
   @override
@@ -45,12 +57,61 @@ class _MainScreenState extends State<MainScreen> {
 
   int get _currentIndex => _activeIndex;
 
-  NavigatorState? get _currentBranchNavigator =>
-      widget.branchNavigatorKeys[_currentIndex].currentState;
+  NavigatorState? get _currentBranchNavigator {
+    if (_currentIndex < 0 ||
+        _currentIndex >= widget.branchNavigatorKeys.length) {
+      return null;
+    }
+    return widget.branchNavigatorKeys[_currentIndex].currentState;
+  }
 
-  List<BottomNavigationBarItem> _navItems(BuildContext context) {
+  bool _isCommunityVisible(BuildContext context) {
+    return isCommunityVisible(
+      appLocale: Localizations.maybeLocaleOf(context),
+      deviceLocale: widget.deviceLocaleProvider(),
+    );
+  }
+
+  List<int> _visibleBranchIndices(bool communityVisible) {
+    return communityVisible
+        ? _branchIndicesWithCommunity
+        : _branchIndicesWithoutCommunity;
+  }
+
+  int _toDisplayIndex(List<int> visibleBranchIndices, int branchIndex) {
+    final displayIndex = visibleBranchIndices.indexOf(branchIndex);
+    return displayIndex == -1 ? 0 : displayIndex;
+  }
+
+  int _toBranchIndex(List<int> visibleBranchIndices, int displayIndex) {
+    if (displayIndex < 0 || displayIndex >= visibleBranchIndices.length) {
+      return _dashboardBranchIndex;
+    }
+    return visibleBranchIndices[displayIndex];
+  }
+
+  void _syncHiddenCommunityBranch(List<int> visibleBranchIndices) {
+    if (visibleBranchIndices.contains(_currentIndex)) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _activeIndex = _dashboardBranchIndex;
+      });
+      _navigationShell.goBranch(_dashboardBranchIndex);
+    });
+  }
+
+  List<BottomNavigationBarItem> _navItems(
+    BuildContext context, {
+    required bool communityVisible,
+  }) {
     final l10n = context.l10n;
-    return [
+    final items = <BottomNavigationBarItem>[
       BottomNavigationBarItem(
         icon: const Icon(Icons.dashboard),
         activeIcon: const Icon(Icons.dashboard),
@@ -67,31 +128,40 @@ class _MainScreenState extends State<MainScreen> {
         label: l10n.coffeeRecords,
       ),
       BottomNavigationBarItem(
-        icon: const Icon(Icons.forum),
-        activeIcon: const Icon(Icons.forum),
-        label: l10n.community,
-      ),
-      BottomNavigationBarItem(
         icon: const Icon(Icons.person),
         activeIcon: const Icon(Icons.person),
         label: l10n.profile,
       ),
     ];
+
+    if (communityVisible) {
+      items.insert(
+        _communityBranchIndex,
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.forum),
+          activeIcon: const Icon(Icons.forum),
+          label: l10n.community,
+        ),
+      );
+    }
+
+    return items;
   }
 
-  void _onItemTapped(int index) {
+  void _onItemTapped(int displayIndex, List<int> visibleBranchIndices) {
     // Prevent hidden form fields from keeping focus and consuming the first back gesture.
     FocusManager.instance.primaryFocus?.unfocus();
+    final branchIndex = _toBranchIndex(visibleBranchIndices, displayIndex);
 
-    if (index == _currentIndex) {
-      _navigationShell.goBranch(index, initialLocation: true);
+    if (branchIndex == _currentIndex) {
+      _navigationShell.goBranch(branchIndex, initialLocation: true);
       return;
     }
 
     setState(() {
-      _activeIndex = index;
+      _activeIndex = branchIndex;
     });
-    _navigationShell.goBranch(index);
+    _navigationShell.goBranch(branchIndex);
   }
 
   Future<bool> _onBackPressed(BuildContext context, bool isGuest) async {
@@ -115,6 +185,13 @@ class _MainScreenState extends State<MainScreen> {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
         final isGuest = authState is AuthGuest;
+        final communityVisible = _isCommunityVisible(context);
+        final visibleBranchIndices = _visibleBranchIndices(communityVisible);
+        _syncHiddenCommunityBranch(visibleBranchIndices);
+        final currentDisplayIndex = _toDisplayIndex(
+          visibleBranchIndices,
+          _currentIndex,
+        );
 
         return PopScope(
           canPop: false,
@@ -167,9 +244,9 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                 BottomNavigationBar(
-                  currentIndex: _currentIndex,
-                  onTap: _onItemTapped,
-                  items: _navItems(context),
+                  currentIndex: currentDisplayIndex,
+                  onTap: (index) => _onItemTapped(index, visibleBranchIndices),
+                  items: _navItems(context, communityVisible: communityVisible),
                 ),
               ],
             ),
