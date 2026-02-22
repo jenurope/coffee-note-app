@@ -114,7 +114,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   String _resolvePostSnippet(AppLocalizations l10n, CommunityPost post) {
     if (post.isWithdrawnContent) {
-      return l10n.withdrawnPostMessage;
+      return '';
     }
     return markdownToPlainTextSnippet(post.content);
   }
@@ -344,6 +344,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       l10n,
                                       post,
                                     );
+                                    final commentCount = post.commentCount ?? 0;
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 12),
                                       child: InkWell(
@@ -409,25 +410,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                               ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                postSnippet,
-                                                style: theme
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      color: theme
-                                                          .colorScheme
-                                                          .onSurface
-                                                          .withValues(
-                                                            alpha: 0.7,
-                                                          ),
-                                                    ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              if (post.commentCount != null &&
-                                                  post.commentCount! > 0) ...[
+                                              if (postSnippet.isNotEmpty) ...[
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  postSnippet,
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                        color: theme
+                                                            .colorScheme
+                                                            .onSurface
+                                                            .withValues(
+                                                              alpha: 0.7,
+                                                            ),
+                                                      ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                              if (commentCount > 0) ...[
                                                 const SizedBox(height: 12),
                                                 Row(
                                                   children: [
@@ -441,7 +444,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                     const SizedBox(width: 4),
                                                     Text(
                                                       l10n.commentsCount(
-                                                        post.commentCount!,
+                                                        commentCount,
                                                       ),
                                                       style: theme
                                                           .textTheme

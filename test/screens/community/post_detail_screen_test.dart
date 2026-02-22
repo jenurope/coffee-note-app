@@ -1,12 +1,16 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:coffee_note_app/core/di/service_locator.dart';
 import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
 import 'package:coffee_note_app/cubits/auth/auth_state.dart';
 import 'package:coffee_note_app/cubits/community/post_detail_cubit.dart';
 import 'package:coffee_note_app/cubits/community/post_detail_state.dart';
+import 'package:coffee_note_app/cubits/community/post_list_cubit.dart';
+import 'package:coffee_note_app/cubits/community/post_list_state.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:coffee_note_app/models/community_post.dart';
 import 'package:coffee_note_app/models/user_profile.dart';
 import 'package:coffee_note_app/screens/community/post_detail_screen.dart';
+import 'package:coffee_note_app/services/community_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -19,27 +23,65 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 class _MockPostDetailCubit extends MockCubit<PostDetailState>
     implements PostDetailCubit {}
 
+class _MockPostListCubit extends MockCubit<PostListState>
+    implements PostListCubit {}
+
+class _MockCommunityService extends Mock implements CommunityService {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(
+      CommunityComment(
+        id: 'fallback-comment',
+        postId: 'fallback-post',
+        userId: 'fallback-user',
+        content: 'fallback',
+        createdAt: DateTime(2026, 2, 21, 14),
+        updatedAt: DateTime(2026, 2, 21, 14),
+      ),
+    );
+  });
+
   group('PostDetailScreen', () {
     late _MockAuthCubit authCubit;
     late _MockPostDetailCubit postDetailCubit;
+    late _MockPostListCubit postListCubit;
+    late _MockCommunityService communityService;
 
-    setUp(() {
+    setUp(() async {
       authCubit = _MockAuthCubit();
       postDetailCubit = _MockPostDetailCubit();
+      postListCubit = _MockPostListCubit();
+      communityService = _MockCommunityService();
+
+      await getIt.reset();
+      getIt.allowReassignment = true;
+      getIt.registerSingleton<CommunityService>(communityService);
+
+      when(() => postListCubit.reload()).thenAnswer((_) async {});
     });
 
     tearDown(() async {
       await authCubit.close();
       await postDetailCubit.close();
+      await postListCubit.close();
+      await getIt.reset();
     });
 
-    testWidgets('탈퇴 사용자 글/댓글은 안내 문구로만 표시한다', (tester) async {
-      final authState = AuthState.authenticated(user: _testUser('viewer'));
-      final postState = PostDetailState.loaded(post: _buildWithdrawnPost());
+    testWidgets('댓글 작성 성공 시 상세와 목록을 함께 갱신한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('writer'));
+      final postState = PostDetailState.loaded(
+        post: _buildActivePost(userId: 'writer'),
+      );
 
       when(() => authCubit.state).thenReturn(authState);
       when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      when(() => postDetailCubit.load(any())).thenAnswer((_) async {});
+      when(() => communityService.createComment(any())).thenAnswer(
+        (invocation) async =>
+            invocation.positionalArguments.first as CommunityComment,
+      );
       whenListen(
         authCubit,
         Stream<AuthState>.fromIterable([authState]),
@@ -50,12 +92,72 @@ void main() {
         Stream<PostDetailState>.fromIterable([postState]),
         initialState: postState,
       );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
 
       await tester.pumpWidget(
         MultiBlocProvider(
           providers: [
             BlocProvider<AuthCubit>.value(value: authCubit),
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '새 댓글');
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pumpAndSettle();
+
+      verify(() => communityService.createComment(any())).called(1);
+      verify(() => postDetailCubit.load('post-1')).called(1);
+      verify(() => postListCubit.reload()).called(1);
+    });
+
+    testWidgets('탈퇴 사용자 글/댓글은 안내 문구로만 표시한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(post: _buildWithdrawnPost());
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
           child: const MaterialApp(
             locale: Locale('ko'),
@@ -73,7 +175,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('탈퇴한 사용자'), findsWidgets);
-      expect(find.text('탈퇴한 사용자의 게시글입니다.'), findsWidgets);
+      expect(find.text('탈퇴한 사용자의 게시글입니다.'), findsOneWidget);
       expect(find.text('탈퇴한 사용자의 댓글입니다.'), findsOneWidget);
       expect(find.text('원문 제목'), findsNothing);
       expect(find.text('원문 본문'), findsNothing);
@@ -115,6 +217,20 @@ CommunityPost _buildWithdrawnPost() {
       ),
     ],
     commentCount: 1,
+  );
+}
+
+CommunityPost _buildActivePost({required String userId}) {
+  final now = DateTime(2026, 2, 21, 14);
+
+  return CommunityPost(
+    id: 'post-1',
+    userId: userId,
+    title: '일반 게시글 제목',
+    content: '일반 게시글 본문',
+    createdAt: now,
+    updatedAt: now,
+    commentCount: 0,
   );
 }
 
