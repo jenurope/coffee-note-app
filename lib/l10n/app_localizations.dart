@@ -1108,6 +1108,12 @@ abstract class AppLocalizations {
   /// **'An error occurred while saving comment. Please try again later.'**
   String get commentCreateFailed;
 
+  /// No description provided for @deletedCommentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This comment has been deleted.'**
+  String get deletedCommentMessage;
+
   /// No description provided for @postDeleteTitle.
   ///
   /// In en, this message translates to:

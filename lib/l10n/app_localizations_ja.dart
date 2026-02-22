@@ -537,6 +537,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commentCreateFailed => 'コメント登録中にエラーが発生しました。しばらくしてから再試行してください。';
 
   @override
+  String get deletedCommentMessage => '削除されたコメントです。';
+
+  @override
   String get postDeleteTitle => '投稿を削除';
 
   @override

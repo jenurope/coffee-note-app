@@ -252,6 +252,7 @@
   "commentNone": "No comments yet.\nLeave the first comment!",
   "commentDeleteFailed": "An error occurred while deleting comment. Please try again later.",
   "commentCreateFailed": "An error occurred while saving comment. Please try again later.",
+  "deletedCommentMessage": "This comment has been deleted.",
   "postDeleteTitle": "Delete Post",
   "postDeleteConfirm": "Delete this post? Comments will also be deleted.",
   "postDeleted": "Post has been deleted.",

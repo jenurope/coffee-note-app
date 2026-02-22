@@ -252,6 +252,7 @@
   "commentNone": "まだコメントがありません。\n最初のコメントを残してみましょう！",
   "commentDeleteFailed": "コメント削除中にエラーが発生しました。しばらくしてから再試行してください。",
   "commentCreateFailed": "コメント登録中にエラーが発生しました。しばらくしてから再試行してください。",
+  "deletedCommentMessage": "削除されたコメントです。",
   "postDeleteTitle": "投稿を削除",
   "postDeleteConfirm": "この投稿を削除しますか？コメントも一緒に削除されます。",
   "postDeleted": "投稿が削除されました。",

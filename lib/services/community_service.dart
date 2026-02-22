@@ -172,7 +172,15 @@ class CommunityService {
   // 댓글 삭제
   Future<void> deleteComment(String id) async {
     try {
-      await _client.from('community_comments').delete().eq('id', id);
+      await _client
+          .from('community_comments')
+          .update({
+            'content': '[deleted_comment]',
+            'is_deleted_content': true,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id)
+          .eq('is_deleted_content', false);
     } catch (e) {
       debugPrint('Delete comment error: $e');
       rethrow;

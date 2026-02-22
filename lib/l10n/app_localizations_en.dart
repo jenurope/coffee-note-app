@@ -552,6 +552,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'An error occurred while saving comment. Please try again later.';
 
   @override
+  String get deletedCommentMessage => 'This comment has been deleted.';
+
+  @override
   String get postDeleteTitle => 'Delete Post';
 
   @override

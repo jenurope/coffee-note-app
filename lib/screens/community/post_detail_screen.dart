@@ -159,6 +159,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return comment.content;
   }
 
+  bool _isDeletedCommentPlaceholder(CommunityComment comment) {
+    return comment.isDeletedContent && !comment.isWithdrawnContent;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -428,6 +432,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   ) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+
+    if (_isDeletedCommentPlaceholder(comment)) {
+      return SizedBox(
+        width: double.infinity,
+        child: Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            child: Text(
+              l10n.deletedCommentMessage,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final dateFormat = DateFormat.Md(
       Localizations.localeOf(context).toString(),
     ).add_Hm();
@@ -466,7 +489,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
-                if (isOwner)
+                if (isOwner && !comment.isDeletedContent)
                   PopupMenuButton<String>(
                     itemBuilder: (context) => [
                       PopupMenuItem(
