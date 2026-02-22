@@ -181,8 +181,6 @@ class _ServiceInquiryListScreenState extends State<ServiceInquiryListScreen> {
                   icon: Icons.support_agent,
                   title: context.l10n.inquiryEmptyTitle,
                   subtitle: context.l10n.inquiryEmptySubtitle,
-                  buttonText: context.l10n.inquiryNewAction,
-                  onButtonPressed: _openNewInquiry,
                 )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),

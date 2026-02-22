@@ -89,6 +89,29 @@ void main() {
       expect(find.text('로그인한 사용자만 문의 내역을 확인할 수 있습니다.'), findsOneWidget);
       verifyNever(() => inquiryService.getMyInquiries(any()));
     });
+
+    testWidgets('문의가 없을 때는 우측 하단 문의 작성 FAB만 노출한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('empty-user'));
+      when(() => authCubit.state).thenReturn(authState);
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      when(
+        () => inquiryService.getMyInquiries('empty-user'),
+      ).thenAnswer((_) async => const <ServiceInquiry>[]);
+
+      await _pumpScreen(
+        tester,
+        authCubit: authCubit,
+        inquiryService: inquiryService,
+      );
+
+      expect(find.text('등록된 문의가 없습니다.'), findsOneWidget);
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.text('문의 작성'), findsOneWidget);
+    });
   });
 }
 
