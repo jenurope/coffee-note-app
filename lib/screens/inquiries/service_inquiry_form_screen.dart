@@ -236,25 +236,25 @@ class _ServiceInquiryFormScreenState extends State<ServiceInquiryFormScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
-                      CustomTextField(
-                        label: context.l10n.inquiryEmailLabel,
-                        hint: context.l10n.inquiryEmailHint,
-                        controller: _emailController,
-                        enabled: !_isSubmitting && !isAuthenticated,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          final text = (value ?? '').trim();
-                          if (text.isEmpty) {
-                            return context.l10n.inquiryEmailRequired;
-                          }
-                          if (!_emailRegex.hasMatch(text)) {
-                            return context.l10n.inquiryEmailInvalid;
-                          }
-                          return null;
-                        },
-                      ),
                       if (!isAuthenticated) ...[
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          label: context.l10n.inquiryEmailLabel,
+                          hint: context.l10n.inquiryEmailHint,
+                          controller: _emailController,
+                          enabled: !_isSubmitting,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            final text = (value ?? '').trim();
+                            if (text.isEmpty) {
+                              return context.l10n.inquiryEmailRequired;
+                            }
+                            if (!_emailRegex.hasMatch(text)) {
+                              return context.l10n.inquiryEmailInvalid;
+                            }
+                            return null;
+                          },
+                        ),
                         const SizedBox(height: 16),
                         CheckboxListTile(
                           contentPadding: EdgeInsets.zero,

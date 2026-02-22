@@ -142,7 +142,7 @@ void main() {
       expect(find.text('문의가 등록되었습니다.'), findsOneWidget);
     });
 
-    testWidgets('로그인 사용자는 계정 이메일이 자동 적용된다', (tester) async {
+    testWidgets('로그인 사용자는 답변 이메일 입력 영역이 노출되지 않는다', (tester) async {
       final authState = AuthState.authenticated(user: _testUser('authed-user'));
       when(() => authCubit.state).thenReturn(authState);
       whenListen(
@@ -168,7 +168,8 @@ void main() {
         allowGuest: false,
       );
 
-      expect(find.text('authed-user@example.com'), findsOneWidget);
+      expect(find.text('답변 받을 이메일'), findsNothing);
+      expect(find.byType(TextFormField), findsNWidgets(2));
 
       await tester.enterText(find.byType(TextFormField).at(0), '로그인 문의');
       await tester.enterText(find.byType(TextFormField).at(1), '로그인 문의 본문입니다.');
