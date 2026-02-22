@@ -99,25 +99,30 @@ class AuthCubit extends Cubit<AuthState> {
     return service.fetchActiveTerms(localeCode: localeCode);
   }
 
-  Future<void> acceptTermsConsents(Map<String, bool> decisions) async {
+  Future<String?> acceptTermsConsents(Map<String, bool> decisions) async {
     final service = _authService;
-    if (service == null) return;
+    if (service == null) return 'errTermsConsentFailed';
     final currentState = state;
     if (currentState is! AuthTermsRequired) {
-      return;
+      return 'errTermsConsentFailed';
     }
-
-    emit(const AuthState.loading());
 
     try {
       await service.saveTermsConsents(
         userId: currentState.user.id,
         decisions: decisions,
       );
-      await _emitAuthenticatedState(currentState.user);
+      final hasPendingTerms = await service.hasPendingRequiredTerms(
+        currentState.user.id,
+      );
+      if (hasPendingTerms) {
+        return 'errTermsRequiredNotAgreed';
+      }
+
+      emit(AuthState.authenticated(user: currentState.user));
+      return null;
     } catch (e) {
-      final message = service.getTermsErrorMessage(e);
-      emit(AuthState.error(message: message));
+      return service.getTermsErrorMessage(e);
     }
   }
 

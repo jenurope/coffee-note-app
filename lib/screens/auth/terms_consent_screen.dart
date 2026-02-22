@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
-import '../../cubits/auth/auth_state.dart';
 import '../../l10n/l10n.dart';
 import '../../models/terms/term_policy.dart';
 
@@ -85,20 +84,21 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
     if (_isSubmitting || !_allRequiredAgreed) {
       return;
     }
+    final authCubit = context.read<AuthCubit>();
 
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
     });
+    await WidgetsBinding.instance.endOfFrame;
 
     try {
-      await context.read<AuthCubit>().acceptTermsConsents(_decisions);
+      final errorMessage = await authCubit.acceptTermsConsents(_decisions);
       if (!mounted) return;
 
-      final authState = context.read<AuthCubit>().state;
-      if (authState is AuthError) {
+      if (errorMessage != null) {
         setState(() {
-          _errorMessage = authState.message;
+          _errorMessage = errorMessage;
         });
       }
     } catch (_) {
@@ -221,6 +221,9 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
                               onChanged: (checked) {
                                 setState(() {
                                   _decisions[term.code] = checked;
+                                  if (checked) {
+                                    _expandedByCode[term.code] = false;
+                                  }
                                 });
                               },
                               onToggleExpanded: () {
@@ -243,7 +246,11 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            key: Key('terms-accept-progress'),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : Text(l10n.termsAgreeAndContinue),
                 ),

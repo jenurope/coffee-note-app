@@ -10,6 +10,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User;
+import 'dart:async';
 
 class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
@@ -52,7 +53,9 @@ void main() {
         ],
       );
 
-      when(() => authCubit.acceptTermsConsents(any())).thenAnswer((_) async {});
+      when(
+        () => authCubit.acceptTermsConsents(any()),
+      ).thenAnswer((_) async => null);
       when(() => authCubit.declineTerms()).thenAnswer((_) async {});
     });
 
@@ -83,6 +86,39 @@ void main() {
       );
 
       expect(acceptButton.onPressed, isNotNull);
+    });
+
+    testWidgets('약관 동의 체크 시 해당 약관 본문이 자동으로 접힌다', (tester) async {
+      await _pumpScreen(tester, authCubit: authCubit);
+
+      expect(find.text('약관 본문 1'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('term-checkbox-service_terms')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('약관 본문 1'), findsNothing);
+    });
+
+    testWidgets('동의 버튼 탭 시 프로그레스 인디케이터를 표시한다', (tester) async {
+      final completer = Completer<String?>();
+      when(
+        () => authCubit.acceptTermsConsents(any()),
+      ).thenAnswer((_) => completer.future);
+
+      await _pumpScreen(tester, authCubit: authCubit);
+
+      await tester.tap(find.byKey(const Key('term-checkbox-service_terms')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('term-checkbox-privacy_policy')));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('terms-accept-button')));
+      await tester.pump();
+
+      expect(find.byKey(const Key('terms-accept-progress')), findsOneWidget);
+
+      completer.complete(null);
+      await tester.pumpAndSettle();
     });
 
     testWidgets('동의하지 않고 나가기 버튼은 declineTerms를 호출한다', (tester) async {
