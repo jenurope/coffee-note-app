@@ -321,13 +321,19 @@ class CommunityService {
   }
 
   String _postListSelect(bool includeAvatar, bool includeProfiles) {
-    if (!includeProfiles) return '*';
+    if (!includeProfiles) {
+      return '''
+        *,
+        comment_stats:community_comments(count)
+      ''';
+    }
 
     return '''
       *,
       profiles!community_posts_user_id_fkey(
         ${_profileColumns(includeAvatar)}
-      )
+      ),
+      comment_stats:community_comments(count)
     ''';
   }
 

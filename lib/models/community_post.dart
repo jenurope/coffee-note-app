@@ -28,6 +28,10 @@ class CommunityPost {
   });
 
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
+    final commentCount =
+        _parseInt(json['comment_count']) ??
+        _parseCommentStatsCount(json['comment_stats']);
+
     return CommunityPost(
       id: json['id'] as String,
       userId: json['user_id'] as String,
@@ -46,8 +50,35 @@ class CommunityPost {
                 )
                 .toList()
           : null,
-      commentCount: json['comment_count'] as int?,
+      commentCount: commentCount,
     );
+  }
+
+  static int? _parseCommentStatsCount(Object? raw) {
+    if (raw == null) return null;
+
+    if (raw is List) {
+      if (raw.isEmpty) return null;
+      return _parseCommentStatsCount(raw.first);
+    }
+
+    if (raw is Map<String, dynamic>) {
+      return _parseInt(raw['count']);
+    }
+
+    if (raw is Map) {
+      return _parseInt(raw['count']);
+    }
+
+    return _parseInt(raw);
+  }
+
+  static int? _parseInt(Object? raw) {
+    if (raw == null) return null;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw);
+    return null;
   }
 
   Map<String, dynamic> toJson() {
