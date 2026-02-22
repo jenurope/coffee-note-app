@@ -181,6 +181,61 @@ void main() {
       expect(find.text('원문 본문'), findsNothing);
       expect(find.text('원문 댓글'), findsNothing);
     });
+
+    testWidgets('삭제 댓글은 안내 문구만 표시하고 메뉴를 노출하지 않는다', (tester) async {
+      final authState = AuthState.authenticated(
+        user: _testUser('comment-owner'),
+      );
+      final postState = PostDetailState.loaded(
+        post: _buildPostWithDeletedComment(commentOwnerId: 'comment-owner'),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-deleted-comment'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('삭제된 댓글입니다.'), findsOneWidget);
+      expect(find.text('삭제 전 원문 댓글'), findsNothing);
+      expect(find.text('댓글작성자닉'), findsNothing);
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
+    });
   });
 }
 
@@ -231,6 +286,39 @@ CommunityPost _buildActivePost({required String userId}) {
     createdAt: now,
     updatedAt: now,
     commentCount: 0,
+  );
+}
+
+CommunityPost _buildPostWithDeletedComment({required String commentOwnerId}) {
+  final now = DateTime(2026, 2, 21, 14);
+  final commentAuthor = UserProfile(
+    id: commentOwnerId,
+    nickname: '댓글작성자닉',
+    email: '$commentOwnerId@example.com',
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  return CommunityPost(
+    id: 'post-deleted-comment',
+    userId: 'post-owner',
+    title: '일반 게시글 제목',
+    content: '일반 게시글 본문',
+    createdAt: now,
+    updatedAt: now,
+    comments: [
+      CommunityComment(
+        id: 'comment-deleted',
+        postId: 'post-deleted-comment',
+        userId: commentOwnerId,
+        content: '삭제 전 원문 댓글',
+        createdAt: now,
+        updatedAt: now,
+        isDeletedContent: true,
+        author: commentAuthor,
+      ),
+    ],
+    commentCount: 1,
   );
 }
 

@@ -133,6 +133,7 @@ class CommunityComment {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isWithdrawnContent;
+  final bool isDeletedContent;
 
   // 관계 데이터
   final UserProfile? author;
@@ -147,6 +148,7 @@ class CommunityComment {
     required this.createdAt,
     required this.updatedAt,
     this.isWithdrawnContent = false,
+    this.isDeletedContent = false,
     this.author,
     this.replies,
   });
@@ -161,6 +163,7 @@ class CommunityComment {
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       isWithdrawnContent: json['is_withdrawn_content'] as bool? ?? false,
+      isDeletedContent: json['is_deleted_content'] as bool? ?? false,
       author: json['profiles'] != null
           ? UserProfile.fromJson(json['profiles'] as Map<String, dynamic>)
           : null,
@@ -177,6 +180,7 @@ class CommunityComment {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'is_withdrawn_content': isWithdrawnContent,
+      'is_deleted_content': isDeletedContent,
     };
   }
 
@@ -198,6 +202,7 @@ class CommunityComment {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isWithdrawnContent,
+    bool? isDeletedContent,
     UserProfile? author,
     List<CommunityComment>? replies,
   }) {
@@ -210,6 +215,7 @@ class CommunityComment {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isWithdrawnContent: isWithdrawnContent ?? this.isWithdrawnContent,
+      isDeletedContent: isDeletedContent ?? this.isDeletedContent,
       author: author ?? this.author,
       replies: replies ?? this.replies,
     );

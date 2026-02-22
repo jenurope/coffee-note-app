@@ -537,6 +537,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commentCreateFailed => '댓글 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 
   @override
+  String get deletedCommentMessage => '삭제된 댓글입니다.';
+
+  @override
   String get postDeleteTitle => '게시글 삭제';
 
   @override

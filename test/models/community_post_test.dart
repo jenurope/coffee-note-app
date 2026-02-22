@@ -44,6 +44,22 @@ void main() {
       expect(post.commentCount, isNull);
     });
   });
+
+  group('CommunityComment.fromJson', () {
+    test('is_deleted_content가 true면 삭제 상태를 파싱한다', () {
+      final comment = CommunityComment.fromJson(
+        _baseCommentJson({'is_deleted_content': true}),
+      );
+
+      expect(comment.isDeletedContent, isTrue);
+    });
+
+    test('is_deleted_content가 없으면 기본값 false를 유지한다', () {
+      final comment = CommunityComment.fromJson(_baseCommentJson({}));
+
+      expect(comment.isDeletedContent, isFalse);
+    });
+  });
 }
 
 Map<String, dynamic> _baseJson(Map<String, dynamic> extra) {
@@ -52,6 +68,19 @@ Map<String, dynamic> _baseJson(Map<String, dynamic> extra) {
     'user_id': 'user-1',
     'title': '테스트 제목',
     'content': '테스트 내용',
+    'created_at': '2026-02-22T00:00:00.000Z',
+    'updated_at': '2026-02-22T00:00:00.000Z',
+    ...extra,
+  };
+}
+
+Map<String, dynamic> _baseCommentJson(Map<String, dynamic> extra) {
+  return {
+    'id': 'comment-1',
+    'post_id': 'post-1',
+    'user_id': 'user-1',
+    'content': '테스트 댓글',
+    'parent_id': null,
     'created_at': '2026-02-22T00:00:00.000Z',
     'updated_at': '2026-02-22T00:00:00.000Z',
     ...extra,
