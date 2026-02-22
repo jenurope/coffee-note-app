@@ -17,7 +17,6 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
   bool _didLoad = false;
   bool _isLoading = false;
   bool _isSubmitting = false;
-  String? _errorMessage;
   List<TermPolicy> _terms = const <TermPolicy>[];
   final Map<String, bool> _decisions = <String, bool>{};
   final Map<String, bool> _expandedByCode = <String, bool>{};
@@ -34,7 +33,6 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
@@ -66,8 +64,8 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'errTermsLoadFailed';
       });
+      _showErrorToast('errTermsLoadFailed');
     }
   }
 
@@ -88,7 +86,6 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
 
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
     await WidgetsBinding.instance.endOfFrame;
 
@@ -97,15 +94,11 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
       if (!mounted) return;
 
       if (errorMessage != null) {
-        setState(() {
-          _errorMessage = errorMessage;
-        });
+        _showErrorToast(errorMessage);
       }
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage = 'errTermsConsentFailed';
-      });
+      _showErrorToast('errTermsConsentFailed');
     } finally {
       if (mounted) {
         setState(() {
@@ -119,16 +112,13 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
     if (_isSubmitting) return;
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
 
     try {
       await context.read<AuthCubit>().declineTerms();
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage = 'errTermsConsentFailed';
-      });
+      _showErrorToast('errTermsConsentFailed');
     } finally {
       if (mounted) {
         setState(() {
@@ -136,6 +126,20 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
         });
       }
     }
+  }
+
+  void _showErrorToast(String errorKey) {
+    final message = UserErrorMessage.localize(context.l10n, errorKey);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        );
+    });
   }
 
   @override
@@ -168,33 +172,6 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (_errorMessage != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: theme.colorScheme.error,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            UserErrorMessage.localize(l10n, _errorMessage!),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.error,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                if (_errorMessage != null) const SizedBox(height: 12),
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())

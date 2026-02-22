@@ -121,6 +121,24 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    testWidgets('동의 저장 실패 시 오류 토스트를 표시한다', (tester) async {
+      when(
+        () => authCubit.acceptTermsConsents(any()),
+      ).thenAnswer((_) async => 'errTermsConsentFailed');
+
+      await _pumpScreen(tester, authCubit: authCubit);
+
+      await tester.tap(find.byKey(const Key('term-checkbox-service_terms')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('term-checkbox-privacy_policy')));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('terms-accept-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsOneWidget);
+    });
+
     testWidgets('동의하지 않고 나가기 버튼은 declineTerms를 호출한다', (tester) async {
       await _pumpScreen(tester, authCubit: authCubit);
 
