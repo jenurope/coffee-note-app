@@ -7,6 +7,7 @@ import '../../services/coffee_log_service.dart';
 import '../../services/community_service.dart';
 import '../../services/guest_sample_service.dart';
 import '../../services/image_upload_service.dart';
+import '../../services/service_inquiry_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -47,5 +48,10 @@ void setupServiceLocator() {
   // Image Upload
   getIt.registerLazySingleton<ImageUploadService>(
     () => ImageUploadService(client),
+  );
+
+  // Service Inquiry
+  getIt.registerLazySingleton<ServiceInquiryService>(
+    () => ServiceInquiryService(client),
   );
 }

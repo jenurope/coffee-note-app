@@ -12,6 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User;
@@ -68,7 +69,7 @@ void main() {
       expect(find.text('라이선스'), findsNothing);
     });
 
-    testWidgets('문의/제보하기 탭 시 준비중 스낵바를 표시한다', (tester) async {
+    testWidgets('문의/제보하기 탭 시 문의 내역 화면으로 이동한다', (tester) async {
       _stubAuthenticatedState(
         authCubit: authCubit,
         dashboardCubit: dashboardCubit,
@@ -81,9 +82,9 @@ void main() {
       );
 
       await tester.tap(find.text('문의/제보하기'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      expect(find.text('문의/제보 기능은 준비 중입니다.'), findsOneWidget);
+      expect(find.text('문의내역 화면'), findsOneWidget);
     });
 
     testWidgets('앱 정보는 다이얼로그 없이 고정 표시된다', (tester) async {
@@ -190,16 +191,36 @@ Future<void> _pumpProfileScreen(
         BlocProvider<AuthCubit>.value(value: authCubit),
         BlocProvider<DashboardCubit>.value(value: dashboardCubit),
       ],
-      child: const MaterialApp(
-        locale: Locale('ko'),
-        localizationsDelegates: [
+      child: MaterialApp.router(
+        routerConfig: GoRouter(
+          initialLocation: '/',
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (context, state) => const ProfileScreen(),
+              routes: [
+                GoRoute(
+                  path: 'profile/inquiries',
+                  builder: (context, state) =>
+                      const Scaffold(body: Center(child: Text('문의내역 화면'))),
+                ),
+                GoRoute(
+                  path: 'profile/edit',
+                  builder: (context, state) =>
+                      const Scaffold(body: Center(child: Text('프로필수정 화면'))),
+                ),
+              ],
+            ),
+          ],
+        ),
+        locale: const Locale('ko'),
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-        home: ProfileScreen(),
+        supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
       ),
     ),
   );

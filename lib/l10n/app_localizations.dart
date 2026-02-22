@@ -1174,6 +1174,234 @@ abstract class AppLocalizations {
   /// **'Contact/Report feature is in preparation.'**
   String get contactReportPreparing;
 
+  /// No description provided for @inquiryGuestEntryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get inquiryGuestEntryAction;
+
+  /// No description provided for @inquiryFormTitleGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Inquiry'**
+  String get inquiryFormTitleGuest;
+
+  /// No description provided for @inquiryFormTitleUser.
+  ///
+  /// In en, this message translates to:
+  /// **'New Inquiry'**
+  String get inquiryFormTitleUser;
+
+  /// No description provided for @inquiryListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Inquiries'**
+  String get inquiryListTitle;
+
+  /// No description provided for @inquiryTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Inquiry Type'**
+  String get inquiryTypeLabel;
+
+  /// No description provided for @inquiryTypeGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get inquiryTypeGeneral;
+
+  /// No description provided for @inquiryTypeBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Bug Report'**
+  String get inquiryTypeBug;
+
+  /// No description provided for @inquiryTypeFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature Request'**
+  String get inquiryTypeFeature;
+
+  /// No description provided for @inquiryTypeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get inquiryTypeAccount;
+
+  /// No description provided for @inquiryTypeTechnical.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical Support'**
+  String get inquiryTypeTechnical;
+
+  /// No description provided for @inquiryTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get inquiryTitleLabel;
+
+  /// No description provided for @inquiryTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter inquiry title'**
+  String get inquiryTitleHint;
+
+  /// No description provided for @inquiryTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a title.'**
+  String get inquiryTitleRequired;
+
+  /// No description provided for @inquiryTitleLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Title must be at least 2 characters.'**
+  String get inquiryTitleLength;
+
+  /// No description provided for @inquiryContentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get inquiryContentLabel;
+
+  /// No description provided for @inquiryContentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your inquiry in detail'**
+  String get inquiryContentHint;
+
+  /// No description provided for @inquiryContentRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter content.'**
+  String get inquiryContentRequired;
+
+  /// No description provided for @inquiryContentLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Content must be at least 5 characters.'**
+  String get inquiryContentLength;
+
+  /// No description provided for @inquiryEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email for Reply'**
+  String get inquiryEmailLabel;
+
+  /// No description provided for @inquiryEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'example@email.com'**
+  String get inquiryEmailHint;
+
+  /// No description provided for @inquiryEmailRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an email.'**
+  String get inquiryEmailRequired;
+
+  /// No description provided for @inquiryEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email address.'**
+  String get inquiryEmailInvalid;
+
+  /// No description provided for @inquiryGuestConsentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to collect my email to receive a reply.'**
+  String get inquiryGuestConsentLabel;
+
+  /// No description provided for @inquiryGuestConsentRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy consent is required.'**
+  String get inquiryGuestConsentRequired;
+
+  /// No description provided for @inquirySubmitAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Inquiry'**
+  String get inquirySubmitAction;
+
+  /// No description provided for @inquirySubmitSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your inquiry has been submitted.'**
+  String get inquirySubmitSuccess;
+
+  /// No description provided for @inquirySubmitFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while submitting inquiry. Please try again later.'**
+  String get inquirySubmitFailed;
+
+  /// No description provided for @inquiryLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load inquiries. Please try again later.'**
+  String get inquiryLoadFailed;
+
+  /// No description provided for @inquiryNewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New Inquiry'**
+  String get inquiryNewAction;
+
+  /// No description provided for @inquiryEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No inquiries yet.'**
+  String get inquiryEmptyTitle;
+
+  /// No description provided for @inquiryEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave a question, suggestion, or report.'**
+  String get inquiryEmptySubtitle;
+
+  /// No description provided for @inquiryListLoginRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Only signed-in users can view inquiry history.'**
+  String get inquiryListLoginRequired;
+
+  /// No description provided for @inquiryAnswerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Support Team Reply'**
+  String get inquiryAnswerLabel;
+
+  /// No description provided for @inquiryAnswerPending.
+  ///
+  /// In en, this message translates to:
+  /// **'No reply has been registered yet.'**
+  String get inquiryAnswerPending;
+
+  /// No description provided for @inquiryStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get inquiryStatusPending;
+
+  /// No description provided for @inquiryStatusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get inquiryStatusInProgress;
+
+  /// No description provided for @inquiryStatusResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get inquiryStatusResolved;
+
+  /// No description provided for @inquiryStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get inquiryStatusClosed;
+
   /// No description provided for @preparing.
   ///
   /// In en, this message translates to:

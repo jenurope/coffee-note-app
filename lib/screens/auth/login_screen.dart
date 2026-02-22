@@ -156,6 +156,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
               ),
 
+              const SizedBox(height: 8),
+
+              TextButton.icon(
+                key: const Key('guest-inquiry-button'),
+                onPressed: _isLoading
+                    ? null
+                    : () => context.push('/auth/inquiry'),
+                icon: const Icon(Icons.support_agent_outlined),
+                label: Text(context.l10n.inquiryGuestEntryAction),
+              ),
+
               const SizedBox(height: 48),
             ],
           ),
