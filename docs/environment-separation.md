@@ -61,19 +61,11 @@ flutter run --flavor prod --dart-define-from-file=dart_define.prod.json
 
 `/supabase/sql/README.md`의 대상 파일 순서를 그대로 사용합니다.
 
-1. `20260219_dev_reset_and_code_constraints.sql`
-2. `20260220_storage_media_buckets_and_policies.sql`
-3. `20260221_storage_community_bucket_and_policies.sql`
-4. `20260221_community_hourly_write_limits.sql`
-5. `20260221_withdraw_account_soft_preserve_rows.sql`
-6. `20260221_remove_legacy_bean_and_brew_details.sql`
-7. `20260221_terms_catalog_and_consents.sql`
-8. `20260222_withdraw_storage_cleanup_via_storage_api.sql`
-9. `20260222_service_inquiries_guest_support.sql`
-10. `20260222_service_inquiries_customer_type_preserve_on_withdraw.sql`
-11. `20260223_community_comment_soft_delete_placeholder.sql`
+1. `20260223_dev_bootstrap_final.sql`
 
 SQL Editor 실행 시 Role은 `postgres`(owner)로 지정합니다.
+
+`20260223_dev_bootstrap_final.sql`의 Storage 정책 섹션 실행 시 `ERROR: must be owner of table objects`가 발생하면, Storage Policy는 SQL이 아닌 Dashboard UI에서 수동으로 생성합니다.
 
 ### 4-3. 적용 후 검증
 
