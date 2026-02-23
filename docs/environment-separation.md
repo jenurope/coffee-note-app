@@ -10,6 +10,7 @@
 | iOS bundle id | `com.gooun.works.coffeelog` | `com.gooun.works.coffeelog.dev` |
 | 앱 이름 | 커피로그 | 커피로그 DEV |
 | Supabase 프로젝트 | `jbfcltrhniuwxswatyqg` | `csfsencsdhfmhgaezhno` |
+| Firebase 프로젝트 | 단일 프로젝트(공용) | 단일 프로젝트(공용) |
 
 ## 2. 로컬 파일 준비
 
@@ -23,6 +24,14 @@
    - `SUPABASE_PUBLISHABLE_KEY`
    - `GOOGLE_IOS_CLIENT_ID`
    - `GOOGLE_WEB_CLIENT_ID`
+   - `FIREBASE_PROJECT_ID`
+   - `FIREBASE_MESSAGING_SENDER_ID`
+   - `FIREBASE_STORAGE_BUCKET`
+   - `FIREBASE_ANDROID_API_KEY`
+   - `FIREBASE_ANDROID_APP_ID`
+   - `FIREBASE_IOS_API_KEY`
+   - `FIREBASE_IOS_APP_ID`
+   - `FIREBASE_IOS_BUNDLE_ID`
 
 ### 2-2. iOS 선택 오버라이드 파일
 
@@ -84,8 +93,28 @@ SQL Editor 실행 시 Role은 `postgres`(owner)로 지정합니다.
 4. `dart_define.*.json`의 `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_WEB_CLIENT_ID` 값 점검
 5. 각 flavor에서 Google 로그인 성공 여부 확인
 
-## 6. 금지 사항
+## 6. Firebase 수동 작업 체크리스트
+
+단일 Firebase 프로젝트를 유지하되, 앱 식별자는 dev/prod로 분리합니다.
+
+1. Firebase 프로젝트에 Android 앱 2개 등록
+   - `com.gooun.works.coffeelog`
+   - `com.gooun.works.coffeelog.dev`
+2. Firebase 프로젝트에 iOS 앱 2개 등록
+   - `com.gooun.works.coffeelog`
+   - `com.gooun.works.coffeelog.dev`
+3. Firebase 설정값을 `dart_define.dev.json`, `dart_define.prod.json`에 각각 반영
+4. 수집 정책 확인
+   - `APP_ENV=prod`: Analytics/Crashlytics 활성화
+   - `APP_ENV=dev`: Analytics/Crashlytics 비활성화
+5. Google Cloud API Key 제한 적용
+   - Android: 패키지명 + SHA 인증서 제한
+   - iOS: 번들 ID 제한
+6. 제한 후 `run_dev.sh`, `run_prod.sh`로 초기화 오류(403 등) 여부 확인
+
+## 7. 금지 사항
 
 1. `flutter run` 단독 실행 금지
 2. prod 앱으로 dev DB에 연결하거나, dev 앱으로 prod DB에 연결 금지
 3. prod 프로젝트에 개발용 파괴적 SQL 실행 금지
+4. Firebase API 키/앱 ID를 비밀값으로 오해하고 서버 비밀키처럼 취급 금지
