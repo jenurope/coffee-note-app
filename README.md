@@ -35,12 +35,10 @@
   "GOOGLE_WEB_CLIENT_ID": "your-web-client-id.apps.googleusercontent.com",
   "FIREBASE_PROJECT_ID": "your-firebase-project-id",
   "FIREBASE_MESSAGING_SENDER_ID": "your-firebase-sender-id",
-  "FIREBASE_STORAGE_BUCKET": "your-firebase-storage-bucket",
   "FIREBASE_ANDROID_API_KEY": "your-android-api-key",
   "FIREBASE_ANDROID_APP_ID": "your-android-app-id",
   "FIREBASE_IOS_API_KEY": "your-ios-api-key",
-  "FIREBASE_IOS_APP_ID": "your-ios-app-id",
-  "FIREBASE_IOS_BUNDLE_ID": "com.gooun.works.coffeelog 또는 com.gooun.works.coffeelog.dev"
+  "FIREBASE_IOS_APP_ID": "your-ios-app-id"
 }
 ```
 
@@ -65,7 +63,6 @@ Google URL Scheme/표시명을 로컬에서 오버라이드하려면 아래 파�
 - 보안은 아래 운영 통제로 보완합니다.
   - Firebase 앱을 패키지/번들 ID 기준으로 dev/prod 분리 등록
   - Google Cloud API Key에 Android 패키지+SHA, iOS 번들 ID 제한 적용
-  - Firestore/Storage 규칙 및 App Check 적용
 
 ### 환경 분리 운영 가이드
 

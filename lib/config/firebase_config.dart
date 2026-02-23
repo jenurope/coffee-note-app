@@ -7,22 +7,16 @@ class FirebaseDefineValues {
   const FirebaseDefineValues({
     required this.projectId,
     required this.messagingSenderId,
-    required this.storageBucket,
     required this.androidApiKey,
     required this.androidAppId,
     required this.iosApiKey,
     required this.iosAppId,
-    required this.iosBundleId,
   });
 
   static const fromEnvironment = FirebaseDefineValues(
     projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
     messagingSenderId: String.fromEnvironment(
       'FIREBASE_MESSAGING_SENDER_ID',
-      defaultValue: '',
-    ),
-    storageBucket: String.fromEnvironment(
-      'FIREBASE_STORAGE_BUCKET',
       defaultValue: '',
     ),
     androidApiKey: String.fromEnvironment(
@@ -35,20 +29,14 @@ class FirebaseDefineValues {
     ),
     iosApiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: ''),
     iosAppId: String.fromEnvironment('FIREBASE_IOS_APP_ID', defaultValue: ''),
-    iosBundleId: String.fromEnvironment(
-      'FIREBASE_IOS_BUNDLE_ID',
-      defaultValue: '',
-    ),
   );
 
   final String projectId;
   final String messagingSenderId;
-  final String storageBucket;
   final String androidApiKey;
   final String androidAppId;
   final String iosApiKey;
   final String iosAppId;
-  final String iosBundleId;
 }
 
 class FirebaseConfig {
@@ -94,7 +82,6 @@ class FirebaseConfig {
         appId: values.androidAppId,
         messagingSenderId: values.messagingSenderId,
         projectId: values.projectId,
-        storageBucket: values.storageBucket,
       );
     }
 
@@ -103,8 +90,6 @@ class FirebaseConfig {
       appId: values.iosAppId,
       messagingSenderId: values.messagingSenderId,
       projectId: values.projectId,
-      storageBucket: values.storageBucket,
-      iosBundleId: values.iosBundleId,
     );
   }
 
@@ -114,7 +99,6 @@ class FirebaseConfig {
     if (values.messagingSenderId.isEmpty) {
       missing.add('FIREBASE_MESSAGING_SENDER_ID');
     }
-    if (values.storageBucket.isEmpty) missing.add('FIREBASE_STORAGE_BUCKET');
 
     if (platform == TargetPlatform.android) {
       if (values.androidApiKey.isEmpty) missing.add('FIREBASE_ANDROID_API_KEY');
@@ -124,7 +108,6 @@ class FirebaseConfig {
     if (platform == TargetPlatform.iOS) {
       if (values.iosApiKey.isEmpty) missing.add('FIREBASE_IOS_API_KEY');
       if (values.iosAppId.isEmpty) missing.add('FIREBASE_IOS_APP_ID');
-      if (values.iosBundleId.isEmpty) missing.add('FIREBASE_IOS_BUNDLE_ID');
     }
 
     return missing;

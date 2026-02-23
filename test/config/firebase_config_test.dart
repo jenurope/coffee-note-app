@@ -8,12 +8,10 @@ void main() {
     const values = FirebaseDefineValues(
       projectId: 'coffee-note',
       messagingSenderId: '1234567890',
-      storageBucket: 'coffee-note.appspot.com',
       androidApiKey: 'android-key',
       androidAppId: '1:1234567890:android:abc123',
       iosApiKey: 'ios-key',
       iosAppId: '1:1234567890:ios:def456',
-      iosBundleId: 'com.gooun.works.coffeelog',
     );
 
     test('prod 환경에서만 수집 플래그가 활성화된다', () {
@@ -42,9 +40,9 @@ void main() {
 
       expect(options.projectId, 'coffee-note');
       expect(options.messagingSenderId, '1234567890');
-      expect(options.storageBucket, 'coffee-note.appspot.com');
       expect(options.apiKey, 'android-key');
       expect(options.appId, '1:1234567890:android:abc123');
+      expect(options.storageBucket, isNull);
     });
 
     test('iOS 옵션이 올바르게 생성된다', () {
@@ -57,22 +55,20 @@ void main() {
 
       expect(options.projectId, 'coffee-note');
       expect(options.messagingSenderId, '1234567890');
-      expect(options.storageBucket, 'coffee-note.appspot.com');
       expect(options.apiKey, 'ios-key');
       expect(options.appId, '1:1234567890:ios:def456');
-      expect(options.iosBundleId, 'com.gooun.works.coffeelog');
+      expect(options.storageBucket, isNull);
+      expect(options.iosBundleId, isNull);
     });
 
     test('필수 키 누락 시 APP_ENV가 포함된 예외를 반환한다', () {
       const emptyValues = FirebaseDefineValues(
         projectId: '',
         messagingSenderId: '',
-        storageBucket: '',
         androidApiKey: '',
         androidAppId: '',
         iosApiKey: '',
         iosAppId: '',
-        iosBundleId: '',
       );
       final config = FirebaseConfig(
         values: emptyValues,
