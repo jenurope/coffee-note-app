@@ -48,3 +48,7 @@ app.*.map.json
 .env
 .env.local
 dart_define.json
+dart_define.dev.json
+dart_define.prod.json
+ios/Flutter/Env.dev.xcconfig
+ios/Flutter/Env.prod.xcconfig

@@ -4,42 +4,53 @@
 
 ## 실행 방법
 
-> **⚠️ 중요:** `flutter run`을 직접 사용하지 마세요. Supabase 환경변수가 전달되지 않아 앱이 정상 동작하지 않습니다.
+> **⚠️ 중요:** `flutter run`을 직접 사용하지 마세요. 환경변수(`dart-define`)가 누락되면 앱이 정상 동작하지 않습니다.
 
 ### 앱 실행
 
 ```bash
-# 기본 실행 (dart_define.json에서 환경변수 로드)
-./run.sh
+# 기본 개발 환경 실행 (dev flavor)
+./run_dev.sh
+
+# 운영 환경 명시 실행 (prod flavor)
+./run_prod.sh
 
 # 특정 디바이스 지정
-./run.sh chrome
-./run.sh <device-id>
+./run_dev.sh chrome
+./run_dev.sh <device-id>
 ```
 
-`run.sh`는 내부적으로 `--dart-define-from-file=dart_define.json` 옵션을 사용하여 Supabase URL과 Publishable Key(환경변수명: `SUPABASE_PUBLISHABLE_KEY`)를 전달합니다.
+`run_dev.sh`, `run_prod.sh`는 내부적으로 `--flavor` + `--dart-define-from-file` 옵션을 사용해 환경별 설정을 전달합니다.
 
-### 환경변수 설정
+### 환경 파일 설정
 
-프로젝트 루트에 `dart_define.json` 파일이 필요합니다:
+프로젝트 루트에 아래 로컬 파일을 생성해 사용합니다(버전관리 제외).
 
 ```json
 {
+  "APP_ENV": "dev|prod",
   "SUPABASE_URL": "https://your-project.supabase.co",
-  "SUPABASE_PUBLISHABLE_KEY": "your-publishable-key"
+  "SUPABASE_PUBLISHABLE_KEY": "your-publishable-key",
+  "GOOGLE_IOS_CLIENT_ID": "your-ios-client-id.apps.googleusercontent.com",
+  "GOOGLE_WEB_CLIENT_ID": "your-web-client-id.apps.googleusercontent.com"
 }
 ```
 
-> `dart_define.json`은 `.gitignore`에 포함되어 있으므로 별도로 생성해야 합니다.
+1. `dart_define.dev.example.json` -> `dart_define.dev.json`
+2. `dart_define.prod.example.json` -> `dart_define.prod.json`
 
-### Supabase 인증 마이그레이션 (개발환경 원샷)
+### iOS 로컬 설정 파일
 
-1. Supabase `Project Settings > API Keys`에서 Publishable/Secret Key 체계를 사용하도록 정리합니다.
-2. 앱 환경변수 `SUPABASE_PUBLISHABLE_KEY` 값이 Publishable Key(`sb_publishable_...`)인지 확인합니다.
-3. `Project Settings > JWT > Signing Keys`에서 Standby Key를 만든 뒤 Rotate를 수행합니다.
-4. 전환 확인 후 `Legacy API key`와 `Legacy JWT secret`을 비활성화합니다.
-5. `/.well-known/jwks.json`의 `keys`가 비어있지 않은지 확인합니다.
-6. 앱 로그인 후 `getClaims` 검증 로그에서 알고리즘이 `HS256`이 아닌지 확인합니다.
+Google URL Scheme/표시명을 로컬에서 오버라이드하려면 아래 파일을 생성합니다(선택).
+
+1. `ios/Flutter/Env.dev.example.xcconfig` -> `ios/Flutter/Env.dev.xcconfig`
+2. `ios/Flutter/Env.prod.example.xcconfig` -> `ios/Flutter/Env.prod.xcconfig`
+
+`Env.*.xcconfig`를 만들지 않아도 예시 파일 기본값으로 빌드는 가능합니다.
+
+### 환경 분리 운영 가이드
+
+상세 체크리스트는 `/docs/environment-separation.md`를 참고하세요.
 
 ## 기술 스택
 

@@ -9,6 +9,7 @@ android {
     namespace = "com.gooun.works.coffeelog"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+    flavorDimensions += "env"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -28,6 +29,18 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "커피로그 DEV")
+        }
+        create("prod") {
+            dimension = "env"
+            resValue("string", "app_name", "커피로그")
+        }
     }
 
     buildTypes {

@@ -16,12 +16,15 @@ class AuthService {
     'community',
   ];
 
-  // iOS 클라이언트 ID
-  static const String _iosClientId =
-      '8081750780-m14ad4segdpjfcdve6tk62489eqqkd6u.apps.googleusercontent.com';
-  // Web 클라이언트 ID (Supabase용)
-  static const String _webClientId =
-      '8081750780-scf0av9f4beqnb2in0p2sshqava1us8h.apps.googleusercontent.com';
+  // 환경변수로 주입되는 Google OAuth 클라이언트 ID
+  static const String _iosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+    defaultValue: '',
+  );
+  static const String _webClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '',
+  );
 
   AuthService(this._client) {
     _auth = _client.auth;
@@ -109,6 +112,15 @@ class AuthService {
   // 구글 로그인
   Future<AuthResponse> signInWithGoogle() async {
     try {
+      if (_iosClientId.isEmpty || _webClientId.isEmpty) {
+        throw Exception(
+          'Google OAuth 설정이 누락되었습니다. '
+          '--dart-define=GOOGLE_IOS_CLIENT_ID=... '
+          '--dart-define=GOOGLE_WEB_CLIENT_ID=... '
+          '옵션을 설정해주세요.',
+        );
+      }
+
       final GoogleSignIn googleSignIn = GoogleSignIn(
         clientId: _iosClientId,
         serverClientId: _webClientId,
