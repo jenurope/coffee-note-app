@@ -3,14 +3,24 @@ version = 1
 name = "coffee-note-app"
 
 [setup]
-script = ""
+script = "./.codex/environments/setup.sh"
 
 [[actions]]
-name = "Run(local)"
+name = "Run(dev)"
 icon = "run"
-command = "./run_local.sh"
+command = "./run_dev.sh"
 
 [[actions]]
-name = "Run(worktree)"
+name = "Run(prod)"
 icon = "run"
-command = "./run_worktree.sh"
+command = "./run_prod.sh"
+
+[[actions]]
+name = "Analyze"
+icon = "run"
+command = "flutter analyze"
+
+[[actions]]
+name = "Test"
+icon = "run"
+command = "flutter test"
