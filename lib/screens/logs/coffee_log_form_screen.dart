@@ -348,6 +348,9 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final localizations = MaterialLocalizations.of(context);
+    final appBarActionColor =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onPrimary;
+    final appBarDisabledActionColor = appBarActionColor.withValues(alpha: 0.5);
 
     // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
@@ -367,6 +370,10 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
           actions: [
             TextButton(
               onPressed: _isLoading || _isUploadingImage ? null : _handleSubmit,
+              style: TextButton.styleFrom(
+                foregroundColor: appBarActionColor,
+                disabledForegroundColor: appBarDisabledActionColor,
+              ),
               child: Text(context.l10n.save),
             ),
           ],

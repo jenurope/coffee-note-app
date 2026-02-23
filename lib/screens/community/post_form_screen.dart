@@ -545,6 +545,9 @@ class _PostFormScreenState extends State<PostFormScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final appBarActionColor =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onPrimary;
+    final appBarDisabledActionColor = appBarActionColor.withValues(alpha: 0.5);
 
     return PopScope(
       canPop: _allowPop,
@@ -562,6 +565,10 @@ class _PostFormScreenState extends State<PostFormScreen> {
           actions: [
             TextButton(
               onPressed: _isLoading ? null : _handleSubmit,
+              style: TextButton.styleFrom(
+                foregroundColor: appBarActionColor,
+                disabledForegroundColor: appBarDisabledActionColor,
+              ),
               child: Text(context.l10n.save),
             ),
           ],
