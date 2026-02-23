@@ -5,16 +5,19 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../config/firebase_config.dart';
+import '../../config/app_environment.dart';
 
 class FirebaseBootstrap {
-  const FirebaseBootstrap({required FirebaseConfig config}) : _config = config;
+  const FirebaseBootstrap({required this.environment});
 
   factory FirebaseBootstrap.fromEnvironment() {
-    return FirebaseBootstrap(config: FirebaseConfig.fromEnvironment());
+    return FirebaseBootstrap(environment: AppEnvironment.current);
   }
 
-  final FirebaseConfig _config;
+  final AppEnvironment environment;
+
+  bool get _analyticsCollectionEnabled => environment == AppEnvironment.prod;
+  bool get _crashlyticsCollectionEnabled => environment == AppEnvironment.prod;
 
   static bool _errorHandlersInstalled = false;
   static FlutterExceptionHandler? _previousFlutterErrorHandler;
@@ -29,29 +32,31 @@ class FirebaseBootstrap {
     final platform = platformOverride ?? defaultTargetPlatform;
     final isWeb = isWebOverride ?? kIsWeb;
 
-    if (!_config.supportsPlatform(platform: platform, isWeb: isWeb)) {
+    final supportsMobile =
+        !isWeb &&
+        (platform == TargetPlatform.android || platform == TargetPlatform.iOS);
+    if (!supportsMobile) {
       logger('Firebase 초기화 건너뜀: 지원 대상(iOS/Android)이 아닙니다.');
       return false;
     }
 
     try {
-      final options = _config.buildOptions(platform: platform, isWeb: isWeb);
-
-      await Firebase.initializeApp(options: options);
+      // google-services.json / GoogleService-Info.plist 기반 초기화
+      await Firebase.initializeApp();
 
       await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(
-        _config.analyticsCollectionEnabled,
+        _analyticsCollectionEnabled,
       );
       await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-        _config.crashlyticsCollectionEnabled,
+        _crashlyticsCollectionEnabled,
       );
 
       _installGlobalErrorHandlers(logger);
 
       logger(
         'Firebase 초기화 완료 '
-        '(analytics=${_config.analyticsCollectionEnabled}, '
-        'crashlytics=${_config.crashlyticsCollectionEnabled})',
+        '(analytics=$_analyticsCollectionEnabled, '
+        'crashlytics=$_crashlyticsCollectionEnabled)',
       );
       return true;
     } catch (e, st) {
@@ -68,7 +73,7 @@ class FirebaseBootstrap {
   }) async {
     final logger = log ?? debugPrint;
 
-    if (!_config.crashlyticsCollectionEnabled) {
+    if (!_crashlyticsCollectionEnabled) {
       logger('Zone error captured (Crashlytics disabled): $error');
       return;
     }
@@ -89,7 +94,7 @@ class FirebaseBootstrap {
     if (_errorHandlersInstalled) return;
     _errorHandlersInstalled = true;
 
-    final crashlyticsEnabled = _config.crashlyticsCollectionEnabled;
+    final crashlyticsEnabled = _crashlyticsCollectionEnabled;
     _previousFlutterErrorHandler = FlutterError.onError;
     _previousPlatformErrorHandler = PlatformDispatcher.instance.onError;
 

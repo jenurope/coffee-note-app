@@ -32,18 +32,25 @@
   "SUPABASE_URL": "https://your-project.supabase.co",
   "SUPABASE_PUBLISHABLE_KEY": "your-publishable-key",
   "GOOGLE_IOS_CLIENT_ID": "your-ios-client-id.apps.googleusercontent.com",
-  "GOOGLE_WEB_CLIENT_ID": "your-web-client-id.apps.googleusercontent.com",
-  "FIREBASE_PROJECT_ID": "your-firebase-project-id",
-  "FIREBASE_MESSAGING_SENDER_ID": "your-firebase-sender-id",
-  "FIREBASE_ANDROID_API_KEY": "your-android-api-key",
-  "FIREBASE_ANDROID_APP_ID": "your-android-app-id",
-  "FIREBASE_IOS_API_KEY": "your-ios-api-key",
-  "FIREBASE_IOS_APP_ID": "your-ios-app-id"
+  "GOOGLE_WEB_CLIENT_ID": "your-web-client-id.apps.googleusercontent.com"
 }
 ```
 
 1. `dart_define.dev.example.json` -> `dart_define.dev.json`
 2. `dart_define.prod.example.json` -> `dart_define.prod.json`
+
+### Firebase 설정 파일 (필수)
+
+`dart-define`이 아니라 플랫폼 설정 파일로 Firebase를 초기화합니다.
+
+1. Android
+   - `android/app/src/dev/google-services.json.example` -> `android/app/src/dev/google-services.json`
+   - `android/app/src/prod/google-services.json.example` -> `android/app/src/prod/google-services.json`
+2. iOS
+   - `ios/Firebase/dev/GoogleService-Info.plist.example` -> `ios/Firebase/dev/GoogleService-Info.plist`
+   - `ios/Firebase/prod/GoogleService-Info.plist.example` -> `ios/Firebase/prod/GoogleService-Info.plist`
+
+각 파일의 예시값을 실제 Firebase 콘솔에서 내려받은 값으로 교체해야 앱이 정상 초기화됩니다.
 
 ### iOS 로컬 설정 파일
 
@@ -60,8 +67,7 @@ Google URL Scheme/표시명을 로컬에서 오버라이드하려면 아래 파�
 - Firebase 수집 정책은 `APP_ENV` 기준으로 동작합니다.
   - `prod`: Analytics/Crashlytics 활성화
   - `dev`: Analytics/Crashlytics 비활성화
-- `FIREBASE_MESSAGING_SENDER_ID`는 Firebase Core 초기화 필수값이며, FCM 사용 여부와는 별개입니다.
-- `dart-define` 값(특히 Firebase API 키/앱 ID)은 앱 바이너리에서 추출 가능하므로 비밀값으로 간주하지 않습니다.
+- `google-services.json`, `GoogleService-Info.plist` 안의 값(API 키/앱 ID 포함)은 앱 바이너리에서 추출 가능하므로 비밀값으로 간주하지 않습니다.
 - 보안은 아래 운영 통제로 보완합니다.
   - Firebase 앱을 패키지/번들 ID 기준으로 dev/prod 분리 등록
   - Google Cloud API Key에 Android 패키지+SHA, iOS 번들 ID 제한 적용

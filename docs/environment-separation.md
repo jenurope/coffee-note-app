@@ -24,14 +24,20 @@
    - `SUPABASE_PUBLISHABLE_KEY`
    - `GOOGLE_IOS_CLIENT_ID`
    - `GOOGLE_WEB_CLIENT_ID`
-   - `FIREBASE_PROJECT_ID`
-   - `FIREBASE_MESSAGING_SENDER_ID`
-   - `FIREBASE_ANDROID_API_KEY`
-   - `FIREBASE_ANDROID_APP_ID`
-   - `FIREBASE_IOS_API_KEY`
-   - `FIREBASE_IOS_APP_ID`
 
-### 2-2. iOS 선택 오버라이드 파일
+### 2-2. Firebase 설정 파일
+
+`dart-define`이 아니라 플랫폼 설정 파일로 Firebase를 초기화합니다.
+
+1. Android 파일 준비
+   - `android/app/src/dev/google-services.json.example` -> `android/app/src/dev/google-services.json`
+   - `android/app/src/prod/google-services.json.example` -> `android/app/src/prod/google-services.json`
+2. iOS 파일 준비
+   - `ios/Firebase/dev/GoogleService-Info.plist.example` -> `ios/Firebase/dev/GoogleService-Info.plist`
+   - `ios/Firebase/prod/GoogleService-Info.plist.example` -> `ios/Firebase/prod/GoogleService-Info.plist`
+3. 예시 파일 값을 각 Firebase 앱의 실제 값으로 교체
+
+### 2-3. iOS 선택 오버라이드 파일
 
 기본값은 `Env.*.example.xcconfig`에서 로드됩니다. 필요 시 아래 파일로 덮어씁니다.
 
@@ -102,8 +108,9 @@ SQL Editor 실행 시 Role은 `postgres`(owner)로 지정합니다.
 2. Firebase 프로젝트에 iOS 앱 2개 등록
    - `com.gooun.works.coffeelog`
    - `com.gooun.works.coffeelog.dev`
-3. Firebase 설정값을 `dart_define.dev.json`, `dart_define.prod.json`에 각각 반영
-   - `FIREBASE_MESSAGING_SENDER_ID`는 Firebase Core 초기화 필수값이며 FCM 사용을 의미하지 않음
+3. Firebase 설정 파일 배치
+   - Android: `google-services.json`을 flavor 경로에 배치
+   - iOS: `GoogleService-Info.plist`를 환경 경로에 배치
 4. 수집 정책 확인
    - `APP_ENV=prod`: Analytics/Crashlytics 활성화
    - `APP_ENV=dev`: Analytics/Crashlytics 비활성화
