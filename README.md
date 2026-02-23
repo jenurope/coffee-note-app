@@ -56,9 +56,11 @@ Google URL Scheme/표시명을 로컬에서 오버라이드하려면 아래 파�
 
 ### Firebase 수집 정책/보안 메모
 
+- 오픈스펙 범위: Firebase `Analytics` + `Crashlytics`만 포함 (앱 푸시/FCM 제외)
 - Firebase 수집 정책은 `APP_ENV` 기준으로 동작합니다.
   - `prod`: Analytics/Crashlytics 활성화
   - `dev`: Analytics/Crashlytics 비활성화
+- `FIREBASE_MESSAGING_SENDER_ID`는 Firebase Core 초기화 필수값이며, FCM 사용 여부와는 별개입니다.
 - `dart-define` 값(특히 Firebase API 키/앱 ID)은 앱 바이너리에서 추출 가능하므로 비밀값으로 간주하지 않습니다.
 - 보안은 아래 운영 통제로 보완합니다.
   - Firebase 앱을 패키지/번들 ID 기준으로 dev/prod 분리 등록

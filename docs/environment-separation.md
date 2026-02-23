@@ -94,6 +94,7 @@ SQL Editor 실행 시 Role은 `postgres`(owner)로 지정합니다.
 ## 6. Firebase 수동 작업 체크리스트
 
 단일 Firebase 프로젝트를 유지하되, 앱 식별자는 dev/prod로 분리합니다.
+오픈스펙 범위는 Firebase `Analytics` + `Crashlytics`이며, 앱 푸시(FCM)는 포함하지 않습니다.
 
 1. Firebase 프로젝트에 Android 앱 2개 등록
    - `com.gooun.works.coffeelog`
@@ -102,6 +103,7 @@ SQL Editor 실행 시 Role은 `postgres`(owner)로 지정합니다.
    - `com.gooun.works.coffeelog`
    - `com.gooun.works.coffeelog.dev`
 3. Firebase 설정값을 `dart_define.dev.json`, `dart_define.prod.json`에 각각 반영
+   - `FIREBASE_MESSAGING_SENDER_ID`는 Firebase Core 초기화 필수값이며 FCM 사용을 의미하지 않음
 4. 수집 정책 확인
    - `APP_ENV=prod`: Analytics/Crashlytics 활성화
    - `APP_ENV=dev`: Analytics/Crashlytics 비활성화
