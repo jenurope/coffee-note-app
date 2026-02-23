@@ -1,12 +1,11 @@
 #!/bin/bash
-# 커피 노트 앱 개발 환경 실행 스크립트(dev flavor)
-# 사용법: ./run_local.sh [device] (예: ./run_local.sh, ./run_local.sh emulator-5554)
+# 개발 환경(dev flavor) 실행 스크립트
+# 사용법: ./run_dev.sh [device]
 
 set -euo pipefail
 
-# 디바이스 인자 처리
 DEVICE_ARG=""
-if [ -n "$1" ]; then
+if [ -n "${1-}" ]; then
   DEVICE_ARG="-d $1"
 fi
 

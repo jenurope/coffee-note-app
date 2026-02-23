@@ -1,8 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'app_environment.dart';
+
 class SupabaseConfig {
-  // 환경변수를 통해 주입받는 Supabase 설정
-  // 실행 시: flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...
+  // 실행 시:
+  // --dart-define=APP_ENV=dev|prod
+  // --dart-define=SUPABASE_URL=...
+  // --dart-define=SUPABASE_PUBLISHABLE_KEY=...
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
     defaultValue: '',
@@ -13,9 +17,13 @@ class SupabaseConfig {
   );
 
   static Future<void> initialize() async {
+    final environment = AppEnvironment.currentValue;
+
     if (supabaseUrl.isEmpty || supabasePublishableKey.isEmpty) {
       throw Exception(
         'Supabase 설정이 누락되었습니다. '
+        '(APP_ENV=$environment) '
+        '--dart-define=APP_ENV=dev|prod '
         '--dart-define=SUPABASE_URL=... '
         '--dart-define=SUPABASE_PUBLISHABLE_KEY=... '
         '옵션을 사용하여 실행해주세요.',
