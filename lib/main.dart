@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
@@ -8,6 +10,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'core/bloc/app_bloc_observer.dart';
 import 'core/di/service_locator.dart';
 import 'core/errors/user_error_message.dart';
+import 'core/firebase/firebase_bootstrap.dart';
 import 'config/supabase_config.dart';
 import 'cubits/auth/auth_cubit.dart';
 import 'cubits/bean/bean_list_cubit.dart';
@@ -19,6 +22,7 @@ import 'app.dart';
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  FirebaseBootstrap? firebaseBootstrap;
 
   // BLoC 옵저버 (개발 시 디버그 로그)
   Bloc.observer = const AppBlocObserver();
@@ -29,6 +33,9 @@ void main() async {
     await SupabaseConfig.initialize();
     // GetIt 서비스 등록 (Supabase 초기화 후)
     setupServiceLocator();
+    firebaseBootstrap = FirebaseBootstrap.fromEnvironment();
+    // Firebase 관측 계층 초기화 (실패해도 앱은 계속 실행)
+    await firebaseBootstrap.initialize(log: debugPrint);
   } catch (e, st) {
     initializationError = UserErrorMessage.from(
       e,
@@ -46,30 +53,42 @@ void main() async {
     runApp(_InitializationErrorApp(message: errorMessage));
     return;
   }
+  final telemetryBootstrap = firebaseBootstrap!;
 
-  runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => AuthCubit()),
-        BlocProvider(
-          create: (context) =>
-              BeanListCubit(authCubit: context.read<AuthCubit>()),
+  runZonedGuarded(
+    () {
+      runApp(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => AuthCubit()),
+            BlocProvider(
+              create: (context) =>
+                  BeanListCubit(authCubit: context.read<AuthCubit>()),
+            ),
+            BlocProvider(
+              create: (context) =>
+                  LogListCubit(authCubit: context.read<AuthCubit>()),
+            ),
+            BlocProvider(
+              create: (context) =>
+                  PostListCubit(authCubit: context.read<AuthCubit>()),
+            ),
+            BlocProvider(
+              create: (context) =>
+                  DashboardCubit(authCubit: context.read<AuthCubit>()),
+            ),
+          ],
+          child: const CoffeeNoteApp(),
         ),
-        BlocProvider(
-          create: (context) =>
-              LogListCubit(authCubit: context.read<AuthCubit>()),
-        ),
-        BlocProvider(
-          create: (context) =>
-              PostListCubit(authCubit: context.read<AuthCubit>()),
-        ),
-        BlocProvider(
-          create: (context) =>
-              DashboardCubit(authCubit: context.read<AuthCubit>()),
-        ),
-      ],
-      child: const CoffeeNoteApp(),
-    ),
+      );
+    },
+    (error, stackTrace) {
+      debugPrint('Uncaught zone error: $error');
+      debugPrint(stackTrace.toString());
+      unawaited(
+        telemetryBootstrap.recordZoneError(error, stackTrace, log: debugPrint),
+      );
+    },
   );
 }
 

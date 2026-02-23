@@ -55,6 +55,9 @@ dependencies:
   flutter_native_splash: ^2.4.4
   flutter_quill: ^11.5.0
   markdown_quill: ^4.3.0
+  firebase_core: ^4.4.0
+  firebase_analytics: ^12.1.2
+  firebase_crashlytics: ^5.0.7
 
 dev_dependencies:
   flutter_test:

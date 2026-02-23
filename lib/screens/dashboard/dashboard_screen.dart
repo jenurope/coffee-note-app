@@ -50,16 +50,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             return Scaffold(
               appBar: AppBar(
                 title: Text(l10n.appTitle),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.notificationsPreparing)),
-                      );
-                    },
-                  ),
-                ],
               ),
               body: RefreshIndicator(
                 onRefresh: () => context.read<DashboardCubit>().refresh(),
