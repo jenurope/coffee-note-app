@@ -17,6 +17,7 @@ import '../../services/coffee_bean_service.dart';
 import '../../services/image_upload_service.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/image_picker_widget.dart';
+import '../../widgets/navigation/form_leave_confirm_dialog.dart';
 
 class BeanFormScreen extends StatefulWidget {
   final String? beanId;
@@ -40,12 +41,17 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
   String? _roastLevel = RoastLevelCatalog.medium;
   bool _isLoading = false;
   bool _isInitialized = false;
+  bool _allowPop = false;
+  bool _isLeaveDialogOpen = false;
+  _BeanFormSnapshot? _initialSnapshot;
 
   @override
   void initState() {
     super.initState();
     if (widget.beanId != null) {
       _loadBean();
+    } else {
+      _captureInitialSnapshot();
     }
   }
 
@@ -107,6 +113,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     _rating = bean.rating;
     _roastLevel = bean.roastLevel;
     _existingImageUrl = bean.imageUrl;
+    _captureInitialSnapshot();
   }
 
   Future<void> _selectDate() async {
@@ -201,6 +208,81 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     return filePath ?? existing;
   }
 
+  DateTime _normalizedDate(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+
+  String _normalizedText(String value) => value.trim();
+
+  _BeanFormSnapshot _currentSnapshot() {
+    return _BeanFormSnapshot(
+      name: _normalizedText(_nameController.text),
+      roastery: _normalizedText(_roasteryController.text),
+      tastingNotes: _normalizedText(_tastingNotesController.text),
+      price: _normalizedText(_priceController.text),
+      purchaseLocation: _normalizedText(_purchaseLocationController.text),
+      purchaseDate: _normalizedDate(_purchaseDate),
+      rating: _rating,
+      roastLevel: _roastLevel,
+      imageReference: _normalizedExistingImageReference(),
+      selectedImagePath: _selectedImage?.path,
+    );
+  }
+
+  void _captureInitialSnapshot() {
+    _initialSnapshot = _currentSnapshot();
+  }
+
+  bool get _hasUnsavedChanges {
+    if (_allowPop) return false;
+    if (isEditing && !_isInitialized) return false;
+    final initialSnapshot = _initialSnapshot;
+    if (initialSnapshot == null) return false;
+    return _currentSnapshot() != initialSnapshot;
+  }
+
+  Future<bool> _confirmLeaveIfNeeded() async {
+    if (!_hasUnsavedChanges) {
+      return true;
+    }
+    if (_isLeaveDialogOpen) {
+      return false;
+    }
+
+    _isLeaveDialogOpen = true;
+    final shouldLeave = await showFormLeaveConfirmDialog(
+      context,
+      isEditing: isEditing,
+    );
+    _isLeaveDialogOpen = false;
+    return shouldLeave;
+  }
+
+  void _popSafely() {
+    if (_allowPop) {
+      if (mounted) {
+        context.pop();
+      }
+      return;
+    }
+
+    setState(() {
+      _allowPop = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.pop();
+    });
+  }
+
+  Future<void> _handlePopInvoked() async {
+    if (_isLoading || _isUploadingImage) return;
+
+    final shouldLeave = await _confirmLeaveIfNeeded();
+    if (!mounted || !shouldLeave) return;
+
+    _popSafely();
+  }
+
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -258,8 +340,10 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
       }
 
       if (mounted) {
-        context.pop();
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        _captureInitialSnapshot();
+        _popSafely();
+        messenger.showSnackBar(
           SnackBar(
             content: Text(
               isEditing ? context.l10n.beanUpdated : context.l10n.beanCreated,
@@ -293,304 +377,381 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final localizations = MaterialLocalizations.of(context);
+    final appBarActionColor =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onPrimary;
+    final appBarDisabledActionColor = appBarActionColor.withValues(alpha: 0.5);
 
     // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isEditing
-              ? context.l10n.beanFormEditTitle
-              : context.l10n.beanFormNewTitle,
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handlePopInvoked();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            isEditing
+                ? context.l10n.beanFormEditTitle
+                : context.l10n.beanFormNewTitle,
+          ),
+          actions: [
+            TextButton(
+              onPressed: _isLoading || _isUploadingImage ? null : _handleSubmit,
+              style: TextButton.styleFrom(
+                foregroundColor: appBarActionColor,
+                disabledForegroundColor: appBarDisabledActionColor,
+              ),
+              child: Text(context.l10n.save),
+            ),
+          ],
         ),
-      ),
-      body: LoadingOverlay(
-        isLoading: _isLoading,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 이미지 선택
-                Text(context.l10n.beanPhoto, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 8),
-                ImagePickerWidget(
-                  imageUrl: _existingImageUrl,
-                  localImagePath: _selectedImage?.path,
-                  onTap: _pickImage,
-                  height: 200,
-                  placeholderIcon: Icons.coffee,
-                ),
-                const SizedBox(height: 16),
+        body: LoadingOverlay(
+          isLoading: _isLoading,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 이미지 선택
+                  Text(
+                    context.l10n.beanPhoto,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  ImagePickerWidget(
+                    imageUrl: _existingImageUrl,
+                    localImagePath: _selectedImage?.path,
+                    onTap: _pickImage,
+                    height: 200,
+                    placeholderIcon: Icons.coffee,
+                  ),
+                  const SizedBox(height: 16),
 
-                // 원두 이름
-                CustomTextField(
-                  label: context.l10n.beanNameLabel,
-                  hint: context.l10n.beanNameHint,
-                  controller: _nameController,
-                  prefixIcon: Icons.coffee,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return context.l10n.beanNameRequired;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  // 원두 이름
+                  CustomTextField(
+                    label: context.l10n.beanNameLabel,
+                    hint: context.l10n.beanNameHint,
+                    controller: _nameController,
+                    prefixIcon: Icons.coffee,
+                    textInputAction: TextInputAction.next,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return context.l10n.beanNameRequired;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // 로스터리
-                CustomTextField(
-                  label: context.l10n.roasteryLabel,
-                  hint: context.l10n.roasteryHint,
-                  controller: _roasteryController,
-                  prefixIcon: Icons.store,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return context.l10n.roasteryRequired;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  // 로스터리
+                  CustomTextField(
+                    label: context.l10n.roasteryLabel,
+                    hint: context.l10n.roasteryHint,
+                    controller: _roasteryController,
+                    prefixIcon: Icons.store,
+                    textInputAction: TextInputAction.next,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return context.l10n.roasteryRequired;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // 구매일
-                Text(
-                  context.l10n.purchaseDate,
-                  style: theme.textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: _selectDate,
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.calendar_today),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  // 구매일
+                  Text(
+                    context.l10n.purchaseDate,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _selectDate,
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        localizations.formatMediumDate(_purchaseDate),
                       ),
                     ),
-                    child: Text(localizations.formatMediumDate(_purchaseDate)),
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // 평점
-                Text(context.l10n.rating, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 8),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        RatingBar.builder(
-                          initialRating: _rating,
-                          minRating: 0.5,
-                          direction: Axis.horizontal,
-                          allowHalfRating: true,
-                          itemCount: 5,
-                          itemSize: 40,
-                          itemPadding: const EdgeInsets.symmetric(
-                            horizontal: 4,
+                  // 평점
+                  Text(context.l10n.rating, style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 8),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          RatingBar.builder(
+                            initialRating: _rating,
+                            minRating: 0.5,
+                            direction: Axis.horizontal,
+                            allowHalfRating: true,
+                            itemCount: 5,
+                            itemSize: 40,
+                            itemPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                            ),
+                            itemBuilder: (context, _) =>
+                                const Icon(Icons.star, color: Colors.amber),
+                            onRatingUpdate: (rating) {
+                              setState(() {
+                                _rating = rating;
+                              });
+                            },
                           ),
-                          itemBuilder: (context, _) =>
-                              const Icon(Icons.star, color: Colors.amber),
-                          onRatingUpdate: (rating) {
-                            setState(() {
-                              _rating = rating;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _rating.toStringAsFixed(1),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(height: 8),
+                          Text(
+                            _rating.toStringAsFixed(1),
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // 로스팅 레벨
-                Text(context.l10n.roastLevel, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 8),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-                    child: Column(
-                      children: [
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final trackWidth = constraints.maxWidth;
+                  // 로스팅 레벨
+                  Text(
+                    context.l10n.roastLevel,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                      child: Column(
+                        children: [
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final trackWidth = constraints.maxWidth;
 
-                            return Listener(
-                              behavior: HitTestBehavior.opaque,
-                              onPointerDown: (event) {
-                                _updateRoastLevelFromPosition(
-                                  event.localPosition.dx,
-                                  trackWidth,
-                                );
-                              },
-                              onPointerMove: (event) {
-                                _updateRoastLevelFromPosition(
-                                  event.localPosition.dx,
-                                  trackWidth,
-                                );
-                              },
-                              child: Container(
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFFC4A676),
-                                      const Color(0xFFA97445),
-                                      const Color(0xFF7A4A27),
-                                      const Color(0xFF4F2B17),
-                                      const Color(0xFF2D160C),
-                                    ],
+                              return Listener(
+                                behavior: HitTestBehavior.opaque,
+                                onPointerDown: (event) {
+                                  _updateRoastLevelFromPosition(
+                                    event.localPosition.dx,
+                                    trackWidth,
+                                  );
+                                },
+                                onPointerMove: (event) {
+                                  _updateRoastLevelFromPosition(
+                                    event.localPosition.dx,
+                                    trackWidth,
+                                  );
+                                },
+                                child: Container(
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        const Color(0xFFC4A676),
+                                        const Color(0xFFA97445),
+                                        const Color(0xFF7A4A27),
+                                        const Color(0xFF4F2B17),
+                                        const Color(0xFF2D160C),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: Row(
-                                  children: CoffeeBean.roastLevels
-                                      .asMap()
-                                      .entries
-                                      .map((entry) {
-                                        final level = entry.value;
-                                        final isSelected = _roastLevel == level;
+                                  child: Row(
+                                    children: CoffeeBean.roastLevels
+                                        .asMap()
+                                        .entries
+                                        .map((entry) {
+                                          final level = entry.value;
+                                          final isSelected =
+                                              _roastLevel == level;
 
-                                        return Expanded(
-                                          child: Center(
-                                            child: AnimatedContainer(
-                                              duration: const Duration(
-                                                milliseconds: 180,
-                                              ),
-                                              height: isSelected ? 26 : 14,
-                                              width: isSelected ? 26 : 14,
-                                              decoration: BoxDecoration(
-                                                color: isSelected
-                                                    ? Colors.white
-                                                    : Colors.white.withValues(
-                                                        alpha: 0.35,
-                                                      ),
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: isSelected
-                                                      ? const Color(0xFF2D160C)
-                                                      : Colors.white.withValues(
-                                                          alpha: 0.6,
-                                                        ),
-                                                  width: 2,
+                                          return Expanded(
+                                            child: Center(
+                                              child: AnimatedContainer(
+                                                duration: const Duration(
+                                                  milliseconds: 180,
                                                 ),
-                                                boxShadow: isSelected
-                                                    ? [
-                                                        BoxShadow(
-                                                          color: Colors.black
-                                                              .withValues(
-                                                                alpha: 0.25,
-                                                              ),
-                                                          blurRadius: 8,
-                                                          offset: const Offset(
-                                                            0,
-                                                            3,
-                                                          ),
+                                                height: isSelected ? 26 : 14,
+                                                width: isSelected ? 26 : 14,
+                                                decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : Colors.white.withValues(
+                                                          alpha: 0.35,
                                                         ),
-                                                      ]
-                                                    : null,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: isSelected
+                                                        ? const Color(
+                                                            0xFF2D160C,
+                                                          )
+                                                        : Colors.white
+                                                              .withValues(
+                                                                alpha: 0.6,
+                                                              ),
+                                                    width: 2,
+                                                  ),
+                                                  boxShadow: isSelected
+                                                      ? [
+                                                          BoxShadow(
+                                                            color: Colors.black
+                                                                .withValues(
+                                                                  alpha: 0.25,
+                                                                ),
+                                                            blurRadius: 8,
+                                                            offset:
+                                                                const Offset(
+                                                                  0,
+                                                                  3,
+                                                                ),
+                                                          ),
+                                                        ]
+                                                      : null,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        );
-                                      })
-                                      .toList(),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: List.generate(
-                            CoffeeBean.roastLevels.length,
-                            (index) {
-                              final String? label = switch (index) {
-                                0 => context.l10n.roastLight,
-                                2 => context.l10n.roastMedium,
-                                4 => context.l10n.roastDark,
-                                _ => null,
-                              };
-
-                              return Expanded(
-                                child: Center(
-                                  child: label == null
-                                      ? const SizedBox.shrink()
-                                      : Text(
-                                          label,
-                                          style: theme.textTheme.labelMedium,
-                                          textAlign: TextAlign.center,
-                                        ),
+                                          );
+                                        })
+                                        .toList(),
+                                  ),
                                 ),
                               );
                             },
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 10),
+                          Row(
+                            children: List.generate(
+                              CoffeeBean.roastLevels.length,
+                              (index) {
+                                final String? label = switch (index) {
+                                  0 => context.l10n.roastLight,
+                                  2 => context.l10n.roastMedium,
+                                  4 => context.l10n.roastDark,
+                                  _ => null,
+                                };
+
+                                return Expanded(
+                                  child: Center(
+                                    child: label == null
+                                        ? const SizedBox.shrink()
+                                        : Text(
+                                            label,
+                                            style: theme.textTheme.labelMedium,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // 가격
-                CustomTextField(
-                  label: context.l10n.price,
-                  hint: context.l10n.priceHint,
-                  controller: _priceController,
-                  keyboardType: TextInputType.number,
-                  prefixIcon: Icons.attach_money,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 16),
+                  // 가격
+                  CustomTextField(
+                    label: context.l10n.price,
+                    hint: context.l10n.priceHint,
+                    controller: _priceController,
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.attach_money,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
 
-                // 구매처
-                CustomTextField(
-                  label: context.l10n.purchaseLocation,
-                  hint: context.l10n.purchaseLocationHint,
-                  controller: _purchaseLocationController,
-                  prefixIcon: Icons.shopping_bag,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 16),
+                  // 구매처
+                  CustomTextField(
+                    label: context.l10n.purchaseLocation,
+                    hint: context.l10n.purchaseLocationHint,
+                    controller: _purchaseLocationController,
+                    prefixIcon: Icons.shopping_bag,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
 
-                // 테이스팅 노트
-                CustomTextField(
-                  label: context.l10n.tastingNotes,
-                  hint: context.l10n.tastingNotesHint,
-                  controller: _tastingNotesController,
-                  maxLines: 4,
-                  textInputAction: TextInputAction.done,
-                ),
-
-                const SizedBox(height: 32),
-
-                // 저장 버튼
-                CustomButton(
-                  text: isEditing
-                      ? context.l10n.saveAsEdit
-                      : context.l10n.saveAsNew,
-                  onPressed: _handleSubmit,
-                  isLoading: _isLoading || _isUploadingImage,
-                ),
-                const SizedBox(height: 16),
-              ],
+                  // 테이스팅 노트
+                  CustomTextField(
+                    label: context.l10n.tastingNotes,
+                    hint: context.l10n.tastingNotesHint,
+                    controller: _tastingNotesController,
+                    maxLines: 4,
+                    textInputAction: TextInputAction.done,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+class _BeanFormSnapshot {
+  const _BeanFormSnapshot({
+    required this.name,
+    required this.roastery,
+    required this.tastingNotes,
+    required this.price,
+    required this.purchaseLocation,
+    required this.purchaseDate,
+    required this.rating,
+    required this.roastLevel,
+    required this.imageReference,
+    required this.selectedImagePath,
+  });
+
+  final String name;
+  final String roastery;
+  final String tastingNotes;
+  final String price;
+  final String purchaseLocation;
+  final DateTime purchaseDate;
+  final double rating;
+  final String? roastLevel;
+  final String? imageReference;
+  final String? selectedImagePath;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is _BeanFormSnapshot &&
+        other.name == name &&
+        other.roastery == roastery &&
+        other.tastingNotes == tastingNotes &&
+        other.price == price &&
+        other.purchaseLocation == purchaseLocation &&
+        other.purchaseDate == purchaseDate &&
+        other.rating == rating &&
+        other.roastLevel == roastLevel &&
+        other.imageReference == imageReference &&
+        other.selectedImagePath == selectedImagePath;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    name,
+    roastery,
+    tastingNotes,
+    price,
+    purchaseLocation,
+    purchaseDate,
+    rating,
+    roastLevel,
+    imageReference,
+    selectedImagePath,
+  );
 }

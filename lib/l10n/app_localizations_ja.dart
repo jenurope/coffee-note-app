@@ -54,6 +54,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cancel => 'キャンセル';
 
   @override
+  String get leave => '終了';
+
+  @override
   String get delete => '削除';
 
   @override
@@ -287,6 +290,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get saveAsEdit => '更新';
+
+  @override
+  String get formLeaveConfirmCreate => '作成中の内容が失われます。終了しますか？';
+
+  @override
+  String get formLeaveConfirmEdit => '編集した内容が失われます。終了しますか？';
 
   @override
   String get beanCreated => '豆が登録されました。';

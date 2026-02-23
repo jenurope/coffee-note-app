@@ -54,6 +54,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cancel => '취소';
 
   @override
+  String get leave => '나가기';
+
+  @override
   String get delete => '삭제';
 
   @override
@@ -287,6 +290,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get saveAsEdit => '수정하기';
+
+  @override
+  String get formLeaveConfirmCreate => '작성 중인 내용이 사라집니다. 나가시겠습니까?';
+
+  @override
+  String get formLeaveConfirmEdit => '수정한 내용이 사라집니다. 나가시겠습니까?';
 
   @override
   String get beanCreated => '원두가 등록되었습니다.';

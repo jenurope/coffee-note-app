@@ -55,6 +55,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get leave => 'Leave';
+
+  @override
   String get delete => 'Delete';
 
   @override
@@ -293,6 +296,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saveAsEdit => 'Update';
+
+  @override
+  String get formLeaveConfirmCreate =>
+      'Your draft will be lost. Do you want to leave?';
+
+  @override
+  String get formLeaveConfirmEdit =>
+      'Your changes will be lost. Do you want to leave?';
 
   @override
   String get beanCreated => 'Bean has been registered.';
