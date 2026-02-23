@@ -30,7 +30,7 @@
 `dart-define`이 아니라 플랫폼 설정 파일로 Firebase를 초기화합니다.
 
 1. Android 파일 준비
-   - `android/app/src/main/google-services.json.example` -> `android/app/src/main/google-services.json`
+   - `android/app/google-services.json.example` -> `android/app/google-services.json`
    - 단일 `google-services.json`에 `com.gooun.works.coffeelog` / `com.gooun.works.coffeelog.dev` client를 함께 포함
 2. iOS 파일 준비
    - `ios/Firebase/dev/GoogleService-Info.plist.example` -> `ios/Firebase/dev/GoogleService-Info.plist`
@@ -109,7 +109,7 @@ SQL Editor 실행 시 Role은 `postgres`(owner)로 지정합니다.
    - `com.gooun.works.coffeelog`
    - `com.gooun.works.coffeelog.dev`
 3. Firebase 설정 파일 배치
-   - Android: 단일 `google-services.json`을 `android/app/src/main`에 배치
+   - Android: 단일 `google-services.json`을 `android/app`에 배치
    - iOS: `GoogleService-Info.plist`를 환경 경로에 배치
 4. 수집 정책 확인
    - `APP_ENV=prod`: Analytics/Crashlytics 활성화
