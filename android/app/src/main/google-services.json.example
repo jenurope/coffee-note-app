@@ -7,6 +7,19 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "YOUR_PROD_ANDROID_APP_ID",
+        "android_client_info": {
+          "package_name": "com.gooun.works.coffeelog"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "YOUR_PROD_ANDROID_API_KEY"
+        }
+      ]
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "YOUR_DEV_ANDROID_APP_ID",
         "android_client_info": {
           "package_name": "com.gooun.works.coffeelog.dev"

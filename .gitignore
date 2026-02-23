@@ -55,5 +55,5 @@ ios/Flutter/Env.prod.xcconfig
 ios/Runner/GoogleService-Info.plist
 ios/Firebase/dev/GoogleService-Info.plist
 ios/Firebase/prod/GoogleService-Info.plist
-android/app/src/dev/google-services.json
-android/app/src/prod/google-services.json
+android/app/google-services.json
+android/app/src/main/google-services.json

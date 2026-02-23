@@ -44,8 +44,8 @@
 `dart-define`이 아니라 플랫폼 설정 파일로 Firebase를 초기화합니다.
 
 1. Android
-   - `android/app/src/dev/google-services.json.example` -> `android/app/src/dev/google-services.json`
-   - `android/app/src/prod/google-services.json.example` -> `android/app/src/prod/google-services.json`
+   - `android/app/src/main/google-services.json.example` -> `android/app/src/main/google-services.json`
+   - 단일 `google-services.json` 파일 안에 `com.gooun.works.coffeelog` / `com.gooun.works.coffeelog.dev` client가 모두 포함되어야 합니다.
 2. iOS
    - `ios/Firebase/dev/GoogleService-Info.plist.example` -> `ios/Firebase/dev/GoogleService-Info.plist`
    - `ios/Firebase/prod/GoogleService-Info.plist.example` -> `ios/Firebase/prod/GoogleService-Info.plist`
