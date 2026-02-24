@@ -302,11 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _buildMenuTile(
                             context,
                             title: l10n.myPosts,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(l10n.preparing)),
-                              );
-                            },
+                            onTap: () => context.push('/profile/posts'),
                           ),
                           const Divider(height: 1),
                           _buildMenuTile(

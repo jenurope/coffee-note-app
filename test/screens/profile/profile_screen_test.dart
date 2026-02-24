@@ -87,6 +87,24 @@ void main() {
       expect(find.text('문의내역 화면'), findsOneWidget);
     });
 
+    testWidgets('내 게시글 탭 시 내 게시글 목록 화면으로 이동한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await _pumpProfileScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await tester.tap(find.text('내 게시글'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('내 게시글 목록 화면'), findsOneWidget);
+    });
+
     testWidgets('앱 정보는 다이얼로그 없이 고정 표시된다', (tester) async {
       _stubAuthenticatedState(
         authCubit: authCubit,
@@ -199,6 +217,11 @@ Future<void> _pumpProfileScreen(
               path: '/',
               builder: (context, state) => const ProfileScreen(),
               routes: [
+                GoRoute(
+                  path: 'profile/posts',
+                  builder: (context, state) =>
+                      const Scaffold(body: Center(child: Text('내 게시글 목록 화면'))),
+                ),
                 GoRoute(
                   path: 'profile/inquiries',
                   builder: (context, state) =>

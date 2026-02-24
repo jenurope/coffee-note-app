@@ -74,6 +74,7 @@ void main() {
           searchQuery: null,
           sortBy: null,
           ascending: false,
+          userId: null,
           limit: 20,
           offset: 0,
         ),
@@ -94,6 +95,7 @@ void main() {
           searchQuery: null,
           sortBy: null,
           ascending: false,
+          userId: null,
           limit: 20,
           offset: 0,
         ),
@@ -125,6 +127,7 @@ void main() {
           searchQuery: null,
           sortBy: null,
           ascending: false,
+          userId: null,
           limit: 20,
           offset: 0,
         ),
@@ -134,6 +137,7 @@ void main() {
           searchQuery: null,
           sortBy: null,
           ascending: false,
+          userId: null,
           limit: 20,
           offset: 20,
         ),
@@ -154,6 +158,121 @@ void main() {
       expect(loaded.posts.last.id, 'post-20');
       expect(loaded.hasMore, isFalse);
       expect(loaded.isLoadingMore, isFalse);
+    });
+
+    test('loadForUser는 userId 필터로 게시글을 로드한다', () async {
+      final user = _testUser('auth-post-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 14, 12);
+      final post = _buildPost(
+        id: 'target-post',
+        userId: 'target-user',
+        createdAt: now,
+      );
+
+      when(
+        () => communityService.getPosts(
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          userId: 'target-user',
+          limit: 20,
+          offset: 0,
+        ),
+      ).thenAnswer((_) async => [post]);
+
+      final cubit = PostListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadForUser('target-user');
+
+      final state = cubit.state;
+      expect(state, isA<PostListLoaded>());
+      expect((state as PostListLoaded).posts.single.userId, 'target-user');
+      verify(
+        () => communityService.getPosts(
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          userId: 'target-user',
+          limit: 20,
+          offset: 0,
+        ),
+      ).called(1);
+    });
+
+    test('loadForUser 이후 loadMore/reload도 동일한 userId 필터를 유지한다', () async {
+      final user = _testUser('auth-post-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 14, 12);
+      final firstPagePosts = List.generate(
+        20,
+        (index) => _buildPost(
+          id: 'target-post-$index',
+          userId: 'target-user',
+          createdAt: now.add(Duration(minutes: index)),
+        ),
+      );
+      final secondPagePosts = [
+        _buildPost(
+          id: 'target-post-20',
+          userId: 'target-user',
+          createdAt: now.add(const Duration(minutes: 20)),
+        ),
+      ];
+
+      when(
+        () => communityService.getPosts(
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          userId: 'target-user',
+          limit: 20,
+          offset: 0,
+        ),
+      ).thenAnswer((_) async => firstPagePosts);
+      when(
+        () => communityService.getPosts(
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          userId: 'target-user',
+          limit: 20,
+          offset: 20,
+        ),
+      ).thenAnswer((_) async => secondPagePosts);
+
+      final cubit = PostListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadForUser('target-user');
+      await cubit.loadMore();
+      await cubit.reload();
+
+      verify(
+        () => communityService.getPosts(
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          userId: 'target-user',
+          limit: 20,
+          offset: 0,
+        ),
+      ).called(2);
+      verify(
+        () => communityService.getPosts(
+          searchQuery: null,
+          sortBy: null,
+          ascending: false,
+          userId: 'target-user',
+          limit: 20,
+          offset: 20,
+        ),
+      ).called(1);
     });
   });
 }
