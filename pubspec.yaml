@@ -84,18 +84,19 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#5D4037"
-  image: "assets/images/splash_login_icon.png"
+  image: "assets/images/splash_login_icon_safe.png"
   color_dark: "#121212"
-  image_dark: "assets/images/splash_login_icon.png"
+  image_dark: "assets/images/splash_login_icon_safe.png"
   
   android_12:
     color: "#5D4037"
-    image: "assets/images/splash_login_icon.png"
+    image: "assets/images/splash_login_icon_safe.png"
     color_dark: "#121212"
-    image_dark: "assets/images/splash_login_icon.png"
+    image_dark: "assets/images/splash_login_icon_safe.png"
     
   android: true
   ios: true
+  web: false
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
