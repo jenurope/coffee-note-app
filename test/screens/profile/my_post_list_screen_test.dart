@@ -112,6 +112,48 @@ void main() {
       expect(find.text('DETAIL post-1'), findsOneWidget);
     });
 
+    testWidgets('상세 화면에서 뒤로가면 내 게시글 목록으로 복귀한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('my-user'));
+      final now = DateTime(2026, 2, 24, 10);
+      final postState = PostListState.loaded(
+        posts: [
+          CommunityPost(
+            id: 'post-1',
+            userId: 'my-user',
+            title: '내 글 제목',
+            content: '내 글 내용',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+        filters: const PostFilters(),
+        hasMore: false,
+      );
+
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        authState: authState,
+        postState: postState,
+      );
+
+      await _pumpMyPostListScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      await tester.tap(find.text('내 글 제목'));
+      await tester.pumpAndSettle();
+      expect(find.text('DETAIL post-1'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('내 글 제목'), findsOneWidget);
+      expect(find.text('DETAIL post-1'), findsNothing);
+    });
+
     testWidgets('비인증 상태에서는 로그인 유도 UI를 노출한다', (tester) async {
       const authState = AuthState.guest();
       const postState = PostListState.initial();
@@ -168,12 +210,15 @@ Future<void> _pumpMyPostListScreen(
       GoRoute(
         path: '/profile/posts',
         builder: (context, state) => const MyPostListScreen(),
-      ),
-      GoRoute(
-        path: '/community/:id',
-        builder: (context, state) => Scaffold(
-          body: Center(child: Text('DETAIL ${state.pathParameters['id']}')),
-        ),
+        routes: [
+          GoRoute(
+            path: ':id',
+            builder: (context, state) => Scaffold(
+              appBar: AppBar(),
+              body: Center(child: Text('DETAIL ${state.pathParameters['id']}')),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/auth/login',

@@ -169,7 +169,7 @@ class _MyPostListScreenState extends State<MyPostListScreen> {
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: InkWell(
                                   onTap: () =>
-                                      context.push('/community/${post.id}'),
+                                      context.push('/profile/posts/${post.id}'),
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),

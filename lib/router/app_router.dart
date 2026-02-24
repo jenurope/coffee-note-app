@@ -457,6 +457,18 @@ GoRouter createAppRouter({
                     name: 'profile-posts',
                     builder: (context, state) =>
                         routeBuilders.buildMyPosts(context, state),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        name: 'profile-post-detail',
+                        builder: (context, state) =>
+                            routeBuilders.buildPostDetail(
+                              context,
+                              state,
+                              postId: _requiredPathParameter(state, 'id'),
+                            ),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'inquiries',
