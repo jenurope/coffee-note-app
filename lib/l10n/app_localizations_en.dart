@@ -563,6 +563,38 @@ class AppLocalizationsEn extends AppLocalizations {
       'An error occurred while saving comment. Please try again later.';
 
   @override
+  String get reportAction => 'Report';
+
+  @override
+  String get reportPostTitle => 'Report Post';
+
+  @override
+  String get reportCommentTitle => 'Report Comment';
+
+  @override
+  String get reportReasonHint => 'Describe the reason for reporting.';
+
+  @override
+  String get reportReasonRequired => 'Please enter a report reason.';
+
+  @override
+  String get reportReasonTooLong =>
+      'Report reason must be 500 characters or fewer.';
+
+  @override
+  String get reportSubmitAction => 'Submit Report';
+
+  @override
+  String get reportSubmitSuccess => 'Your report has been submitted.';
+
+  @override
+  String get reportSubmitFailed =>
+      'An error occurred while submitting report. Please try again later.';
+
+  @override
+  String get reportDuplicate => 'You have already reported this item.';
+
+  @override
   String get deletedCommentMessage => 'This comment has been deleted.';
 
   @override

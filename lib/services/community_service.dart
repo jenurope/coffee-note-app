@@ -4,6 +4,7 @@ import '../models/community_post.dart';
 
 class CommunityService {
   final SupabaseClient _client;
+  static const int _maxReportReasonLength = 500;
 
   CommunityService(this._client);
 
@@ -191,6 +192,32 @@ class CommunityService {
     }
   }
 
+  Future<void> reportPost({
+    required String postId,
+    required String userId,
+    required String reason,
+  }) {
+    return _insertReport(
+      userId: userId,
+      reason: reason,
+      targetType: 'post',
+      postId: postId,
+    );
+  }
+
+  Future<void> reportComment({
+    required String commentId,
+    required String userId,
+    required String reason,
+  }) {
+    return _insertReport(
+      userId: userId,
+      reason: reason,
+      targetType: 'comment',
+      commentId: commentId,
+    );
+  }
+
   Future<List<CommunityComment>> getComments({
     required String postId,
     int limit = 20,
@@ -335,6 +362,35 @@ class CommunityService {
     return (response as List)
         .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<void> _insertReport({
+    required String userId,
+    required String reason,
+    required String targetType,
+    String? postId,
+    String? commentId,
+  }) async {
+    final trimmedReason = reason.trim();
+    if (trimmedReason.isEmpty) {
+      throw const FormatException('report_reason_required');
+    }
+    if (trimmedReason.length > _maxReportReasonLength) {
+      throw const FormatException('report_reason_too_long');
+    }
+
+    try {
+      await _client.from('community_reports').insert({
+        'user_id': userId,
+        'target_type': targetType,
+        'post_id': postId,
+        'comment_id': commentId,
+        'reason': trimmedReason,
+      });
+    } catch (e) {
+      debugPrint('Create community report error: $e');
+      rethrow;
+    }
   }
 
   String _postListSelect(bool includeAvatar, bool includeProfiles) {

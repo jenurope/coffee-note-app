@@ -1126,6 +1126,66 @@ abstract class AppLocalizations {
   /// **'An error occurred while saving comment. Please try again later.'**
   String get commentCreateFailed;
 
+  /// No description provided for @reportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get reportAction;
+
+  /// No description provided for @reportPostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Post'**
+  String get reportPostTitle;
+
+  /// No description provided for @reportCommentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Comment'**
+  String get reportCommentTitle;
+
+  /// No description provided for @reportReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the reason for reporting.'**
+  String get reportReasonHint;
+
+  /// No description provided for @reportReasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a report reason.'**
+  String get reportReasonRequired;
+
+  /// No description provided for @reportReasonTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Report reason must be 500 characters or fewer.'**
+  String get reportReasonTooLong;
+
+  /// No description provided for @reportSubmitAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Report'**
+  String get reportSubmitAction;
+
+  /// No description provided for @reportSubmitSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your report has been submitted.'**
+  String get reportSubmitSuccess;
+
+  /// No description provided for @reportSubmitFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while submitting report. Please try again later.'**
+  String get reportSubmitFailed;
+
+  /// No description provided for @reportDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'You have already reported this item.'**
+  String get reportDuplicate;
+
   /// No description provided for @deletedCommentMessage.
   ///
   /// In en, this message translates to:

@@ -22,6 +22,7 @@ drop table if exists public.user_terms_consents cascade;
 drop table if exists public.terms_contents cascade;
 drop table if exists public.terms_catalog cascade;
 drop table if exists public.service_inquiries cascade;
+drop table if exists public.community_reports cascade;
 drop table if exists public.community_comments cascade;
 drop table if exists public.community_posts cascade;
 drop table if exists public.coffee_logs cascade;
@@ -32,6 +33,7 @@ drop table if exists public.withdraw_storage_cleanup_failures cascade;
 drop type if exists public.inquiry_customer_type cascade;
 drop type if exists public.inquiry_status cascade;
 drop type if exists public.inquiry_type cascade;
+drop type if exists public.community_report_target_type cascade;
 
 -- ===== 타입 =====
 create type public.inquiry_type as enum (
@@ -53,6 +55,11 @@ create type public.inquiry_customer_type as enum (
   'member',
   'guest',
   'withdrawn'
+);
+
+create type public.community_report_target_type as enum (
+  'post',
+  'comment'
 );
 
 -- ===== 테이블 =====
@@ -161,6 +168,46 @@ create table public.community_comments (
     foreign key (parent_id)
     references public.community_comments(id)
     on delete cascade
+);
+
+create table public.community_reports (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  target_type public.community_report_target_type not null,
+  post_id uuid,
+  comment_id uuid,
+  reason text not null,
+  created_at timestamptz not null default now(),
+  constraint community_reports_user_id_fkey
+    foreign key (user_id)
+    references public.profiles(id)
+    on delete cascade,
+  constraint community_reports_post_id_fkey
+    foreign key (post_id)
+    references public.community_posts(id)
+    on delete cascade,
+  constraint community_reports_comment_id_fkey
+    foreign key (comment_id)
+    references public.community_comments(id)
+    on delete cascade,
+  constraint community_reports_reason_check
+    check (
+      nullif(btrim(reason), '') is not null
+      and char_length(btrim(reason)) <= 500
+    ),
+  constraint community_reports_target_scope_check
+    check (
+      (
+        target_type = 'post'
+        and post_id is not null
+        and comment_id is null
+      )
+      or (
+        target_type = 'comment'
+        and comment_id is not null
+        and post_id is null
+      )
+    )
 );
 
 create table public.terms_catalog (
@@ -280,6 +327,23 @@ create index idx_community_comments_created_at
 create index community_comments_user_id_created_at_idx
   on public.community_comments(user_id, created_at desc);
 
+create index idx_community_reports_user_id
+  on public.community_reports(user_id);
+
+create index idx_community_reports_post_id
+  on public.community_reports(post_id);
+
+create index idx_community_reports_comment_id
+  on public.community_reports(comment_id);
+
+create unique index community_reports_user_post_unique_idx
+  on public.community_reports(user_id, post_id)
+  where post_id is not null;
+
+create unique index community_reports_user_comment_unique_idx
+  on public.community_reports(user_id, comment_id)
+  where comment_id is not null;
+
 create unique index profiles_nickname_unique_active_normalized_idx
   on public.profiles((lower(btrim(nickname))))
   where is_withdrawn = false;
@@ -307,6 +371,7 @@ alter table public.coffee_beans enable row level security;
 alter table public.coffee_logs enable row level security;
 alter table public.community_comments enable row level security;
 alter table public.community_posts enable row level security;
+alter table public.community_reports enable row level security;
 alter table public.profiles enable row level security;
 alter table public.service_inquiries enable row level security;
 alter table public.terms_catalog enable row level security;
@@ -449,6 +514,15 @@ create policy "users_soft_delete_own_comments"
     and is_deleted_content = true
     and content = '[deleted_comment]'
   );
+
+-- community_reports
+drop policy if exists "사용자는 신고를 생성할 수 있음" on public.community_reports;
+
+create policy "사용자는 신고를 생성할 수 있음"
+  on public.community_reports
+  for insert
+  to authenticated
+  with check ((select auth.uid() as uid) = user_id);
 
 -- profiles
 drop policy if exists "profiles_select_authenticated" on public.profiles;
@@ -1041,6 +1115,7 @@ grant all privileges on table public.coffee_beans to anon, authenticated, servic
 grant all privileges on table public.coffee_logs to anon, authenticated, service_role;
 grant all privileges on table public.community_posts to anon, authenticated, service_role;
 grant all privileges on table public.community_comments to anon, authenticated, service_role;
+grant all privileges on table public.community_reports to anon, authenticated, service_role;
 grant all privileges on table public.service_inquiries to anon, authenticated, service_role;
 grant all privileges on table public.terms_catalog to anon, authenticated, service_role;
 grant all privileges on table public.terms_contents to anon, authenticated, service_role;
