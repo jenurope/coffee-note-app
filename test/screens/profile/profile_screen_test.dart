@@ -105,6 +105,24 @@ void main() {
       expect(find.text('내 게시글 목록 화면'), findsOneWidget);
     });
 
+    testWidgets('내 댓글 탭 시 내 댓글 목록 화면으로 이동한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await _pumpProfileScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await tester.tap(find.text('내 댓글'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('내 댓글 목록 화면'), findsOneWidget);
+    });
+
     testWidgets('앱 정보는 다이얼로그 없이 고정 표시된다', (tester) async {
       _stubAuthenticatedState(
         authCubit: authCubit,
@@ -221,6 +239,11 @@ Future<void> _pumpProfileScreen(
                   path: 'profile/posts',
                   builder: (context, state) =>
                       const Scaffold(body: Center(child: Text('내 게시글 목록 화면'))),
+                ),
+                GoRoute(
+                  path: 'profile/comments',
+                  builder: (context, state) =>
+                      const Scaffold(body: Center(child: Text('내 댓글 목록 화면'))),
                 ),
                 GoRoute(
                   path: 'profile/inquiries',
