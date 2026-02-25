@@ -19,8 +19,24 @@ class PostListCubit extends Cubit<PostListState> {
 
   final CommunityService _service;
   final AuthCubit? _authCubit;
+  String? _activeUserId;
 
   Future<void> load([PostFilters filters = const PostFilters()]) async {
+    await _loadScoped(filters: filters, userId: null);
+  }
+
+  Future<void> loadForUser(
+    String userId, [
+    PostFilters filters = const PostFilters(),
+  ]) async {
+    await _loadScoped(filters: filters, userId: userId);
+  }
+
+  Future<void> _loadScoped({
+    required PostFilters filters,
+    required String? userId,
+  }) async {
+    _activeUserId = _normalizeUserId(userId);
     final pageSize = _resolvePageSize(filters);
     final initialFilters = filters.copyWith(limit: pageSize, offset: 0);
     emit(PostListState.loading(filters: initialFilters));
@@ -31,6 +47,7 @@ class PostListCubit extends Cubit<PostListState> {
           searchQuery: initialFilters.searchQuery,
           sortBy: initialFilters.sortBy,
           ascending: initialFilters.ascending,
+          userId: _activeUserId,
           limit: pageSize,
           offset: 0,
         );
@@ -75,6 +92,7 @@ class PostListCubit extends Cubit<PostListState> {
         searchQuery: currentState.filters.searchQuery,
         sortBy: currentState.filters.sortBy,
         ascending: currentState.filters.ascending,
+        userId: _activeUserId,
         limit: pageSize,
         offset: currentState.posts.length,
       );
@@ -93,8 +111,18 @@ class PostListCubit extends Cubit<PostListState> {
   }
 
   Future<void> onAuthStateChanged(AuthState authState) async {
-    if (authState is AuthGuest || authState is AuthAuthenticated) {
+    if (authState is AuthGuest) {
       await load(_currentFilters());
+      return;
+    }
+
+    if (authState is AuthAuthenticated) {
+      final currentFilters = _currentFilters();
+      if (_activeUserId != null) {
+        await loadForUser(authState.user.id, currentFilters);
+        return;
+      }
+      await load(currentFilters);
       return;
     }
 
@@ -102,6 +130,7 @@ class PostListCubit extends Cubit<PostListState> {
   }
 
   void reset() {
+    _activeUserId = null;
     emit(const PostListState.initial());
   }
 
@@ -115,11 +144,11 @@ class PostListCubit extends Cubit<PostListState> {
   }
 
   Future<void> reload() async {
-    await load(_currentFilters());
+    await _loadScoped(filters: _currentFilters(), userId: _activeUserId);
   }
 
   Future<void> updateFilters(PostFilters filters) async {
-    await load(filters);
+    await _loadScoped(filters: filters, userId: _activeUserId);
   }
 
   int _resolvePageSize(PostFilters filters) {
@@ -128,5 +157,13 @@ class PostListCubit extends Cubit<PostListState> {
       return _defaultPageSize;
     }
     return limit;
+  }
+
+  String? _normalizeUserId(String? userId) {
+    final normalized = userId?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return null;
+    }
+    return normalized;
   }
 }

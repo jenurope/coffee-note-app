@@ -9,6 +9,7 @@ import '../cubits/auth/auth_cubit.dart';
 import '../cubits/auth/auth_state.dart';
 import '../cubits/bean/bean_detail_cubit.dart';
 import '../cubits/community/post_detail_cubit.dart';
+import '../cubits/community/post_list_cubit.dart';
 import '../cubits/log/log_detail_cubit.dart';
 
 import '../screens/auth/login_screen.dart';
@@ -28,6 +29,7 @@ import '../screens/inquiries/service_inquiry_form_screen.dart';
 import '../screens/inquiries/service_inquiry_list_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/profile_edit_screen.dart';
+import '../screens/profile/my_post_list_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../widgets/navigation/guest_tab_root_back_guard.dart';
 
@@ -41,6 +43,7 @@ abstract final class AppRoutePath {
   static const logs = '/logs';
   static const community = '/community';
   static const profile = '/profile';
+  static const profilePosts = '/profile/posts';
   static const profileInquiries = '/profile/inquiries';
   static const profileInquiriesNew = '/profile/inquiries/new';
   static const profileEdit = '/profile/edit';
@@ -165,6 +168,14 @@ class AppRouteBuilders {
 
   Widget buildProfile(BuildContext context, GoRouterState state) {
     return const ProfileScreen();
+  }
+
+  Widget buildMyPosts(BuildContext context, GoRouterState state) {
+    final authCubit = context.read<AuthCubit>();
+    return BlocProvider(
+      create: (_) => PostListCubit(authCubit: authCubit),
+      child: const MyPostListScreen(),
+    );
   }
 
   Widget buildServiceInquiryList(BuildContext context, GoRouterState state) {
@@ -441,6 +452,24 @@ GoRouter createAppRouter({
                   ),
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'posts',
+                    name: 'profile-posts',
+                    builder: (context, state) =>
+                        routeBuilders.buildMyPosts(context, state),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        name: 'profile-post-detail',
+                        builder: (context, state) =>
+                            routeBuilders.buildPostDetail(
+                              context,
+                              state,
+                              postId: _requiredPathParameter(state, 'id'),
+                            ),
+                      ),
+                    ],
+                  ),
                   GoRoute(
                     path: 'inquiries',
                     name: 'profile-inquiries',

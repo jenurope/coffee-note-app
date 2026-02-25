@@ -12,6 +12,7 @@ class CommunityService {
     String? searchQuery,
     String? sortBy,
     bool ascending = false,
+    String? userId,
     int? limit,
     int? offset,
   }) async {
@@ -22,6 +23,7 @@ class CommunityService {
         searchQuery: searchQuery,
         sortBy: sortBy,
         ascending: ascending,
+        userId: userId,
         limit: limit,
         offset: offset,
       );
@@ -38,6 +40,7 @@ class CommunityService {
           searchQuery: searchQuery,
           sortBy: sortBy,
           ascending: ascending,
+          userId: userId,
           limit: limit,
           offset: offset,
         );
@@ -50,6 +53,7 @@ class CommunityService {
           searchQuery: searchQuery,
           sortBy: sortBy,
           ascending: ascending,
+          userId: userId,
           limit: limit,
           offset: offset,
         );
@@ -241,12 +245,17 @@ class CommunityService {
     String? searchQuery,
     String? sortBy,
     required bool ascending,
+    String? userId,
     int? limit,
     int? offset,
   }) async {
     var query = _client
         .from('community_posts')
         .select(_postListSelect(includeAvatar, includeProfiles));
+
+    if (userId != null && userId.isNotEmpty) {
+      query = query.eq('user_id', userId);
+    }
 
     if (searchQuery != null && searchQuery.isNotEmpty) {
       final sanitizedQuery = _sanitizeSearchQuery(searchQuery);
