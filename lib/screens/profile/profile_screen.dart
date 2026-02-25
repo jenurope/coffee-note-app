@@ -308,11 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _buildMenuTile(
                             context,
                             title: l10n.myComments,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(l10n.preparing)),
-                              );
-                            },
+                            onTap: () => context.push('/profile/comments'),
                           ),
                         ],
                       ),

@@ -239,6 +239,58 @@ class CommunityService {
     }
   }
 
+  Future<List<CommunityComment>> getCommentsByUser({
+    required String userId,
+    int limit = 20,
+    int offset = 0,
+    bool ascending = false,
+    bool includeDeleted = false,
+  }) async {
+    try {
+      return await _getCommentsByUserInternal(
+        userId: userId,
+        includeAvatar: true,
+        includeProfiles: true,
+        limit: limit,
+        offset: offset,
+        ascending: ascending,
+        includeDeleted: includeDeleted,
+      );
+    } on PostgrestException catch (e) {
+      if (!_shouldRetryWithoutAvatar(e)) {
+        debugPrint('Get comments by user error: $e');
+        rethrow;
+      }
+
+      try {
+        return await _getCommentsByUserInternal(
+          userId: userId,
+          includeAvatar: false,
+          includeProfiles: true,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+          includeDeleted: includeDeleted,
+        );
+      } on PostgrestException catch (fallbackError) {
+        if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
+
+        return _getCommentsByUserInternal(
+          userId: userId,
+          includeAvatar: false,
+          includeProfiles: false,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+          includeDeleted: includeDeleted,
+        );
+      }
+    } catch (e) {
+      debugPrint('Get comments by user error: $e');
+      rethrow;
+    }
+  }
+
   Future<List<CommunityPost>> _getPostsInternal({
     required bool includeAvatar,
     required bool includeProfiles,
@@ -329,6 +381,33 @@ class CommunityService {
         .from('community_comments')
         .select(_commentSelect(includeAvatar, includeProfiles))
         .eq('post_id', postId)
+        .order('created_at', ascending: ascending)
+        .range(offset, offset + limit - 1);
+
+    return (response as List)
+        .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<CommunityComment>> _getCommentsByUserInternal({
+    required String userId,
+    required bool includeAvatar,
+    required bool includeProfiles,
+    required int limit,
+    required int offset,
+    required bool ascending,
+    required bool includeDeleted,
+  }) async {
+    var query = _client
+        .from('community_comments')
+        .select(_commentSelect(includeAvatar, includeProfiles))
+        .eq('user_id', userId);
+
+    if (!includeDeleted) {
+      query = query.eq('is_deleted_content', false);
+    }
+
+    final response = await query
         .order('created_at', ascending: ascending)
         .range(offset, offset + limit - 1);
 

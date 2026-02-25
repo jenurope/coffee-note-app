@@ -8,6 +8,7 @@ import '../l10n/l10n.dart';
 import '../cubits/auth/auth_cubit.dart';
 import '../cubits/auth/auth_state.dart';
 import '../cubits/bean/bean_detail_cubit.dart';
+import '../cubits/community/my_comment_list_cubit.dart';
 import '../cubits/community/post_detail_cubit.dart';
 import '../cubits/community/post_list_cubit.dart';
 import '../cubits/log/log_detail_cubit.dart';
@@ -29,6 +30,7 @@ import '../screens/inquiries/service_inquiry_form_screen.dart';
 import '../screens/inquiries/service_inquiry_list_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/profile_edit_screen.dart';
+import '../screens/profile/my_comment_list_screen.dart';
 import '../screens/profile/my_post_list_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../widgets/navigation/guest_tab_root_back_guard.dart';
@@ -44,6 +46,7 @@ abstract final class AppRoutePath {
   static const community = '/community';
   static const profile = '/profile';
   static const profilePosts = '/profile/posts';
+  static const profileComments = '/profile/comments';
   static const profileInquiries = '/profile/inquiries';
   static const profileInquiriesNew = '/profile/inquiries/new';
   static const profileEdit = '/profile/edit';
@@ -175,6 +178,14 @@ class AppRouteBuilders {
     return BlocProvider(
       create: (_) => PostListCubit(authCubit: authCubit),
       child: const MyPostListScreen(),
+    );
+  }
+
+  Widget buildMyComments(BuildContext context, GoRouterState state) {
+    final authCubit = context.read<AuthCubit>();
+    return BlocProvider(
+      create: (_) => MyCommentListCubit(authCubit: authCubit),
+      child: const MyCommentListScreen(),
     );
   }
 
@@ -466,6 +477,24 @@ GoRouter createAppRouter({
                               context,
                               state,
                               postId: _requiredPathParameter(state, 'id'),
+                            ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'comments',
+                    name: 'profile-comments',
+                    builder: (context, state) =>
+                        routeBuilders.buildMyComments(context, state),
+                    routes: [
+                      GoRoute(
+                        path: ':postId',
+                        name: 'profile-comment-post-detail',
+                        builder: (context, state) =>
+                            routeBuilders.buildPostDetail(
+                              context,
+                              state,
+                              postId: _requiredPathParameter(state, 'postId'),
                             ),
                       ),
                     ],
