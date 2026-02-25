@@ -171,38 +171,26 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          commentContent,
-                                          style: theme.textTheme.bodyMedium,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
+                                        Expanded(
+                                          child: Text(
+                                            commentContent,
+                                            style: theme.textTheme.bodyMedium,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              dateFormat.format(
-                                                comment.createdAt,
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          dateFormat.format(comment.createdAt),
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.6),
                                               ),
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                    color: theme
-                                                        .colorScheme
-                                                        .onSurface
-                                                        .withValues(alpha: 0.6),
-                                                  ),
-                                            ),
-                                            const Spacer(),
-                                            Icon(
-                                              Icons.chevron_right,
-                                              color: theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.5),
-                                            ),
-                                          ],
                                         ),
                                       ],
                                     ),
