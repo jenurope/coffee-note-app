@@ -81,6 +81,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => _FilterSheet(
         currentFilters: _filters,
         onApply: (filters) {
@@ -317,100 +318,112 @@ class _FilterSheetState extends State<_FilterSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SafeArea(
+      top: false,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: mediaQuery.size.height * 0.9),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            24 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                l10n.filter,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.filter,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _minRating = null;
+                        _roastLevel = null;
+                        _sortBy = null;
+                      });
+                    },
+                    child: Text(l10n.reset),
+                  ),
+                ],
               ),
-              TextButton(
+              const SizedBox(height: 16),
+
+              Text(l10n.sort, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _buildSortChip(l10n.sortNewest, 'created_at'),
+                  _buildSortChip(l10n.sortByRating, 'rating'),
+                  _buildSortChip(l10n.sortByName, 'name'),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Text(l10n.roastLevel, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: CoffeeBean.roastLevels.map((level) {
+                  return FilterChip(
+                    label: Text(RoastLevelCatalog.label(l10n, level)),
+                    selected: _roastLevel == level,
+                    onSelected: (selected) {
+                      setState(() {
+                        _roastLevel = selected ? level : null;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 16),
+
+              Text(l10n.minRating, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [3.0, 4.0, 4.5].map((rating) {
+                  return FilterChip(
+                    label: Text(l10n.ratingAtLeast(rating)),
+                    selected: _minRating == rating,
+                    onSelected: (selected) {
+                      setState(() {
+                        _minRating = selected ? rating : null;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 24),
+
+              CustomButton(
+                text: l10n.apply,
                 onPressed: () {
-                  setState(() {
-                    _minRating = null;
-                    _roastLevel = null;
-                    _sortBy = null;
-                  });
+                  widget.onApply(
+                    widget.currentFilters.copyWith(
+                      minRating: _minRating,
+                      roastLevel: _roastLevel,
+                      sortBy: _sortBy,
+                    ),
+                  );
                 },
-                child: Text(l10n.reset),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          Text(l10n.sort, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              _buildSortChip(l10n.sortNewest, 'created_at'),
-              _buildSortChip(l10n.sortByRating, 'rating'),
-              _buildSortChip(l10n.sortByName, 'name'),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Text(l10n.roastLevel, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: CoffeeBean.roastLevels.map((level) {
-              return FilterChip(
-                label: Text(RoastLevelCatalog.label(l10n, level)),
-                selected: _roastLevel == level,
-                onSelected: (selected) {
-                  setState(() {
-                    _roastLevel = selected ? level : null;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 16),
-
-          Text(l10n.minRating, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [3.0, 4.0, 4.5].map((rating) {
-              return FilterChip(
-                label: Text(l10n.ratingAtLeast(rating)),
-                selected: _minRating == rating,
-                onSelected: (selected) {
-                  setState(() {
-                    _minRating = selected ? rating : null;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 24),
-
-          CustomButton(
-            text: l10n.apply,
-            onPressed: () {
-              widget.onApply(
-                widget.currentFilters.copyWith(
-                  minRating: _minRating,
-                  roastLevel: _roastLevel,
-                  sortBy: _sortBy,
-                ),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
