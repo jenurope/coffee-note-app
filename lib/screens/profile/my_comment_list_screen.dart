@@ -165,9 +165,25 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: InkWell(
-                                  onTap: () => context.push(
-                                    '/profile/comments/${comment.postId}',
-                                  ),
+                                  onTap: () {
+                                    if (comment.parentId != null) {
+                                      context.push(
+                                        '/profile/comments/${comment.postId}',
+                                      );
+                                      WidgetsBinding.instance.addPostFrameCallback((
+                                        _,
+                                      ) {
+                                        if (!mounted) return;
+                                        context.push(
+                                          '/profile/comments/${comment.postId}/comments/${comment.id}',
+                                        );
+                                      });
+                                      return;
+                                    }
+                                    context.push(
+                                      '/profile/comments/${comment.postId}',
+                                    );
+                                  },
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),
