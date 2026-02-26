@@ -179,6 +179,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.text('답글'), findsOneWidget);
       await tester.tap(
         find.byKey(const ValueKey('replyActionButton-comment-parent')),
       );
@@ -296,6 +297,7 @@ void main() {
         find.byKey(const ValueKey('replyActionButton-comment-parent')),
         findsOneWidget,
       );
+      expect(find.text('답글 (1)'), findsOneWidget);
       expect(find.text('대댓글'), findsNothing);
       expect(
         find.byKey(const ValueKey('replyActionButton-comment-reply')),

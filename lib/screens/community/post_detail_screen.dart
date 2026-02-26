@@ -326,10 +326,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 hasMoreComments: final hasMoreComments,
               ) =>
                 () {
-                  final visibleComments =
-                      (post.comments ?? const <CommunityComment>[])
-                          .where((comment) => comment.parentId == null)
-                          .toList(growable: false);
+                  final allComments =
+                      post.comments ?? const <CommunityComment>[];
+                  final visibleComments = allComments
+                      .where((comment) => comment.parentId == null)
+                      .toList(growable: false);
+                  final replyCountByParentId = <String, int>{};
+                  for (final comment in allComments) {
+                    final parentId = comment.parentId;
+                    if (parentId == null) continue;
+                    replyCountByParentId[parentId] =
+                        (replyCountByParentId[parentId] ?? 0) + 1;
+                  }
                   final isOwner = currentUser?.id == post.userId;
                   final canReportPost =
                       !isOwner &&
@@ -471,6 +479,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           !comment.isWithdrawnContent,
                                       canReply: canReply,
                                       isReply: false,
+                                      replyCount:
+                                          replyCountByParentId[comment.id] ?? 0,
                                     );
                                   })
                                 else
@@ -597,6 +607,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     bool canReport, {
     required bool canReply,
     required bool isReply,
+    required int replyCount,
   }) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
@@ -625,6 +636,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     ).add_Hm();
     final authorName = _resolveAuthorName(l10n, comment.author);
     final commentContent = _resolveCommentContent(l10n, comment);
+    final replyActionLabel = replyCount > 0
+        ? '${l10n.replyAction} ($replyCount)'
+        : l10n.replyAction;
 
     return Card(
       margin: cardMargin,
@@ -721,7 +735,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     onPressed: () =>
                         context.push(_commentDetailPath(context, comment)),
                     icon: const Icon(Icons.reply_outlined, size: 18),
-                    label: Text(l10n.replyAction),
+                    label: Text(replyActionLabel),
                     style: TextButton.styleFrom(
                       minimumSize: const Size(88, 30),
                       padding: const EdgeInsets.symmetric(
