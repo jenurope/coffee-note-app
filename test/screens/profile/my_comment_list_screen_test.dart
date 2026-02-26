@@ -151,6 +151,53 @@ void main() {
       expect(find.text('DETAIL post-1'), findsNothing);
     });
 
+    testWidgets('대댓글 탭 시 댓글 상세로 이동하고 뒤로가면 게시글, 프로필 순으로 이동한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('my-user'));
+      final now = DateTime(2026, 2, 25, 10);
+      final commentState = MyCommentListState.loaded(
+        comments: [
+          CommunityComment(
+            id: 'comment-reply-1',
+            postId: 'post-1',
+            userId: 'my-user',
+            content: '내 대댓글 내용',
+            parentId: 'comment-parent-1',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+        hasMore: false,
+      );
+
+      _bindStates(
+        authCubit: authCubit,
+        myCommentListCubit: myCommentListCubit,
+        authState: authState,
+        commentState: commentState,
+      );
+
+      await _pumpMyCommentListScreen(
+        tester,
+        authCubit: authCubit,
+        myCommentListCubit: myCommentListCubit,
+      );
+
+      await tester.tap(find.text('내 대댓글 내용'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('COMMENT comment-reply-1'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('DETAIL post-1'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('내 대댓글 내용'), findsOneWidget);
+      expect(find.text('DETAIL post-1'), findsNothing);
+      expect(find.text('COMMENT comment-reply-1'), findsNothing);
+    });
+
     testWidgets('비인증 상태에서는 로그인 유도 UI를 노출한다', (tester) async {
       const authState = AuthState.guest();
       const commentState = MyCommentListState.initial();
@@ -216,6 +263,17 @@ Future<void> _pumpMyCommentListScreen(
                 child: Text('DETAIL ${state.pathParameters['postId']}'),
               ),
             ),
+            routes: [
+              GoRoute(
+                path: 'comments/:commentId',
+                builder: (context, state) => Scaffold(
+                  appBar: AppBar(),
+                  body: Center(
+                    child: Text('COMMENT ${state.pathParameters['commentId']}'),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -234,6 +292,7 @@ Future<void> _pumpMyCommentListScreen(
         BlocProvider<MyCommentListCubit>.value(value: myCommentListCubit),
       ],
       child: MaterialApp.router(
+        theme: ThemeData(splashFactory: NoSplash.splashFactory),
         routerConfig: router,
         locale: const Locale('ko'),
         localizationsDelegates: const [

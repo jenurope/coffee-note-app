@@ -33,6 +33,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   static const int _maxReportReasonLength = 500;
   static const Key _postReportButtonKey = Key('postReportButton');
   static const Key _reportReasonFieldKey = Key('reportReasonField');
+  static const String _replyActionButtonKeyPrefix = 'replyActionButton';
   final _commentController = TextEditingController();
   final _detailScrollController = ScrollController();
   bool _isSubmitting = false;
@@ -325,6 +326,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 hasMoreComments: final hasMoreComments,
               ) =>
                 () {
+                  final allComments =
+                      post.comments ?? const <CommunityComment>[];
+                  final visibleComments = allComments
+                      .where((comment) => comment.parentId == null)
+                      .toList(growable: false);
+                  final replyCountByParentId = <String, int>{};
+                  for (final comment in allComments) {
+                    final parentId = comment.parentId;
+                    if (parentId == null) continue;
+                    if (comment.isDeletedContent) continue;
+                    replyCountByParentId[parentId] =
+                        (replyCountByParentId[parentId] ?? 0) + 1;
+                  }
                   final isOwner = currentUser?.id == post.userId;
                   final canReportPost =
                       !isOwner &&
@@ -447,10 +461,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                if (post.comments != null &&
-                                    post.comments!.isNotEmpty)
-                                  ...post.comments!.map(
-                                    (comment) => _buildCommentTile(
+                                if (visibleComments.isNotEmpty)
+                                  ...visibleComments.map((comment) {
+                                    final canReply =
+                                        currentUser != null &&
+                                        !isGuest &&
+                                        comment.parentId == null &&
+                                        !comment.isDeletedContent &&
+                                        !comment.isWithdrawnContent;
+                                    return _buildCommentTile(
                                       context,
                                       comment,
                                       currentUser?.id == comment.userId,
@@ -459,8 +478,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           currentUser.id != comment.userId &&
                                           !comment.isDeletedContent &&
                                           !comment.isWithdrawnContent,
-                                    ),
-                                  )
+                                      canReply: canReply,
+                                      isReply: false,
+                                      replyCount:
+                                          replyCountByParentId[comment.id] ?? 0,
+                                    );
+                                  })
                                 else
                                   Center(
                                     child: Padding(
@@ -582,23 +605,47 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     BuildContext context,
     CommunityComment comment,
     bool isOwner,
-    bool canReport,
-  ) {
+    bool canReport, {
+    required bool canReply,
+    required bool isReply,
+    required int replyCount,
+  }) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final cardMargin = EdgeInsets.only(left: isReply ? 24 : 0, bottom: 8);
+    final replyActionLabel = replyCount > 0
+        ? '${l10n.replyAction} ($replyCount)'
+        : l10n.replyAction;
 
     if (_isDeletedCommentPlaceholder(comment)) {
       return SizedBox(
         width: double.infinity,
         child: Card(
-          margin: const EdgeInsets.only(bottom: 8),
+          margin: cardMargin,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            child: Text(
-              l10n.deletedCommentMessage,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.deletedCommentMessage,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                if (replyCount > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: _buildReplyDetailButton(
+                        context,
+                        comment,
+                        replyActionLabel,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -612,7 +659,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final commentContent = _resolveCommentContent(l10n, comment);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: cardMargin,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -696,10 +743,51 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(commentContent),
+            if (canReply)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: _buildReplyDetailButton(
+                    context,
+                    comment,
+                    replyActionLabel,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildReplyDetailButton(
+    BuildContext context,
+    CommunityComment comment,
+    String label,
+  ) {
+    return TextButton.icon(
+      key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
+      onPressed: () => context.push(_commentDetailPath(context, comment)),
+      icon: const Icon(Icons.reply_outlined, size: 18),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        minimumSize: const Size(88, 30),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+
+  String _commentDetailPath(BuildContext context, CommunityComment comment) {
+    final currentPath = GoRouterState.of(context).uri.path;
+    if (currentPath.startsWith('/profile/posts/')) {
+      return '/profile/posts/${comment.postId}/comments/${comment.id}';
+    }
+    if (currentPath.startsWith('/profile/comments/')) {
+      return '/profile/comments/${comment.postId}/comments/${comment.id}';
+    }
+    return '/community/${comment.postId}/comments/${comment.id}';
   }
 
   Future<void> _showDeleteDialog(BuildContext context) async {

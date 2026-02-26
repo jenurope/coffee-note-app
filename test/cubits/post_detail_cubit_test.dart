@@ -100,7 +100,130 @@ void main() {
       expect(loaded.post.comments, hasLength(21));
       expect(loaded.hasMoreComments, isFalse);
       expect(loaded.isLoadingMoreComments, isFalse);
-      expect(loaded.post.comments?.last.id, 'comment-20');
+      expect(
+        loaded.post.comments?.any((comment) => comment.id == 'comment-20'),
+        isTrue,
+      );
+    });
+
+    test('댓글을 최신 부모 우선 + 대댓글 시간순으로 재구성한다', () async {
+      final user = _testUser('detail-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final post = _buildPost(id: 'post-1', userId: user.id, commentCount: 4);
+      final comments = [
+        _buildComment(
+          id: 'reply-orphan',
+          postId: post.id,
+          createdAt: DateTime(2026, 2, 14, 13),
+          parentId: 'missing-parent',
+        ),
+        _buildComment(
+          id: 'reply-1',
+          postId: post.id,
+          createdAt: DateTime(2026, 2, 14, 12),
+          parentId: 'parent-1',
+        ),
+        _buildComment(
+          id: 'parent-2',
+          postId: post.id,
+          createdAt: DateTime(2026, 2, 14, 11),
+        ),
+        _buildComment(
+          id: 'parent-1',
+          postId: post.id,
+          createdAt: DateTime(2026, 2, 14, 10),
+        ),
+      ];
+
+      when(
+        () => communityService.getPost(post.id, includeComments: false),
+      ).thenAnswer((_) async => post);
+      when(
+        () => communityService.getComments(
+          postId: post.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+        ),
+      ).thenAnswer((_) async => comments);
+
+      final cubit = PostDetailCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.load(post.id);
+
+      final loaded = cubit.state as PostDetailLoaded;
+      expect(loaded.post.comments?.map((comment) => comment.id).toList(), [
+        'reply-orphan',
+        'parent-2',
+        'parent-1',
+        'reply-1',
+      ]);
+    });
+
+    test('부모가 다음 페이지에 로드되면 대댓글을 부모 아래로 재결합한다', () async {
+      final user = _testUser('detail-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final post = _buildPost(id: 'post-1', userId: user.id, commentCount: 3);
+
+      final firstPageComments = [
+        _buildComment(
+          id: 'reply-1',
+          postId: post.id,
+          createdAt: DateTime(2026, 2, 14, 13),
+          parentId: 'parent-1',
+        ),
+        _buildComment(
+          id: 'parent-2',
+          postId: post.id,
+          createdAt: DateTime(2026, 2, 14, 12),
+        ),
+      ];
+      final secondPageComments = [
+        _buildComment(
+          id: 'parent-1',
+          postId: post.id,
+          createdAt: DateTime(2026, 2, 14, 11),
+        ),
+      ];
+
+      when(
+        () => communityService.getPost(post.id, includeComments: false),
+      ).thenAnswer((_) async => post);
+      when(
+        () => communityService.getComments(
+          postId: post.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+        ),
+      ).thenAnswer((_) async => firstPageComments);
+      when(
+        () => communityService.getComments(
+          postId: post.id,
+          limit: 20,
+          offset: 2,
+          ascending: false,
+        ),
+      ).thenAnswer((_) async => secondPageComments);
+
+      final cubit = PostDetailCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.load(post.id);
+      await cubit.loadMoreComments();
+
+      final loaded = cubit.state as PostDetailLoaded;
+      expect(loaded.post.comments?.map((comment) => comment.id).toList(), [
+        'parent-2',
+        'parent-1',
+        'reply-1',
+      ]);
+      expect(loaded.hasMoreComments, isFalse);
     });
   });
 }
@@ -133,13 +256,19 @@ CommunityPost _buildPost({
   );
 }
 
-CommunityComment _buildComment({required String id, required String postId}) {
-  final now = DateTime(2026, 2, 14, 12);
+CommunityComment _buildComment({
+  required String id,
+  required String postId,
+  DateTime? createdAt,
+  String? parentId,
+}) {
+  final now = createdAt ?? DateTime(2026, 2, 14, 12);
   return CommunityComment(
     id: id,
     postId: postId,
     userId: 'user',
     content: '댓글',
+    parentId: parentId,
     createdAt: now,
     updatedAt: now,
   );

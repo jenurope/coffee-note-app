@@ -526,6 +526,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postScreenTitle => '게시글';
 
   @override
+  String get commentDetailTitle => '댓글 상세';
+
+  @override
   String get commentCreated => '댓글이 등록되었습니다.';
 
   @override
@@ -544,6 +547,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get commentCreateFailed => '댓글 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get replyAction => '답글';
+
+  @override
+  String get replyHint => '답글을 입력하세요...';
+
+  @override
+  String get replyCancel => '답글 취소';
 
   @override
   String get reportAction => '신고';

@@ -19,6 +19,7 @@ import '../screens/beans/bean_detail_screen.dart';
 import '../screens/beans/bean_form_screen.dart';
 import '../screens/beans/bean_list_screen.dart';
 import '../screens/community/community_screen.dart';
+import '../screens/community/comment_detail_screen.dart';
 import '../screens/community/post_detail_screen.dart';
 import '../screens/community/post_form_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
@@ -159,6 +160,15 @@ class AppRouteBuilders {
       create: (_) => PostDetailCubit(authCubit: authCubit)..load(postId),
       child: PostDetailScreen(postId: postId),
     );
+  }
+
+  Widget buildCommentDetail(
+    BuildContext context,
+    GoRouterState state, {
+    required String postId,
+    required String commentId,
+  }) {
+    return CommentDetailScreen(postId: postId, commentId: commentId);
   }
 
   Widget buildPostForm(
@@ -436,6 +446,20 @@ GoRouter createAppRouter({
                     ),
                     routes: [
                       GoRoute(
+                        path: 'comments/:commentId',
+                        name: 'post-comment-detail',
+                        builder: (context, state) =>
+                            routeBuilders.buildCommentDetail(
+                              context,
+                              state,
+                              postId: _requiredPathParameter(state, 'id'),
+                              commentId: _requiredPathParameter(
+                                state,
+                                'commentId',
+                              ),
+                            ),
+                      ),
+                      GoRoute(
                         path: 'edit',
                         name: 'post-edit',
                         builder: (context, state) =>
@@ -478,6 +502,22 @@ GoRouter createAppRouter({
                               state,
                               postId: _requiredPathParameter(state, 'id'),
                             ),
+                        routes: [
+                          GoRoute(
+                            path: 'comments/:commentId',
+                            name: 'profile-post-comment-detail',
+                            builder: (context, state) =>
+                                routeBuilders.buildCommentDetail(
+                                  context,
+                                  state,
+                                  postId: _requiredPathParameter(state, 'id'),
+                                  commentId: _requiredPathParameter(
+                                    state,
+                                    'commentId',
+                                  ),
+                                ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -496,6 +536,25 @@ GoRouter createAppRouter({
                               state,
                               postId: _requiredPathParameter(state, 'postId'),
                             ),
+                        routes: [
+                          GoRoute(
+                            path: 'comments/:commentId',
+                            name: 'profile-comment-detail',
+                            builder: (context, state) =>
+                                routeBuilders.buildCommentDetail(
+                                  context,
+                                  state,
+                                  postId: _requiredPathParameter(
+                                    state,
+                                    'postId',
+                                  ),
+                                  commentId: _requiredPathParameter(
+                                    state,
+                                    'commentId',
+                                  ),
+                                ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

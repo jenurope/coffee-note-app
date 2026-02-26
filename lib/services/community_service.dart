@@ -266,6 +266,88 @@ class CommunityService {
     }
   }
 
+  Future<CommunityComment?> getCommentById({required String commentId}) async {
+    try {
+      return await _getCommentByIdInternal(
+        commentId: commentId,
+        includeAvatar: true,
+        includeProfiles: true,
+      );
+    } on PostgrestException catch (e) {
+      if (!_shouldRetryWithoutAvatar(e)) {
+        debugPrint('Get comment by id error: $e');
+        rethrow;
+      }
+
+      try {
+        return await _getCommentByIdInternal(
+          commentId: commentId,
+          includeAvatar: false,
+          includeProfiles: true,
+        );
+      } on PostgrestException catch (fallbackError) {
+        if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
+
+        return _getCommentByIdInternal(
+          commentId: commentId,
+          includeAvatar: false,
+          includeProfiles: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Get comment by id error: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<CommunityComment>> getReplies({
+    required String parentCommentId,
+    int limit = 20,
+    int offset = 0,
+    bool ascending = true,
+  }) async {
+    try {
+      return await _getRepliesInternal(
+        parentCommentId: parentCommentId,
+        includeAvatar: true,
+        includeProfiles: true,
+        limit: limit,
+        offset: offset,
+        ascending: ascending,
+      );
+    } on PostgrestException catch (e) {
+      if (!_shouldRetryWithoutAvatar(e)) {
+        debugPrint('Get replies error: $e');
+        rethrow;
+      }
+
+      try {
+        return await _getRepliesInternal(
+          parentCommentId: parentCommentId,
+          includeAvatar: false,
+          includeProfiles: true,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+        );
+      } on PostgrestException catch (fallbackError) {
+        if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
+
+        return _getRepliesInternal(
+          parentCommentId: parentCommentId,
+          includeAvatar: false,
+          includeProfiles: false,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+        );
+      }
+    } catch (e) {
+      debugPrint('Get replies error: $e');
+      rethrow;
+    }
+  }
+
   Future<List<CommunityComment>> getCommentsByUser({
     required String userId,
     int limit = 20,
@@ -314,6 +396,33 @@ class CommunityService {
       }
     } catch (e) {
       debugPrint('Get comments by user error: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, bool>> getCommentDeletionStatusByIds({
+    required List<String> commentIds,
+  }) async {
+    if (commentIds.isEmpty) {
+      return const <String, bool>{};
+    }
+
+    try {
+      final response = await _client
+          .from('community_comments')
+          .select('id,is_deleted_content')
+          .inFilter('id', commentIds);
+
+      final statusById = <String, bool>{};
+      for (final row in response as List) {
+        final map = row as Map<String, dynamic>;
+        final id = map['id'] as String?;
+        if (id == null) continue;
+        statusById[id] = map['is_deleted_content'] as bool? ?? false;
+      }
+      return statusById;
+    } catch (e) {
+      debugPrint('Get comment deletion status error: $e');
       rethrow;
     }
   }
@@ -408,6 +517,44 @@ class CommunityService {
         .from('community_comments')
         .select(_commentSelect(includeAvatar, includeProfiles))
         .eq('post_id', postId)
+        .order('created_at', ascending: ascending)
+        .range(offset, offset + limit - 1);
+
+    return (response as List)
+        .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<CommunityComment?> _getCommentByIdInternal({
+    required String commentId,
+    required bool includeAvatar,
+    required bool includeProfiles,
+  }) async {
+    final response = await _client
+        .from('community_comments')
+        .select(_commentSelect(includeAvatar, includeProfiles))
+        .eq('id', commentId)
+        .maybeSingle();
+
+    if (response == null) {
+      return null;
+    }
+
+    return CommunityComment.fromJson(response);
+  }
+
+  Future<List<CommunityComment>> _getRepliesInternal({
+    required String parentCommentId,
+    required bool includeAvatar,
+    required bool includeProfiles,
+    required int limit,
+    required int offset,
+    required bool ascending,
+  }) async {
+    final response = await _client
+        .from('community_comments')
+        .select(_commentSelect(includeAvatar, includeProfiles))
+        .eq('parent_id', parentCommentId)
         .order('created_at', ascending: ascending)
         .range(offset, offset + limit - 1);
 

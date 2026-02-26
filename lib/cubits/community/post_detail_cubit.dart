@@ -37,13 +37,14 @@ class PostDetailCubit extends Cubit<PostDetailState> {
           offset: 0,
           ascending: false,
         );
-        final postWithComments = post.copyWith(comments: comments);
+        final threadedComments = _buildThreadedComments(comments);
+        final postWithComments = post.copyWith(comments: threadedComments);
         emit(
           PostDetailState.loaded(
             post: postWithComments,
             hasMoreComments: _hasMoreComments(
               totalCount: post.commentCount,
-              loadedCount: comments.length,
+              loadedCount: threadedComments.length,
               fetchedCount: comments.length,
             ),
           ),
@@ -79,7 +80,13 @@ class PostDetailCubit extends Cubit<PostDetailState> {
         offset: currentComments.length,
         ascending: false,
       );
-      final mergedComments = [...currentComments, ...nextComments];
+      final mergedMap = <String, CommunityComment>{
+        for (final comment in currentComments) comment.id: comment,
+      };
+      for (final comment in nextComments) {
+        mergedMap[comment.id] = comment;
+      }
+      final mergedComments = _buildThreadedComments(mergedMap.values.toList());
 
       emit(
         currentState.copyWith(
@@ -107,5 +114,70 @@ class PostDetailCubit extends Cubit<PostDetailState> {
       return loadedCount < totalCount;
     }
     return fetchedCount == _defaultCommentPageSize;
+  }
+
+  List<CommunityComment> _buildThreadedComments(
+    List<CommunityComment> comments,
+  ) {
+    if (comments.isEmpty) {
+      return comments;
+    }
+
+    final commentById = <String, CommunityComment>{
+      for (final comment in comments) comment.id: comment,
+    };
+    final roots = <CommunityComment>[];
+    final repliesByParentId = <String, List<CommunityComment>>{};
+
+    for (final comment in comments) {
+      final parentId = comment.parentId;
+      if (parentId == null) {
+        roots.add(comment);
+        continue;
+      }
+
+      final parent = commentById[parentId];
+      if (parent != null && parent.parentId == null) {
+        repliesByParentId
+            .putIfAbsent(parentId, () => <CommunityComment>[])
+            .add(comment);
+        continue;
+      }
+
+      // 부모 댓글이 아직 로드되지 않았거나 부모 자체가 대댓글이면 단독 댓글처럼 표시합니다.
+      roots.add(comment);
+    }
+
+    roots.sort(_sortByCreatedAtDesc);
+    for (final replies in repliesByParentId.values) {
+      replies.sort(_sortByCreatedAtAsc);
+    }
+
+    final ordered = <CommunityComment>[];
+    for (final root in roots) {
+      ordered.add(root);
+      final replies = repliesByParentId[root.id];
+      if (replies != null && replies.isNotEmpty) {
+        ordered.addAll(replies);
+      }
+    }
+
+    return ordered;
+  }
+
+  int _sortByCreatedAtDesc(CommunityComment a, CommunityComment b) {
+    final createdAtCompare = b.createdAt.compareTo(a.createdAt);
+    if (createdAtCompare != 0) {
+      return createdAtCompare;
+    }
+    return b.id.compareTo(a.id);
+  }
+
+  int _sortByCreatedAtAsc(CommunityComment a, CommunityComment b) {
+    final createdAtCompare = a.createdAt.compareTo(b.createdAt);
+    if (createdAtCompare != 0) {
+      return createdAtCompare;
+    }
+    return a.id.compareTo(b.id);
   }
 }

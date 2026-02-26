@@ -541,6 +541,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postScreenTitle => 'Post';
 
   @override
+  String get commentDetailTitle => 'Comment Detail';
+
+  @override
   String get commentCreated => 'Comment has been registered.';
 
   @override
@@ -561,6 +564,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get commentCreateFailed =>
       'An error occurred while saving comment. Please try again later.';
+
+  @override
+  String get replyAction => 'Reply';
+
+  @override
+  String get replyHint => 'Enter a reply...';
+
+  @override
+  String get replyCancel => 'Cancel reply';
 
   @override
   String get reportAction => 'Report';

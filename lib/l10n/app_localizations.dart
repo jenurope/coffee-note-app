@@ -1090,6 +1090,12 @@ abstract class AppLocalizations {
   /// **'Post'**
   String get postScreenTitle;
 
+  /// No description provided for @commentDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment Detail'**
+  String get commentDetailTitle;
+
   /// No description provided for @commentCreated.
   ///
   /// In en, this message translates to:
@@ -1125,6 +1131,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An error occurred while saving comment. Please try again later.'**
   String get commentCreateFailed;
+
+  /// No description provided for @replyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get replyAction;
+
+  /// No description provided for @replyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a reply...'**
+  String get replyHint;
+
+  /// No description provided for @replyCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reply'**
+  String get replyCancel;
 
   /// No description provided for @reportAction.
   ///
