@@ -313,6 +313,49 @@ void main() {
       );
     });
 
+    testWidgets('삭제된 대댓글은 답글 수 카운트에서 제외한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildPostForReplyCountExcludingDeletedReplies(),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(postId: 'post-reply-count-filter'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('답글 (1)'), findsOneWidget);
+      expect(find.text('답글 (2)'), findsNothing);
+    });
+
     testWidgets('탈퇴 사용자 글/댓글은 안내 문구로만 표시한다', (tester) async {
       final authState = AuthState.authenticated(user: _testUser('viewer'));
       final postState = PostDetailState.loaded(post: _buildWithdrawnPost());
@@ -985,6 +1028,59 @@ CommunityPost _buildPostForReplyActionVisibility() {
       ),
     ],
     commentCount: 4,
+  );
+}
+
+CommunityPost _buildPostForReplyCountExcludingDeletedReplies() {
+  final now = DateTime(2026, 2, 21, 14);
+  final commentAuthor = UserProfile(
+    id: 'comment-owner',
+    nickname: '댓글작성자닉',
+    email: 'comment-owner@example.com',
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  return CommunityPost(
+    id: 'post-reply-count-filter',
+    userId: 'post-owner',
+    title: '일반 게시글 제목',
+    content: '일반 게시글 본문',
+    createdAt: now,
+    updatedAt: now,
+    comments: [
+      CommunityComment(
+        id: 'comment-parent',
+        postId: 'post-reply-count-filter',
+        userId: 'comment-owner',
+        content: '답글 가능한 부모 댓글',
+        createdAt: now,
+        updatedAt: now,
+        author: commentAuthor,
+      ),
+      CommunityComment(
+        id: 'comment-reply-visible',
+        postId: 'post-reply-count-filter',
+        userId: 'comment-owner',
+        content: '노출 대댓글',
+        parentId: 'comment-parent',
+        createdAt: now.add(const Duration(minutes: 1)),
+        updatedAt: now.add(const Duration(minutes: 1)),
+        author: commentAuthor,
+      ),
+      CommunityComment(
+        id: 'comment-reply-deleted',
+        postId: 'post-reply-count-filter',
+        userId: 'comment-owner',
+        content: '삭제 대댓글',
+        parentId: 'comment-parent',
+        isDeletedContent: true,
+        createdAt: now.add(const Duration(minutes: 2)),
+        updatedAt: now.add(const Duration(minutes: 2)),
+        author: commentAuthor,
+      ),
+    ],
+    commentCount: 3,
   );
 }
 

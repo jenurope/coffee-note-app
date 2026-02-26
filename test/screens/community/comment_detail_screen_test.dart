@@ -62,6 +62,13 @@ void main() {
         content: '하위 댓글',
         parentId: 'comment-parent',
       );
+      final deletedChildComment = _comment(
+        id: 'comment-child-deleted',
+        postId: 'post-1',
+        content: '[deleted_comment]',
+        parentId: 'comment-parent',
+        isDeletedContent: true,
+      );
 
       when(() => authCubit.state).thenReturn(authState);
       whenListen(
@@ -79,7 +86,7 @@ void main() {
           offset: 0,
           ascending: true,
         ),
-      ).thenAnswer((_) async => [childComment]);
+      ).thenAnswer((_) async => [childComment, deletedChildComment]);
       when(() => communityService.createComment(any())).thenAnswer(
         (invocation) async =>
             invocation.positionalArguments.first as CommunityComment,
@@ -100,6 +107,7 @@ void main() {
 
       expect(find.text('원댓글'), findsOneWidget);
       expect(find.text('하위 댓글'), findsOneWidget);
+      expect(find.text('댓글 1'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField), '새 답글');
       await tester.tap(find.byIcon(Icons.send));

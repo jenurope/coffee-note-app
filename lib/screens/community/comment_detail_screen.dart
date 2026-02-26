@@ -504,6 +504,9 @@ class _CommentDetailScreenState extends State<CommentDetailScreen> {
         authState is AuthAuthenticated &&
         authState is! AuthGuest &&
         _canReply(parent);
+    final visibleReplyCount = _replies
+        .where((reply) => !reply.isDeletedContent)
+        .length;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.commentDetailTitle)),
@@ -530,7 +533,7 @@ class _CommentDetailScreenState extends State<CommentDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          l10n.commentsCount(_replies.length),
+                          l10n.commentsCount(visibleReplyCount),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),

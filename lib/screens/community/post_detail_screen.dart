@@ -335,6 +335,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   for (final comment in allComments) {
                     final parentId = comment.parentId;
                     if (parentId == null) continue;
+                    if (comment.isDeletedContent) continue;
                     replyCountByParentId[parentId] =
                         (replyCountByParentId[parentId] ?? 0) + 1;
                   }
