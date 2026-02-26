@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
+import '../../models/community_post.dart';
 import '../../services/community_service.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
@@ -19,6 +20,7 @@ class MyCommentListCubit extends Cubit<MyCommentListState> {
   final CommunityService _service;
   final AuthCubit? _authCubit;
   String? _activeUserId;
+  int _nextOffset = 0;
 
   Future<void> loadForUser(String userId) async {
     await _loadScoped(userId: userId);
@@ -39,18 +41,22 @@ class MyCommentListCubit extends Cubit<MyCommentListState> {
           ascending: false,
           includeDeleted: false,
         );
+        final filteredComments = await _filterCommentsForMyList(comments);
+        _nextOffset = comments.length;
         emit(
           MyCommentListState.loaded(
-            comments: comments,
+            comments: filteredComments,
             hasMore: comments.length == _defaultPageSize,
           ),
         );
         return;
       }
 
+      _nextOffset = 0;
       emit(const MyCommentListState.loaded(comments: [], hasMore: false));
     } catch (e) {
       debugPrint('MyCommentListCubit.loadForUser error: $e');
+      _nextOffset = 0;
       emit(
         MyCommentListState.error(
           message: UserErrorMessage.from(e, fallbackKey: 'errRequestFailed'),
@@ -71,14 +77,16 @@ class MyCommentListCubit extends Cubit<MyCommentListState> {
       final nextComments = await _service.getCommentsByUser(
         userId: targetUserId,
         limit: _defaultPageSize,
-        offset: currentState.comments.length,
+        offset: _nextOffset,
         ascending: false,
         includeDeleted: false,
       );
+      final filteredNextComments = await _filterCommentsForMyList(nextComments);
+      _nextOffset += nextComments.length;
 
       emit(
         currentState.copyWith(
-          comments: [...currentState.comments, ...nextComments],
+          comments: [...currentState.comments, ...filteredNextComments],
           isLoadingMore: false,
           hasMore: nextComments.length == _defaultPageSize,
         ),
@@ -95,6 +103,7 @@ class MyCommentListCubit extends Cubit<MyCommentListState> {
 
   void reset() {
     _activeUserId = null;
+    _nextOffset = 0;
     emit(const MyCommentListState.initial());
   }
 
@@ -104,5 +113,29 @@ class MyCommentListCubit extends Cubit<MyCommentListState> {
       return null;
     }
     return normalized;
+  }
+
+  Future<List<CommunityComment>> _filterCommentsForMyList(
+    List<CommunityComment> comments,
+  ) async {
+    final parentIds = comments
+        .map((comment) => comment.parentId)
+        .whereType<String>()
+        .toSet()
+        .toList(growable: false);
+    if (parentIds.isEmpty) {
+      return comments;
+    }
+
+    final parentDeletionStatus = await _service.getCommentDeletionStatusByIds(
+      commentIds: parentIds,
+    );
+    return comments
+        .where((comment) {
+          final parentId = comment.parentId;
+          if (parentId == null) return true;
+          return parentDeletionStatus[parentId] != true;
+        })
+        .toList(growable: false);
   }
 }

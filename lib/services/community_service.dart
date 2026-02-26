@@ -400,6 +400,33 @@ class CommunityService {
     }
   }
 
+  Future<Map<String, bool>> getCommentDeletionStatusByIds({
+    required List<String> commentIds,
+  }) async {
+    if (commentIds.isEmpty) {
+      return const <String, bool>{};
+    }
+
+    try {
+      final response = await _client
+          .from('community_comments')
+          .select('id,is_deleted_content')
+          .inFilter('id', commentIds);
+
+      final statusById = <String, bool>{};
+      for (final row in response as List) {
+        final map = row as Map<String, dynamic>;
+        final id = map['id'] as String?;
+        if (id == null) continue;
+        statusById[id] = map['is_deleted_content'] as bool? ?? false;
+      }
+      return statusById;
+    } catch (e) {
+      debugPrint('Get comment deletion status error: $e');
+      rethrow;
+    }
+  }
+
   Future<List<CommunityPost>> _getPostsInternal({
     required bool includeAvatar,
     required bool includeProfiles,

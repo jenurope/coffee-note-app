@@ -163,6 +163,69 @@ void main() {
         ),
       ).called(1);
     });
+
+    test('부모 댓글이 삭제된 대댓글은 내 댓글 목록에서 제외한다', () async {
+      final user = _testUser('auth-comment-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 25, 11);
+      final rootComment = _buildComment(
+        id: 'comment-root',
+        postId: 'post-1',
+        userId: user.id,
+        createdAt: now,
+      );
+      final visibleReply = _buildComment(
+        id: 'comment-visible-reply',
+        postId: 'post-1',
+        userId: user.id,
+        parentId: 'parent-visible',
+        createdAt: now.add(const Duration(minutes: 1)),
+      );
+      final hiddenReply = _buildComment(
+        id: 'comment-hidden-reply',
+        postId: 'post-1',
+        userId: user.id,
+        parentId: 'parent-deleted',
+        createdAt: now.add(const Duration(minutes: 2)),
+      );
+
+      when(
+        () => communityService.getCommentsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeleted: false,
+        ),
+      ).thenAnswer((_) async => [rootComment, visibleReply, hiddenReply]);
+      when(
+        () => communityService.getCommentDeletionStatusByIds(
+          commentIds: any(named: 'commentIds'),
+        ),
+      ).thenAnswer(
+        (_) async => {'parent-visible': false, 'parent-deleted': true},
+      );
+
+      final cubit = MyCommentListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadForUser(user.id);
+
+      final state = cubit.state;
+      expect(state, isA<MyCommentListLoaded>());
+      final loaded = state as MyCommentListLoaded;
+      expect(loaded.comments.map((comment) => comment.id).toList(), [
+        'comment-root',
+        'comment-visible-reply',
+      ]);
+      verify(
+        () => communityService.getCommentDeletionStatusByIds(
+          commentIds: any(named: 'commentIds'),
+        ),
+      ).called(1);
+    });
   });
 }
 
@@ -182,12 +245,14 @@ CommunityComment _buildComment({
   required String postId,
   required String userId,
   required DateTime createdAt,
+  String? parentId,
 }) {
   return CommunityComment(
     id: id,
     postId: postId,
     userId: userId,
     content: '댓글 $id',
+    parentId: parentId,
     createdAt: createdAt,
     updatedAt: createdAt,
   );
