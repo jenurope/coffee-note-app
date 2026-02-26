@@ -157,6 +157,136 @@ void main() {
       expect(find.text('삭제된 댓글입니다.'), findsOneWidget);
       expect(find.byType(TextField), findsNothing);
     });
+
+    testWidgets('본인 대댓글에서는 삭제 메뉴로 삭제할 수 있다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('user-1'));
+      final parentComment = _comment(
+        id: 'comment-parent',
+        postId: 'post-1',
+        content: '원댓글',
+      );
+      final childComment = _comment(
+        id: 'comment-child',
+        postId: 'post-1',
+        content: '하위 댓글',
+        parentId: 'comment-parent',
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      when(
+        () => communityService.getCommentById(commentId: 'comment-parent'),
+      ).thenAnswer((_) async => parentComment);
+      when(
+        () => communityService.getReplies(
+          parentCommentId: 'comment-parent',
+          limit: 20,
+          offset: 0,
+          ascending: true,
+        ),
+      ).thenAnswer((_) async => [childComment]);
+      when(
+        () => communityService.deleteComment(any()),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(
+        BlocProvider<AuthCubit>.value(
+          value: authCubit,
+          child: _buildTestMaterialApp(
+            home: const CommentDetailScreen(
+              postId: 'post-1',
+              commentId: 'comment-parent',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(PopupMenuButton<String>).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+
+      verify(() => communityService.deleteComment('comment-child')).called(1);
+    });
+
+    testWidgets('타인 대댓글에서는 신고 메뉴로 신고할 수 있다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final parentComment = _comment(
+        id: 'comment-parent',
+        postId: 'post-1',
+        content: '원댓글',
+        userId: 'comment-owner',
+      );
+      final childComment = _comment(
+        id: 'comment-child',
+        postId: 'post-1',
+        content: '하위 댓글',
+        parentId: 'comment-parent',
+        userId: 'comment-owner',
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      when(
+        () => communityService.getCommentById(commentId: 'comment-parent'),
+      ).thenAnswer((_) async => parentComment);
+      when(
+        () => communityService.getReplies(
+          parentCommentId: 'comment-parent',
+          limit: 20,
+          offset: 0,
+          ascending: true,
+        ),
+      ).thenAnswer((_) async => [childComment]);
+      when(
+        () => communityService.reportComment(
+          commentId: any(named: 'commentId'),
+          userId: any(named: 'userId'),
+          reason: any(named: 'reason'),
+        ),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(
+        BlocProvider<AuthCubit>.value(
+          value: authCubit,
+          child: _buildTestMaterialApp(
+            home: const CommentDetailScreen(
+              postId: 'post-1',
+              commentId: 'comment-parent',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(PopupMenuButton<String>).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('신고'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('reportReasonField')),
+        '욕설이 포함되어 있습니다.',
+      );
+      await tester.tap(find.text('신고하기'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => communityService.reportComment(
+          commentId: 'comment-child',
+          userId: 'viewer',
+          reason: '욕설이 포함되어 있습니다.',
+        ),
+      ).called(1);
+    });
   });
 }
 
@@ -164,6 +294,7 @@ CommunityComment _comment({
   required String id,
   required String postId,
   required String content,
+  String userId = 'user-1',
   String? parentId,
   bool isDeletedContent = false,
 }) {
@@ -171,7 +302,7 @@ CommunityComment _comment({
   return CommunityComment(
     id: id,
     postId: postId,
-    userId: 'user-1',
+    userId: userId,
     content: content,
     parentId: parentId,
     createdAt: now,
