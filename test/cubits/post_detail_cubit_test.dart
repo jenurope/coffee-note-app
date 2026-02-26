@@ -54,6 +54,40 @@ void main() {
       expect(loaded.isLoadingMoreComments, isFalse);
     });
 
+    test('삭제된 게시글은 상세를 차단하고 댓글을 로드하지 않는다', () async {
+      final user = _testUser('detail-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final post = _buildPost(
+        id: 'post-deleted',
+        userId: user.id,
+        commentCount: 3,
+      ).copyWith(isDeletedContent: true);
+
+      when(
+        () => communityService.getPost(post.id, includeComments: false),
+      ).thenAnswer((_) async => post);
+
+      final cubit = PostDetailCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.load(post.id);
+
+      expect(
+        cubit.state,
+        const PostDetailState.error(message: 'errPostDeleted'),
+      );
+      verifyNever(
+        () => communityService.getComments(
+          postId: any(named: 'postId'),
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+          ascending: any(named: 'ascending'),
+        ),
+      );
+    });
+
     test('댓글 다음 페이지를 이어 붙이고 마지막 페이지에서 hasMore를 false로 바꾼다', () async {
       final user = _testUser('detail-user');
       final authCubit = AuthCubit.test(AuthState.authenticated(user: user));

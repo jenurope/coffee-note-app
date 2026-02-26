@@ -1210,6 +1210,12 @@ abstract class AppLocalizations {
   /// **'You have already reported this item.'**
   String get reportDuplicate;
 
+  /// No description provided for @deletedPostMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This post has been deleted.'**
+  String get deletedPostMessage;
+
   /// No description provided for @deletedCommentMessage.
   ///
   /// In en, this message translates to:
@@ -1929,6 +1935,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Post not found.'**
   String get errPostNotFound;
+
+  /// No description provided for @errPostDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted posts cannot be viewed in detail.'**
+  String get errPostDeleted;
 
   /// No description provided for @coffeeTypeEspresso.
   ///

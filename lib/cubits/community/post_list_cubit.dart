@@ -37,6 +37,7 @@ class PostListCubit extends Cubit<PostListState> {
     required String? userId,
   }) async {
     _activeUserId = _normalizeUserId(userId);
+    final includeDeletedPosts = _activeUserId == null;
     final pageSize = _resolvePageSize(filters);
     final initialFilters = filters.copyWith(limit: pageSize, offset: 0);
     emit(PostListState.loading(filters: initialFilters));
@@ -48,6 +49,7 @@ class PostListCubit extends Cubit<PostListState> {
           sortBy: initialFilters.sortBy,
           ascending: initialFilters.ascending,
           userId: _activeUserId,
+          includeDeletedPosts: includeDeletedPosts,
           limit: pageSize,
           offset: 0,
         );
@@ -93,6 +95,7 @@ class PostListCubit extends Cubit<PostListState> {
         sortBy: currentState.filters.sortBy,
         ascending: currentState.filters.ascending,
         userId: _activeUserId,
+        includeDeletedPosts: _activeUserId == null,
         limit: pageSize,
         offset: currentState.posts.length,
       );

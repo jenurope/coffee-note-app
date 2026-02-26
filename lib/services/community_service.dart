@@ -14,6 +14,7 @@ class CommunityService {
     String? sortBy,
     bool ascending = false,
     String? userId,
+    bool includeDeletedPosts = false,
     int? limit,
     int? offset,
   }) async {
@@ -25,6 +26,7 @@ class CommunityService {
         sortBy: sortBy,
         ascending: ascending,
         userId: userId,
+        includeDeletedPosts: includeDeletedPosts,
         limit: limit,
         offset: offset,
       );
@@ -42,6 +44,7 @@ class CommunityService {
           sortBy: sortBy,
           ascending: ascending,
           userId: userId,
+          includeDeletedPosts: includeDeletedPosts,
           limit: limit,
           offset: offset,
         );
@@ -55,6 +58,7 @@ class CommunityService {
           sortBy: sortBy,
           ascending: ascending,
           userId: userId,
+          includeDeletedPosts: includeDeletedPosts,
           limit: limit,
           offset: offset,
         );
@@ -148,10 +152,10 @@ class CommunityService {
   // 게시글 삭제
   Future<void> deletePost(String id) async {
     try {
-      // 댓글 먼저 삭제
-      await _client.from('community_comments').delete().eq('post_id', id);
-      // 게시글 삭제
-      await _client.from('community_posts').delete().eq('id', id);
+      await _client.rpc(
+        'soft_delete_community_post',
+        params: {'p_post_id': id},
+      );
     } catch (e) {
       debugPrint('Delete post error: $e');
       rethrow;
@@ -434,6 +438,7 @@ class CommunityService {
     String? sortBy,
     required bool ascending,
     String? userId,
+    required bool includeDeletedPosts,
     int? limit,
     int? offset,
   }) async {
@@ -443,6 +448,9 @@ class CommunityService {
 
     if (userId != null && userId.isNotEmpty) {
       query = query.eq('user_id', userId);
+    }
+    if (!includeDeletedPosts) {
+      query = query.eq('is_deleted_content', false);
     }
 
     if (searchQuery != null && searchQuery.isNotEmpty) {

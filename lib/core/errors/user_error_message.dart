@@ -159,6 +159,7 @@ class UserErrorMessage {
       'errLogNotFound' => l10n.errLogNotFound,
       'errSampleLogNotFound' => l10n.errSampleLogNotFound,
       'errPostNotFound' => l10n.errPostNotFound,
+      'errPostDeleted' => l10n.errPostDeleted,
       'appStartUnavailable' => l10n.appStartUnavailable,
       _ => l10n.errRequestFailed,
     };

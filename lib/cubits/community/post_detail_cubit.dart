@@ -31,6 +31,10 @@ class PostDetailCubit extends Cubit<PostDetailState> {
 
       final post = await _service.getPost(postId, includeComments: false);
       if (post != null) {
+        if (post.isDeletedContent) {
+          emit(const PostDetailState.error(message: 'errPostDeleted'));
+          return;
+        }
         final comments = await _service.getComments(
           postId: postId,
           limit: _defaultCommentPageSize,

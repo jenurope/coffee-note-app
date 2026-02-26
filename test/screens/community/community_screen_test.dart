@@ -191,6 +191,48 @@ void main() {
       expect(find.text('원문 제목'), findsNothing);
       expect(find.text('원문 내용'), findsNothing);
     });
+
+    testWidgets('삭제된 게시글은 placeholder를 표시하고 상세 진입을 비활성화한다', (tester) async {
+      final now = DateTime(2026, 2, 21, 14);
+      final deletedPost = CommunityPost(
+        id: 'post-deleted',
+        userId: 'deleted-user-id',
+        title: '삭제 전 제목',
+        content: '삭제 전 내용',
+        createdAt: now,
+        updatedAt: now,
+        isDeletedContent: true,
+      );
+
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: PostListState.loaded(
+          posts: [deletedPost],
+          filters: const PostFilters(),
+        ),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      expect(find.text('삭제된 게시글입니다.'), findsOneWidget);
+      expect(find.text('삭제 전 제목'), findsNothing);
+      expect(find.text('삭제 전 내용'), findsNothing);
+
+      final postInkWell = tester.widget<InkWell>(
+        find
+            .descendant(
+              of: find.byType(Card).first,
+              matching: find.byType(InkWell),
+            )
+            .first,
+      );
+      expect(postInkWell.onTap, isNull);
+    });
   });
 }
 
@@ -205,7 +247,8 @@ Future<void> _pumpCommunityScreen(
         BlocProvider<AuthCubit>.value(value: authCubit),
         BlocProvider<PostListCubit>.value(value: postListCubit),
       ],
-      child: const MaterialApp(
+      child: MaterialApp(
+        theme: ThemeData(splashFactory: NoSplash.splashFactory),
         locale: Locale('ko'),
         localizationsDelegates: [
           AppLocalizations.delegate,

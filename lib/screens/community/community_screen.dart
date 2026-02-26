@@ -106,6 +106,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   String _resolvePostTitle(AppLocalizations l10n, CommunityPost post) {
+    if (post.isDeletedContent) {
+      return l10n.deletedPostMessage;
+    }
     if (post.isWithdrawnContent) {
       return l10n.withdrawnPostMessage;
     }
@@ -113,7 +116,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   String _resolvePostSnippet(AppLocalizations l10n, CommunityPost post) {
-    if (post.isWithdrawnContent) {
+    if (post.isWithdrawnContent || post.isDeletedContent) {
       return '';
     }
     return markdownToPlainTextSnippet(post.content);
@@ -344,13 +347,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       l10n,
                                       post,
                                     );
+                                    final canOpenPostDetail =
+                                        !post.isDeletedContent;
                                     final commentCount = post.commentCount ?? 0;
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 12),
                                       child: InkWell(
-                                        onTap: () => context.push(
-                                          '/community/${post.id}',
-                                        ),
+                                        onTap: canOpenPostDetail
+                                            ? () => context.push(
+                                                '/community/${post.id}',
+                                              )
+                                            : null,
                                         borderRadius: BorderRadius.circular(16),
                                         child: Padding(
                                           padding: const EdgeInsets.all(16),

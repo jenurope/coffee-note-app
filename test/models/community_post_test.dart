@@ -3,6 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CommunityPost.fromJson', () {
+    test('is_deleted_content가 true면 삭제 상태를 파싱한다', () {
+      final post = CommunityPost.fromJson(
+        _baseJson({'is_deleted_content': true}),
+      );
+
+      expect(post.isDeletedContent, isTrue);
+    });
+
+    test('is_deleted_content가 없으면 기본값 false를 유지한다', () {
+      final post = CommunityPost.fromJson(_baseJson({}));
+
+      expect(post.isDeletedContent, isFalse);
+    });
+
     test('comment_count가 있으면 comment_stats보다 우선한다', () {
       final post = CommunityPost.fromJson(
         _baseJson({

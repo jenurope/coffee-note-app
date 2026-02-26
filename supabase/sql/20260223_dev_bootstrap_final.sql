@@ -140,6 +140,7 @@ create table public.community_posts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   is_withdrawn_content boolean not null default false,
+  is_deleted_content boolean not null default false,
   constraint community_posts_user_id_fkey
     foreign key (user_id)
     references public.profiles(id)
@@ -981,6 +982,70 @@ begin
 end;
 $$;
 
+create or replace function public.soft_delete_community_post(p_post_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth, pg_temp
+as $$
+declare
+  v_owner_id uuid;
+  v_is_deleted boolean;
+begin
+  if p_post_id is null then
+    raise exception using
+      errcode = '23502',
+      message = 'community_post_id_required',
+      hint = '삭제할 게시글 ID가 필요합니다.';
+  end if;
+
+  select cp.user_id, cp.is_deleted_content
+    into v_owner_id, v_is_deleted
+    from public.community_posts cp
+   where cp.id = p_post_id
+   for update;
+
+  if not found then
+    raise exception using
+      errcode = 'PGRST116',
+      message = 'community_post_not_found',
+      hint = '게시글을 찾을 수 없습니다.';
+  end if;
+
+  if auth.uid() is null then
+    raise exception using
+      errcode = '42501',
+      message = 'community_post_delete_auth_required',
+      hint = '인증된 사용자만 게시글을 삭제할 수 있습니다.';
+  end if;
+
+  if v_owner_id is distinct from auth.uid() then
+    raise exception using
+      errcode = '42501',
+      message = 'community_post_delete_forbidden',
+      hint = '작성자만 게시글을 삭제할 수 있습니다.';
+  end if;
+
+  if v_is_deleted then
+    return;
+  end if;
+
+  update public.community_posts
+     set title = '[deleted_post]',
+         content = '[deleted_post]',
+         is_deleted_content = true,
+         updated_at = now()
+   where id = p_post_id;
+
+  update public.community_comments
+     set content = '[deleted_comment]',
+         is_deleted_content = true,
+         updated_at = now()
+   where post_id = p_post_id
+     and is_deleted_content = false;
+end;
+$$;
+
 create or replace function public.withdraw_my_account()
 returns void
 language plpgsql
@@ -1049,6 +1114,7 @@ $$;
 revoke all on function public.is_admin(uuid) from public, anon, authenticated, service_role;
 grant execute on function public.is_admin(uuid) to service_role;
 revoke all on function public.log_withdraw_storage_cleanup_failure(text, text, text) from public;
+revoke all on function public.soft_delete_community_post(uuid) from public;
 revoke all on function public.withdraw_my_account() from public;
 
 grant execute on function public.community_hourly_write_limits(uuid) to anon, authenticated, service_role;
@@ -1058,6 +1124,7 @@ grant execute on function public.handle_new_user() to anon, authenticated, servi
 grant execute on function public.handle_updated_at() to anon, authenticated, service_role;
 grant execute on function public.log_withdraw_storage_cleanup_failure(text, text, text) to anon, authenticated, service_role;
 grant execute on function public.set_service_inquiry_customer_type() to anon, authenticated, service_role;
+grant execute on function public.soft_delete_community_post(uuid) to authenticated, service_role;
 grant execute on function public.update_coffee_beans_updated_at_column() to anon, authenticated, service_role;
 grant execute on function public.update_coffee_logs_updated_at_column() to anon, authenticated, service_role;
 grant execute on function public.update_service_inquiries_updated_at_column() to anon, authenticated, service_role;
