@@ -612,6 +612,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final theme = Theme.of(context);
     final l10n = context.l10n;
     final cardMargin = EdgeInsets.only(left: isReply ? 24 : 0, bottom: 8);
+    final replyActionLabel = replyCount > 0
+        ? '${l10n.replyAction} ($replyCount)'
+        : l10n.replyAction;
 
     if (_isDeletedCommentPlaceholder(comment)) {
       return SizedBox(
@@ -620,11 +623,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           margin: cardMargin,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            child: Text(
-              l10n.deletedCommentMessage,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.deletedCommentMessage,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                if (replyCount > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: _buildReplyDetailButton(
+                        context,
+                        comment,
+                        replyActionLabel,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -636,9 +656,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     ).add_Hm();
     final authorName = _resolveAuthorName(l10n, comment.author);
     final commentContent = _resolveCommentContent(l10n, comment);
-    final replyActionLabel = replyCount > 0
-        ? '${l10n.replyAction} ($replyCount)'
-        : l10n.replyAction;
 
     return Card(
       margin: cardMargin,
@@ -730,25 +747,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Align(
                   alignment: Alignment.center,
-                  child: TextButton.icon(
-                    key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
-                    onPressed: () =>
-                        context.push(_commentDetailPath(context, comment)),
-                    icon: const Icon(Icons.reply_outlined, size: 18),
-                    label: Text(replyActionLabel),
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(88, 30),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
+                  child: _buildReplyDetailButton(
+                    context,
+                    comment,
+                    replyActionLabel,
                   ),
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildReplyDetailButton(
+    BuildContext context,
+    CommunityComment comment,
+    String label,
+  ) {
+    return TextButton.icon(
+      key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
+      onPressed: () => context.push(_commentDetailPath(context, comment)),
+      icon: const Icon(Icons.reply_outlined, size: 18),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        minimumSize: const Size(88, 30),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

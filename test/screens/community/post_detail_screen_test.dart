@@ -403,6 +403,79 @@ void main() {
       expect(find.text('삭제 전 원문 댓글'), findsNothing);
       expect(find.text('댓글작성자닉'), findsNothing);
       expect(find.byType(PopupMenuButton<String>), findsNothing);
+      expect(
+        find.byKey(const ValueKey('replyActionButton-comment-deleted')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('삭제된 댓글에 대댓글이 남아 있으면 댓글 상세로 이동할 수 있다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildPostWithDeletedCommentAndReply(
+          commentOwnerId: 'comment-owner',
+        ),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      final router = GoRouter(
+        initialLocation: '/community/post-deleted-comment-with-reply',
+        routes: [
+          GoRoute(
+            path: '/community/:id',
+            builder: (context, state) =>
+                PostDetailScreen(postId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'comments/:commentId',
+                builder: (context, state) => Scaffold(
+                  body: Text('댓글상세:${state.pathParameters['commentId']}'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: _buildTestRouterApp(router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('삭제된 댓글입니다.'), findsOneWidget);
+      expect(find.text('답글 (1)'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey('replyActionButton-comment-deleted-parent')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('댓글상세:comment-deleted-parent'), findsOneWidget);
     });
 
     testWidgets('타인 게시글 신고 성공 시 신고를 등록한다', (tester) async {
@@ -738,6 +811,51 @@ CommunityPost _buildPostWithDeletedComment({required String commentOwnerId}) {
       ),
     ],
     commentCount: 1,
+  );
+}
+
+CommunityPost _buildPostWithDeletedCommentAndReply({
+  required String commentOwnerId,
+}) {
+  final now = DateTime(2026, 2, 21, 14);
+  final commentAuthor = UserProfile(
+    id: commentOwnerId,
+    nickname: '댓글작성자닉',
+    email: '$commentOwnerId@example.com',
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  return CommunityPost(
+    id: 'post-deleted-comment-with-reply',
+    userId: 'post-owner',
+    title: '일반 게시글 제목',
+    content: '일반 게시글 본문',
+    createdAt: now,
+    updatedAt: now,
+    comments: [
+      CommunityComment(
+        id: 'comment-deleted-parent',
+        postId: 'post-deleted-comment-with-reply',
+        userId: commentOwnerId,
+        content: '[deleted_comment]',
+        createdAt: now,
+        updatedAt: now,
+        isDeletedContent: true,
+        author: commentAuthor,
+      ),
+      CommunityComment(
+        id: 'comment-child',
+        postId: 'post-deleted-comment-with-reply',
+        userId: commentOwnerId,
+        content: '남아있는 대댓글',
+        parentId: 'comment-deleted-parent',
+        createdAt: now.add(const Duration(minutes: 1)),
+        updatedAt: now.add(const Duration(minutes: 1)),
+        author: commentAuthor,
+      ),
+    ],
+    commentCount: 2,
   );
 }
 
