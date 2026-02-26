@@ -67,6 +67,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _submitComment() async {
     if (_commentController.text.trim().isEmpty) return;
+    final postState = context.read<PostDetailCubit>().state;
+    if (postState is PostDetailLoaded && postState.post.isWithdrawnContent) {
+      return;
+    }
 
     final authState = context.read<AuthCubit>().state;
     final currentUser = authState is AuthAuthenticated ? authState.user : null;
@@ -340,6 +344,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         (replyCountByParentId[parentId] ?? 0) + 1;
                   }
                   final isOwner = currentUser?.id == post.userId;
+                  final canCreateComment =
+                      currentUser != null &&
+                      !isGuest &&
+                      !post.isWithdrawnContent;
                   final canReportPost =
                       !isOwner &&
                       currentUser != null &&
@@ -523,7 +531,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             ),
                           ),
                         ),
-                        if (currentUser != null && !isGuest)
+                        if (canCreateComment)
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
