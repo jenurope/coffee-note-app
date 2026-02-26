@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
@@ -26,7 +27,12 @@ class PostDetailScreen extends StatefulWidget {
   State<PostDetailScreen> createState() => _PostDetailScreenState();
 }
 
+enum _ReportTargetType { post, comment }
+
 class _PostDetailScreenState extends State<PostDetailScreen> {
+  static const int _maxReportReasonLength = 500;
+  static const Key _postReportButtonKey = Key('postReportButton');
+  static const Key _reportReasonFieldKey = Key('reportReasonField');
   final _commentController = TextEditingController();
   final _detailScrollController = ScrollController();
   bool _isSubmitting = false;
@@ -163,6 +169,134 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return comment.isDeletedContent && !comment.isWithdrawnContent;
   }
 
+  Future<void> _openReportDialog({
+    required _ReportTargetType targetType,
+    required String targetId,
+  }) async {
+    final reason = await _showReportReasonDialog(
+      context,
+      targetType: targetType,
+    );
+    if (!mounted || reason == null) return;
+
+    final authState = context.read<AuthCubit>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.requiredLogin)));
+      return;
+    }
+
+    try {
+      final service = getIt<CommunityService>();
+      if (targetType == _ReportTargetType.post) {
+        await service.reportPost(
+          postId: targetId,
+          userId: currentUser.id,
+          reason: reason,
+        );
+      } else {
+        await service.reportComment(
+          commentId: targetId,
+          userId: currentUser.id,
+          reason: reason,
+        );
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.reportSubmitSuccess)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_reportFailureMessage(context, e))),
+      );
+    }
+  }
+
+  Future<String?> _showReportReasonDialog(
+    BuildContext context, {
+    required _ReportTargetType targetType,
+  }) async {
+    final reasonController = TextEditingController();
+    String? errorText;
+
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                targetType == _ReportTargetType.post
+                    ? context.l10n.reportPostTitle
+                    : context.l10n.reportCommentTitle,
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: TextField(
+                  key: _reportReasonFieldKey,
+                  controller: reasonController,
+                  maxLines: 4,
+                  maxLength: _maxReportReasonLength,
+                  decoration: InputDecoration(
+                    hintText: context.l10n.reportReasonHint,
+                    border: const OutlineInputBorder(),
+                    errorText: errorText,
+                  ),
+                  onChanged: (_) {
+                    if (errorText != null) {
+                      setDialogState(() {
+                        errorText = null;
+                      });
+                    }
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(context.l10n.cancel),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final reason = reasonController.text.trim();
+                    if (reason.isEmpty) {
+                      setDialogState(() {
+                        errorText = context.l10n.reportReasonRequired;
+                      });
+                      return;
+                    }
+                    Navigator.pop(dialogContext, reason);
+                  },
+                  child: Text(context.l10n.reportSubmitAction),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _reportFailureMessage(BuildContext context, Object error) {
+    if (error is FormatException) {
+      return switch (error.message) {
+        'report_reason_required' => context.l10n.reportReasonRequired,
+        'report_reason_too_long' => context.l10n.reportReasonTooLong,
+        _ => context.l10n.reportSubmitFailed,
+      };
+    }
+
+    if (error is PostgrestException && error.code == '23505') {
+      return context.l10n.reportDuplicate;
+    }
+
+    return context.l10n.reportSubmitFailed;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -192,34 +326,48 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ) =>
                 () {
                   final isOwner = currentUser?.id == post.userId;
+                  final canReportPost =
+                      !isOwner &&
+                      currentUser != null &&
+                      !isGuest &&
+                      !post.isWithdrawnContent;
+                  final appBarActions = <Widget>[
+                    if (isOwner) ...[
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () async {
+                          final updated = await context.push<bool>(
+                            '/community/${widget.postId}/edit',
+                          );
+                          if (!context.mounted) return;
+                          if (updated == true) {
+                            context.read<PostDetailCubit>().load(widget.postId);
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () => _showDeleteDialog(context),
+                      ),
+                    ],
+                    if (canReportPost)
+                      IconButton(
+                        key: _postReportButtonKey,
+                        icon: const Icon(Icons.flag_outlined),
+                        tooltip: l10n.reportAction,
+                        onPressed: () => _openReportDialog(
+                          targetType: _ReportTargetType.post,
+                          targetId: post.id,
+                        ),
+                      ),
+                  ];
                   final authorName = _resolveAuthorName(l10n, post.author);
                   final postTitle = _resolvePostTitle(l10n, post);
                   final postContent = _resolvePostContent(l10n, post);
                   return Scaffold(
                     appBar: AppBar(
                       title: Text(l10n.postScreenTitle),
-                      actions: isOwner
-                          ? [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () async {
-                                  final updated = await context.push<bool>(
-                                    '/community/${widget.postId}/edit',
-                                  );
-                                  if (!context.mounted) return;
-                                  if (updated == true) {
-                                    context.read<PostDetailCubit>().load(
-                                      widget.postId,
-                                    );
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () => _showDeleteDialog(context),
-                              ),
-                            ]
-                          : null,
+                      actions: appBarActions.isEmpty ? null : appBarActions,
                     ),
                     body: Column(
                       children: [
@@ -306,6 +454,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       context,
                                       comment,
                                       currentUser?.id == comment.userId,
+                                      currentUser != null &&
+                                          !isGuest &&
+                                          currentUser.id != comment.userId &&
+                                          !comment.isDeletedContent &&
+                                          !comment.isWithdrawnContent,
                                     ),
                                   )
                                 else
@@ -429,6 +582,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     BuildContext context,
     CommunityComment comment,
     bool isOwner,
+    bool canReport,
   ) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
@@ -489,12 +643,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
-                if (isOwner && !comment.isDeletedContent)
+                if ((isOwner || canReport) &&
+                    !comment.isDeletedContent &&
+                    !comment.isWithdrawnContent)
                   PopupMenuButton<String>(
                     itemBuilder: (context) => [
                       PopupMenuItem(
-                        value: 'delete',
-                        child: Text(context.l10n.delete),
+                        value: isOwner ? 'delete' : 'report',
+                        child: Text(
+                          isOwner
+                              ? context.l10n.delete
+                              : context.l10n.reportAction,
+                        ),
                       ),
                     ],
                     onSelected: (value) async {
@@ -524,6 +684,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             );
                           }
                         }
+                      } else if (value == 'report') {
+                        await _openReportDialog(
+                          targetType: _ReportTargetType.comment,
+                          targetId: comment.id,
+                        );
                       }
                     },
                   ),

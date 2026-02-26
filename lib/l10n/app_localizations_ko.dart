@@ -546,6 +546,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commentCreateFailed => '댓글 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 
   @override
+  String get reportAction => '신고';
+
+  @override
+  String get reportPostTitle => '게시글 신고';
+
+  @override
+  String get reportCommentTitle => '댓글 신고';
+
+  @override
+  String get reportReasonHint => '신고 사유를 입력하세요.';
+
+  @override
+  String get reportReasonRequired => '신고 사유를 입력해주세요.';
+
+  @override
+  String get reportReasonTooLong => '신고 사유는 500자 이하여야 합니다.';
+
+  @override
+  String get reportSubmitAction => '신고하기';
+
+  @override
+  String get reportSubmitSuccess => '신고가 접수되었습니다.';
+
+  @override
+  String get reportSubmitFailed => '신고 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get reportDuplicate => '이미 신고한 대상입니다.';
+
+  @override
   String get deletedCommentMessage => '삭제된 댓글입니다.';
 
   @override

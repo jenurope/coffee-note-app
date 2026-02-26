@@ -16,7 +16,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show User;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgrestException, User;
 
 class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
@@ -236,6 +237,285 @@ void main() {
       expect(find.text('댓글작성자닉'), findsNothing);
       expect(find.byType(PopupMenuButton<String>), findsNothing);
     });
+
+    testWidgets('타인 게시글 신고 성공 시 신고를 등록한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildActivePost(userId: 'post-owner'),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      when(
+        () => communityService.reportPost(
+          postId: any(named: 'postId'),
+          userId: any(named: 'userId'),
+          reason: any(named: 'reason'),
+        ),
+      ).thenAnswer((_) async {});
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('postReportButton')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('reportReasonField')),
+        '광고성 게시글입니다.',
+      );
+      await tester.tap(find.text('신고하기'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => communityService.reportPost(
+          postId: 'post-1',
+          userId: 'viewer',
+          reason: '광고성 게시글입니다.',
+        ),
+      ).called(1);
+      expect(find.text('신고가 접수되었습니다.'), findsOneWidget);
+    });
+
+    testWidgets('타인 댓글 신고 메뉴를 통해 신고를 등록한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildPostWithReportableComment(
+          postOwnerId: 'post-owner',
+          commentOwnerId: 'comment-owner',
+        ),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      when(
+        () => communityService.reportComment(
+          commentId: any(named: 'commentId'),
+          userId: any(named: 'userId'),
+          reason: any(named: 'reason'),
+        ),
+      ).thenAnswer((_) async {});
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-with-reportable-comment'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(PopupMenuButton<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('신고'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('reportReasonField')),
+        '욕설이 포함되어 있습니다.',
+      );
+      await tester.tap(find.text('신고하기'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => communityService.reportComment(
+          commentId: 'comment-reportable',
+          userId: 'viewer',
+          reason: '욕설이 포함되어 있습니다.',
+        ),
+      ).called(1);
+    });
+
+    testWidgets('본인 게시글/댓글에는 신고 액션을 노출하지 않는다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('owner'));
+      final postState = PostDetailState.loaded(
+        post: _buildPostWithReportableComment(
+          postOwnerId: 'owner',
+          commentOwnerId: 'owner',
+        ),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-with-reportable-comment'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('postReportButton')), findsNothing);
+      await tester.tap(find.byType(PopupMenuButton<String>).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('삭제'), findsOneWidget);
+      expect(find.text('신고'), findsNothing);
+    });
+
+    testWidgets('중복 신고(23505) 시 전용 안내를 노출한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildActivePost(userId: 'post-owner'),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      when(
+        () => communityService.reportPost(
+          postId: any(named: 'postId'),
+          userId: any(named: 'userId'),
+          reason: any(named: 'reason'),
+        ),
+      ).thenThrow(
+        const PostgrestException(
+          message: 'duplicate key value violates unique constraint',
+          code: '23505',
+        ),
+      );
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('postReportButton')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('reportReasonField')),
+        '중복 신고 테스트',
+      );
+      await tester.tap(find.text('신고하기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('이미 신고한 대상입니다.'), findsOneWidget);
+    });
   });
 }
 
@@ -315,6 +595,41 @@ CommunityPost _buildPostWithDeletedComment({required String commentOwnerId}) {
         createdAt: now,
         updatedAt: now,
         isDeletedContent: true,
+        author: commentAuthor,
+      ),
+    ],
+    commentCount: 1,
+  );
+}
+
+CommunityPost _buildPostWithReportableComment({
+  required String postOwnerId,
+  required String commentOwnerId,
+}) {
+  final now = DateTime(2026, 2, 21, 14);
+  final commentAuthor = UserProfile(
+    id: commentOwnerId,
+    nickname: '댓글작성자닉',
+    email: '$commentOwnerId@example.com',
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  return CommunityPost(
+    id: 'post-with-reportable-comment',
+    userId: postOwnerId,
+    title: '일반 게시글 제목',
+    content: '일반 게시글 본문',
+    createdAt: now,
+    updatedAt: now,
+    comments: [
+      CommunityComment(
+        id: 'comment-reportable',
+        postId: 'post-with-reportable-comment',
+        userId: commentOwnerId,
+        content: '신고 가능한 댓글',
+        createdAt: now,
+        updatedAt: now,
         author: commentAuthor,
       ),
     ],

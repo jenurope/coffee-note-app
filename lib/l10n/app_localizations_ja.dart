@@ -546,6 +546,36 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commentCreateFailed => 'コメント登録中にエラーが発生しました。しばらくしてから再試行してください。';
 
   @override
+  String get reportAction => '通報';
+
+  @override
+  String get reportPostTitle => '投稿を通報';
+
+  @override
+  String get reportCommentTitle => 'コメントを通報';
+
+  @override
+  String get reportReasonHint => '通報理由を入力してください。';
+
+  @override
+  String get reportReasonRequired => '通報理由を入力してください。';
+
+  @override
+  String get reportReasonTooLong => '通報理由は500文字以内で入力してください。';
+
+  @override
+  String get reportSubmitAction => '通報する';
+
+  @override
+  String get reportSubmitSuccess => '通報を受け付けました。';
+
+  @override
+  String get reportSubmitFailed => '通報の送信中にエラーが発生しました。しばらくしてから再試行してください。';
+
+  @override
+  String get reportDuplicate => 'この対象はすでに通報済みです。';
+
+  @override
   String get deletedCommentMessage => '削除されたコメントです。';
 
   @override
