@@ -1,4 +1,5 @@
 import org.gradle.api.GradleException
+import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -15,6 +16,53 @@ val hasReleaseSigning = keyPropertiesFile.exists()
 val isReleaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
     taskName.contains("Release", ignoreCase = true) ||
         taskName.contains("bundle", ignoreCase = true)
+}
+val isProdReleaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.contains("ProdRelease", ignoreCase = true) ||
+        (
+            taskName.contains("prod", ignoreCase = true) &&
+                taskName.contains("release", ignoreCase = true)
+        )
+}
+
+fun parseDartDefines(rawValue: String?): Map<String, String> {
+    if (rawValue.isNullOrBlank()) return emptyMap()
+
+    val decoder = Base64.getDecoder()
+    return rawValue
+        .split(",")
+        .mapNotNull { encoded ->
+            val trimmed = encoded.trim()
+            if (trimmed.isEmpty()) return@mapNotNull null
+
+            val decoded = try {
+                String(decoder.decode(trimmed), Charsets.UTF_8)
+            } catch (_: IllegalArgumentException) {
+                return@mapNotNull null
+            }
+
+            val separatorIndex = decoded.indexOf('=')
+            if (separatorIndex <= 0) return@mapNotNull null
+
+            decoded.substring(0, separatorIndex) to decoded.substring(separatorIndex + 1)
+        }
+        .toMap()
+}
+
+val dartDefines = parseDartDefines(project.findProperty("dart-defines") as? String)
+
+if (isProdReleaseTaskRequested) {
+    val appEnv = dartDefines["APP_ENV"]
+    val supabaseUrl = dartDefines["SUPABASE_URL"]
+    val supabasePublishableKey = dartDefines["SUPABASE_PUBLISHABLE_KEY"]
+
+    if (appEnv != "prod" || supabaseUrl.isNullOrBlank() || supabasePublishableKey.isNullOrBlank()) {
+        throw GradleException(
+            "prod release 빌드는 dart define 설정이 필수입니다. " +
+                "--dart-define-from-file=dart_define.prod.json 옵션과 " +
+                "APP_ENV=prod, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY 값을 확인하세요.",
+        )
+    }
 }
 
 if (hasReleaseSigning) {

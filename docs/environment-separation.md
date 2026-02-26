@@ -52,6 +52,9 @@
 
 # 운영 환경 점검
 ./run_prod.sh
+
+# 플레이스토어 업로드용 AAB 빌드
+./build_prod_aab.sh
 ```
 
 직접 실행 시에도 flavor와 define 파일을 반드시 함께 지정합니다.

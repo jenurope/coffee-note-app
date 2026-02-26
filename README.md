@@ -22,6 +22,14 @@
 
 `run_dev.sh`, `run_prod.sh`는 내부적으로 `--flavor` + `--dart-define-from-file` 옵션을 사용해 환경별 설정을 전달합니다.
 
+### 플레이스토어 배포 빌드
+
+```bash
+./build_prod_aab.sh
+```
+
+`build_prod_aab.sh`는 `dart_define.prod.json` 존재 여부와 필수 키(`APP_ENV=prod`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`)를 먼저 검사한 뒤, `prod` flavor AAB를 빌드합니다.
+
 ### 환경 파일 설정
 
 프로젝트 루트에 아래 로컬 파일을 생성해 사용합니다(버전관리 제외).
