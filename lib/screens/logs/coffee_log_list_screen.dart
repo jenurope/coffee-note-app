@@ -94,6 +94,7 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
     };
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) => _FilterSheet(
         currentFilters: currentFilters,
         onApply: (filters) {
@@ -338,103 +339,115 @@ class _FilterSheetState extends State<_FilterSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SafeArea(
+      top: false,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: mediaQuery.size.height * 0.9),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            24 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                l10n.filter,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.filter,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _minRating = null;
+                        _coffeeType = null;
+                        _sortBy = null;
+                      });
+                    },
+                    child: Text(l10n.reset),
+                  ),
+                ],
               ),
-              TextButton(
+              const SizedBox(height: 16),
+
+              // 정렬
+              Text(l10n.sort, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _buildSortChip(l10n.sortNewest, 'cafe_visit_date'),
+                  _buildSortChip(l10n.sortByRating, 'rating'),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // 커피 종류
+              Text(l10n.coffeeType, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: CoffeeLog.coffeeTypes.map((type) {
+                  return FilterChip(
+                    label: Text(CoffeeTypeCatalog.label(l10n, type)),
+                    selected: _coffeeType == type,
+                    onSelected: (selected) {
+                      setState(() {
+                        _coffeeType = selected ? type : null;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 최소 평점
+              Text(l10n.minRating, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [3.0, 4.0, 4.5].map((rating) {
+                  return FilterChip(
+                    label: Text(l10n.ratingAtLeast(rating)),
+                    selected: _minRating == rating,
+                    onSelected: (selected) {
+                      setState(() {
+                        _minRating = selected ? rating : null;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 24),
+
+              CustomButton(
+                text: l10n.apply,
                 onPressed: () {
-                  setState(() {
-                    _minRating = null;
-                    _coffeeType = null;
-                    _sortBy = null;
-                  });
+                  widget.onApply(
+                    widget.currentFilters.copyWith(
+                      minRating: _minRating,
+                      coffeeType: _coffeeType,
+                      sortBy: _sortBy,
+                    ),
+                  );
                 },
-                child: Text(l10n.reset),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // 정렬
-          Text(l10n.sort, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              _buildSortChip(l10n.sortNewest, 'cafe_visit_date'),
-              _buildSortChip(l10n.sortByRating, 'rating'),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // 커피 종류
-          Text(l10n.coffeeType, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: CoffeeLog.coffeeTypes.map((type) {
-              return FilterChip(
-                label: Text(CoffeeTypeCatalog.label(l10n, type)),
-                selected: _coffeeType == type,
-                onSelected: (selected) {
-                  setState(() {
-                    _coffeeType = selected ? type : null;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 16),
-
-          // 최소 평점
-          Text(l10n.minRating, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [3.0, 4.0, 4.5].map((rating) {
-              return FilterChip(
-                label: Text(l10n.ratingAtLeast(rating)),
-                selected: _minRating == rating,
-                onSelected: (selected) {
-                  setState(() {
-                    _minRating = selected ? rating : null;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 24),
-
-          CustomButton(
-            text: l10n.apply,
-            onPressed: () {
-              widget.onApply(
-                widget.currentFilters.copyWith(
-                  minRating: _minRating,
-                  coffeeType: _coffeeType,
-                  sortBy: _sortBy,
-                ),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
