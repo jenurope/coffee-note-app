@@ -719,9 +719,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             Text(commentContent),
             if (canReply)
               Padding(
-                padding: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.only(top: 8),
                 child: Align(
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.center,
                   child: TextButton.icon(
                     key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
                     onPressed: () =>
@@ -729,8 +729,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     icon: const Icon(Icons.reply_outlined, size: 18),
                     label: Text(l10n.replyAction),
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
+                      minimumSize: const Size(88, 30),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
