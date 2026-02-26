@@ -326,10 +326,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 hasMoreComments: final hasMoreComments,
               ) =>
                 () {
-                  final loadedCommentIds =
+                  final visibleComments =
                       (post.comments ?? const <CommunityComment>[])
-                          .map((comment) => comment.id)
-                          .toSet();
+                          .where((comment) => comment.parentId == null)
+                          .toList(growable: false);
                   final isOwner = currentUser?.id == post.userId;
                   final canReportPost =
                       !isOwner &&
@@ -452,14 +452,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                if (post.comments != null &&
-                                    post.comments!.isNotEmpty)
-                                  ...post.comments!.map((comment) {
-                                    final isReply =
-                                        comment.parentId != null &&
-                                        loadedCommentIds.contains(
-                                          comment.parentId,
-                                        );
+                                if (visibleComments.isNotEmpty)
+                                  ...visibleComments.map((comment) {
                                     final canReply =
                                         currentUser != null &&
                                         !isGuest &&
@@ -476,7 +470,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           !comment.isDeletedContent &&
                                           !comment.isWithdrawnContent,
                                       canReply: canReply,
-                                      isReply: isReply,
+                                      isReply: false,
                                     );
                                   })
                                 else

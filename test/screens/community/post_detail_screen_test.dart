@@ -296,6 +296,7 @@ void main() {
         find.byKey(const ValueKey('replyActionButton-comment-parent')),
         findsOneWidget,
       );
+      expect(find.text('대댓글'), findsNothing);
       expect(
         find.byKey(const ValueKey('replyActionButton-comment-reply')),
         findsNothing,
