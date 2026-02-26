@@ -46,6 +46,14 @@ void main() {
   });
 
   group('CommunityComment.fromJson', () {
+    test('parent_id가 있으면 대댓글 parentId를 파싱한다', () {
+      final comment = CommunityComment.fromJson(
+        _baseCommentJson({'parent_id': 'comment-parent'}),
+      );
+
+      expect(comment.parentId, 'comment-parent');
+    });
+
     test('is_deleted_content가 true면 삭제 상태를 파싱한다', () {
       final comment = CommunityComment.fromJson(
         _baseCommentJson({'is_deleted_content': true}),
@@ -58,6 +66,14 @@ void main() {
       final comment = CommunityComment.fromJson(_baseCommentJson({}));
 
       expect(comment.isDeletedContent, isFalse);
+    });
+
+    test('toInsertJson은 parent_id를 포함한다', () {
+      final comment = CommunityComment.fromJson(
+        _baseCommentJson({'parent_id': 'comment-parent'}),
+      );
+
+      expect(comment.toInsertJson()['parent_id'], 'comment-parent');
     });
   });
 }

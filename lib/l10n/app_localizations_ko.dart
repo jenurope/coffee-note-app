@@ -546,6 +546,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commentCreateFailed => '댓글 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 
   @override
+  String get replyAction => '답글';
+
+  @override
+  String get replyHint => '답글을 입력하세요...';
+
+  @override
+  String get replyCancel => '답글 취소';
+
+  @override
   String get reportAction => '신고';
 
   @override

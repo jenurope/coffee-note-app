@@ -33,9 +33,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   static const int _maxReportReasonLength = 500;
   static const Key _postReportButtonKey = Key('postReportButton');
   static const Key _reportReasonFieldKey = Key('reportReasonField');
+  static const String _replyInputFieldKeyPrefix = 'replyInputField';
+  static const String _replyActionButtonKeyPrefix = 'replyActionButton';
+  static const String _replySendButtonKeyPrefix = 'replySendButton';
+  static const String _replyCancelButtonKeyPrefix = 'replyCancelButton';
   final _commentController = TextEditingController();
+  final _replyController = TextEditingController();
   final _detailScrollController = ScrollController();
   bool _isSubmitting = false;
+  bool _isSubmittingReply = false;
+  String? _activeReplyParentId;
 
   @override
   void initState() {
@@ -49,6 +56,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ..removeListener(_onDetailScroll)
       ..dispose();
     _commentController.dispose();
+    _replyController.dispose();
     super.dispose();
   }
 
@@ -64,8 +72,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  Future<void> _submitComment() async {
-    if (_commentController.text.trim().isEmpty) return;
+  Future<void> _submitComment({String? parentId}) async {
+    final isReply = parentId != null;
+    final targetController = isReply ? _replyController : _commentController;
+    if (targetController.text.trim().isEmpty) return;
 
     final authState = context.read<AuthCubit>().state;
     final currentUser = authState is AuthAuthenticated ? authState.user : null;
@@ -77,7 +87,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
 
     setState(() {
-      _isSubmitting = true;
+      if (isReply) {
+        _isSubmittingReply = true;
+      } else {
+        _isSubmitting = true;
+      }
     });
 
     try {
@@ -87,14 +101,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           id: '',
           postId: widget.postId,
           userId: currentUser.id,
-          content: _commentController.text.trim(),
+          content: targetController.text.trim(),
+          parentId: parentId,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         ),
       );
 
-      _commentController.clear();
+      targetController.clear();
       if (mounted) {
+        if (isReply) {
+          setState(() {
+            _activeReplyParentId = null;
+          });
+        }
         context.read<PostDetailCubit>().load(widget.postId);
         _reloadPostList();
         ScaffoldMessenger.of(
@@ -117,10 +137,30 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isSubmitting = false;
+          if (isReply) {
+            _isSubmittingReply = false;
+          } else {
+            _isSubmitting = false;
+          }
         });
       }
     }
+  }
+
+  void _startReply(String parentId) {
+    setState(() {
+      if (_activeReplyParentId != parentId) {
+        _replyController.clear();
+      }
+      _activeReplyParentId = parentId;
+    });
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _activeReplyParentId = null;
+      _replyController.clear();
+    });
   }
 
   String _resolveAuthorName(AppLocalizations l10n, UserProfile? author) {
@@ -325,6 +365,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 hasMoreComments: final hasMoreComments,
               ) =>
                 () {
+                  final loadedCommentIds =
+                      (post.comments ?? const <CommunityComment>[])
+                          .map((comment) => comment.id)
+                          .toSet();
                   final isOwner = currentUser?.id == post.userId;
                   final canReportPost =
                       !isOwner &&
@@ -449,8 +493,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 const SizedBox(height: 16),
                                 if (post.comments != null &&
                                     post.comments!.isNotEmpty)
-                                  ...post.comments!.map(
-                                    (comment) => _buildCommentTile(
+                                  ...post.comments!.map((comment) {
+                                    final isReply =
+                                        comment.parentId != null &&
+                                        loadedCommentIds.contains(
+                                          comment.parentId,
+                                        );
+                                    final canReply =
+                                        currentUser != null &&
+                                        !isGuest &&
+                                        comment.parentId == null &&
+                                        !comment.isDeletedContent &&
+                                        !comment.isWithdrawnContent;
+                                    return _buildCommentTile(
                                       context,
                                       comment,
                                       currentUser?.id == comment.userId,
@@ -459,8 +514,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           currentUser.id != comment.userId &&
                                           !comment.isDeletedContent &&
                                           !comment.isWithdrawnContent,
-                                    ),
-                                  )
+                                      canReply: canReply,
+                                      isReply: isReply,
+                                      isReplyInputActive:
+                                          _activeReplyParentId == comment.id,
+                                    );
+                                  })
                                 else
                                   Center(
                                     child: Padding(
@@ -535,7 +594,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   IconButton.filled(
                                     onPressed: _isSubmitting
                                         ? null
-                                        : _submitComment,
+                                        : () => _submitComment(),
                                     icon: _isSubmitting
                                         ? const SizedBox(
                                             width: 20,
@@ -582,16 +641,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     BuildContext context,
     CommunityComment comment,
     bool isOwner,
-    bool canReport,
-  ) {
+    bool canReport, {
+    required bool canReply,
+    required bool isReply,
+    required bool isReplyInputActive,
+  }) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final cardMargin = EdgeInsets.only(left: isReply ? 24 : 0, bottom: 8);
 
     if (_isDeletedCommentPlaceholder(comment)) {
       return SizedBox(
         width: double.infinity,
         child: Card(
-          margin: const EdgeInsets.only(bottom: 8),
+          margin: cardMargin,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             child: Text(
@@ -612,7 +675,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final commentContent = _resolveCommentContent(l10n, comment);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: cardMargin,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -696,6 +759,75 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(commentContent),
+            if (canReply)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: TextButton.icon(
+                  key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
+                  onPressed: _isSubmittingReply
+                      ? null
+                      : () => _startReply(comment.id),
+                  icon: const Icon(Icons.reply_outlined, size: 18),
+                  label: Text(l10n.replyAction),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+            if (isReplyInputActive && canReply)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Column(
+                  children: [
+                    TextField(
+                      key: ValueKey('$_replyInputFieldKeyPrefix-${comment.id}'),
+                      controller: _replyController,
+                      decoration: InputDecoration(
+                        hintText: l10n.replyHint,
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      maxLines: null,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          key: ValueKey(
+                            '$_replyCancelButtonKeyPrefix-${comment.id}',
+                          ),
+                          onPressed: _isSubmittingReply ? null : _cancelReply,
+                          child: Text(l10n.replyCancel),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton.filledTonal(
+                          key: ValueKey(
+                            '$_replySendButtonKeyPrefix-${comment.id}',
+                          ),
+                          onPressed: _isSubmittingReply
+                              ? null
+                              : () => _submitComment(parentId: comment.id),
+                          icon: _isSubmittingReply
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.send),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

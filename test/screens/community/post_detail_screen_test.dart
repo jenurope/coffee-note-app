@@ -130,6 +130,147 @@ void main() {
       verify(() => postListCubit.reload()).called(1);
     });
 
+    testWidgets('일반 댓글에 답글 작성 시 parent_id를 포함해 등록한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildPostWithReplyTarget(commentOwnerId: 'comment-owner'),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      when(() => postDetailCubit.load(any())).thenAnswer((_) async {});
+      when(() => communityService.createComment(any())).thenAnswer(
+        (invocation) async =>
+            invocation.positionalArguments.first as CommunityComment,
+      );
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-with-reply-target'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('replyActionButton-comment-parent')),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('replyInputField-comment-parent')),
+        '대댓글입니다.',
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('replySendButton-comment-parent')),
+      );
+      await tester.pumpAndSettle();
+
+      final capturedComment =
+          verify(
+                () => communityService.createComment(captureAny()),
+              ).captured.single
+              as CommunityComment;
+      expect(capturedComment.parentId, 'comment-parent');
+      expect(capturedComment.content, '대댓글입니다.');
+      verify(() => postDetailCubit.load('post-with-reply-target')).called(1);
+      verify(() => postListCubit.reload()).called(1);
+    });
+
+    testWidgets('삭제/탈퇴/대댓글에는 답글 액션을 노출하지 않는다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildPostForReplyActionVisibility(),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
+            home: PostDetailScreen(postId: 'post-reply-action-visibility'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('replyActionButton-comment-parent')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('replyActionButton-comment-reply')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('replyActionButton-comment-deleted')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('replyActionButton-comment-withdrawn')),
+        findsNothing,
+      );
+    });
+
     testWidgets('탈퇴 사용자 글/댓글은 안내 문구로만 표시한다', (tester) async {
       final authState = AuthState.authenticated(user: _testUser('viewer'));
       final postState = PostDetailState.loaded(post: _buildWithdrawnPost());
@@ -634,6 +775,100 @@ CommunityPost _buildPostWithReportableComment({
       ),
     ],
     commentCount: 1,
+  );
+}
+
+CommunityPost _buildPostWithReplyTarget({required String commentOwnerId}) {
+  final now = DateTime(2026, 2, 21, 14);
+  final commentAuthor = UserProfile(
+    id: commentOwnerId,
+    nickname: '댓글작성자닉',
+    email: '$commentOwnerId@example.com',
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  return CommunityPost(
+    id: 'post-with-reply-target',
+    userId: 'post-owner',
+    title: '일반 게시글 제목',
+    content: '일반 게시글 본문',
+    createdAt: now,
+    updatedAt: now,
+    comments: [
+      CommunityComment(
+        id: 'comment-parent',
+        postId: 'post-with-reply-target',
+        userId: commentOwnerId,
+        content: '답글 대상 댓글',
+        createdAt: now,
+        updatedAt: now,
+        author: commentAuthor,
+      ),
+    ],
+    commentCount: 1,
+  );
+}
+
+CommunityPost _buildPostForReplyActionVisibility() {
+  final now = DateTime(2026, 2, 21, 14);
+  final commentAuthor = UserProfile(
+    id: 'comment-owner',
+    nickname: '댓글작성자닉',
+    email: 'comment-owner@example.com',
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  return CommunityPost(
+    id: 'post-reply-action-visibility',
+    userId: 'post-owner',
+    title: '일반 게시글 제목',
+    content: '일반 게시글 본문',
+    createdAt: now,
+    updatedAt: now,
+    comments: [
+      CommunityComment(
+        id: 'comment-parent',
+        postId: 'post-reply-action-visibility',
+        userId: 'comment-owner',
+        content: '답글 가능한 부모 댓글',
+        createdAt: now,
+        updatedAt: now,
+        author: commentAuthor,
+      ),
+      CommunityComment(
+        id: 'comment-reply',
+        postId: 'post-reply-action-visibility',
+        userId: 'comment-owner',
+        content: '대댓글',
+        parentId: 'comment-parent',
+        createdAt: now.add(const Duration(minutes: 1)),
+        updatedAt: now.add(const Duration(minutes: 1)),
+        author: commentAuthor,
+      ),
+      CommunityComment(
+        id: 'comment-deleted',
+        postId: 'post-reply-action-visibility',
+        userId: 'comment-owner',
+        content: '삭제 댓글',
+        isDeletedContent: true,
+        createdAt: now.add(const Duration(minutes: 2)),
+        updatedAt: now.add(const Duration(minutes: 2)),
+        author: commentAuthor,
+      ),
+      CommunityComment(
+        id: 'comment-withdrawn',
+        postId: 'post-reply-action-visibility',
+        userId: 'comment-owner',
+        content: '탈퇴 댓글',
+        isWithdrawnContent: true,
+        createdAt: now.add(const Duration(minutes: 3)),
+        updatedAt: now.add(const Duration(minutes: 3)),
+        author: commentAuthor,
+      ),
+    ],
+    commentCount: 4,
   );
 }
 

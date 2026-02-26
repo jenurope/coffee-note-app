@@ -563,6 +563,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'An error occurred while saving comment. Please try again later.';
 
   @override
+  String get replyAction => 'Reply';
+
+  @override
+  String get replyHint => 'Enter a reply...';
+
+  @override
+  String get replyCancel => 'Cancel reply';
+
+  @override
   String get reportAction => 'Report';
 
   @override

@@ -1126,6 +1126,24 @@ abstract class AppLocalizations {
   /// **'An error occurred while saving comment. Please try again later.'**
   String get commentCreateFailed;
 
+  /// No description provided for @replyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get replyAction;
+
+  /// No description provided for @replyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a reply...'**
+  String get replyHint;
+
+  /// No description provided for @replyCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reply'**
+  String get replyCancel;
+
   /// No description provided for @reportAction.
   ///
   /// In en, this message translates to:

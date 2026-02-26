@@ -839,6 +839,57 @@ begin
 end;
 $$;
 
+create or replace function public.validate_community_comment_parent()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_parent_post_id uuid;
+  v_parent_parent_id uuid;
+begin
+  if new.parent_id is null then
+    return new;
+  end if;
+
+  if new.parent_id = new.id then
+    raise exception using
+      errcode = '23514',
+      message = 'community_comment_parent_self_reference',
+      hint = '댓글의 부모는 자기 자신일 수 없습니다.';
+  end if;
+
+  select c.post_id, c.parent_id
+    into v_parent_post_id, v_parent_parent_id
+    from public.community_comments c
+   where c.id = new.parent_id;
+
+  if not found then
+    raise exception using
+      errcode = '23503',
+      message = 'community_comment_parent_not_found',
+      hint = '부모 댓글을 찾을 수 없습니다.';
+  end if;
+
+  if v_parent_post_id <> new.post_id then
+    raise exception using
+      errcode = '23514',
+      message = 'community_comment_parent_post_mismatch',
+      hint = '부모 댓글은 같은 게시글에 속해야 합니다.';
+  end if;
+
+  if v_parent_parent_id is not null then
+    raise exception using
+      errcode = '23514',
+      message = 'community_comment_parent_depth_exceeded',
+      hint = '대댓글에는 다시 대댓글을 달 수 없습니다.';
+  end if;
+
+  return new;
+end;
+$$;
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -1012,6 +1063,7 @@ grant execute on function public.update_coffee_logs_updated_at_column() to anon,
 grant execute on function public.update_service_inquiries_updated_at_column() to anon, authenticated, service_role;
 grant execute on function public.update_updated_at() to anon, authenticated, service_role;
 grant execute on function public.update_updated_at_column() to anon, authenticated, service_role;
+grant execute on function public.validate_community_comment_parent() to anon, authenticated, service_role;
 grant execute on function public.withdraw_my_account() to anon, authenticated, service_role;
 
 -- ===== 트리거 =====
@@ -1039,6 +1091,13 @@ create trigger community_comments_hourly_limit_trigger
 before insert on public.community_comments
 for each row
 execute function public.enforce_community_comment_hourly_limit();
+
+drop trigger if exists validate_community_comment_parent_trigger
+  on public.community_comments;
+create trigger validate_community_comment_parent_trigger
+before insert or update of parent_id, post_id on public.community_comments
+for each row
+execute function public.validate_community_comment_parent();
 
 create trigger community_posts_updated_at
 before update on public.community_posts

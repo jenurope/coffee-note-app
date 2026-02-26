@@ -546,6 +546,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commentCreateFailed => 'コメント登録中にエラーが発生しました。しばらくしてから再試行してください。';
 
   @override
+  String get replyAction => '返信';
+
+  @override
+  String get replyHint => '返信を入力してください...';
+
+  @override
+  String get replyCancel => '返信をキャンセル';
+
+  @override
   String get reportAction => '通報';
 
   @override
