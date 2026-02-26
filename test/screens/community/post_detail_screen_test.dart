@@ -399,6 +399,8 @@ void main() {
       expect(find.text('원문 제목'), findsNothing);
       expect(find.text('원문 본문'), findsNothing);
       expect(find.text('원문 댓글'), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+      expect(find.byIcon(Icons.send), findsNothing);
     });
 
     testWidgets('삭제 댓글은 안내 문구만 표시하고 메뉴를 노출하지 않는다', (tester) async {

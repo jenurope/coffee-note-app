@@ -588,6 +588,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reportDuplicate => 'この対象はすでに通報済みです。';
 
   @override
+  String get deletedPostMessage => '削除された投稿です。';
+
+  @override
   String get deletedCommentMessage => '削除されたコメントです。';
 
   @override
@@ -953,6 +956,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errPostNotFound => '投稿が見つかりません。';
+
+  @override
+  String get errPostDeleted => '削除された投稿の詳細は表示できません。';
 
   @override
   String get coffeeTypeEspresso => 'エスプレッソ';

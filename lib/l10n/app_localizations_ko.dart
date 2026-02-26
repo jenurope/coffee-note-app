@@ -588,6 +588,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get reportDuplicate => '이미 신고한 대상입니다.';
 
   @override
+  String get deletedPostMessage => '삭제된 게시글입니다.';
+
+  @override
   String get deletedCommentMessage => '삭제된 댓글입니다.';
 
   @override
@@ -953,6 +956,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errPostNotFound => '게시글을 찾을 수 없습니다.';
+
+  @override
+  String get errPostDeleted => '삭제된 게시글은 상세 페이지를 볼 수 없습니다.';
 
   @override
   String get coffeeTypeEspresso => '에스프레소';

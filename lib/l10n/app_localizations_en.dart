@@ -607,6 +607,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportDuplicate => 'You have already reported this item.';
 
   @override
+  String get deletedPostMessage => 'This post has been deleted.';
+
+  @override
   String get deletedCommentMessage => 'This comment has been deleted.';
 
   @override
@@ -1000,6 +1003,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errPostNotFound => 'Post not found.';
+
+  @override
+  String get errPostDeleted => 'Deleted posts cannot be viewed in detail.';
 
   @override
   String get coffeeTypeEspresso => 'Espresso';
