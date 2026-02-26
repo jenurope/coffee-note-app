@@ -526,6 +526,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postScreenTitle => '投稿';
 
   @override
+  String get commentDetailTitle => 'コメント詳細';
+
+  @override
   String get commentCreated => 'コメントが登録されました。';
 
   @override

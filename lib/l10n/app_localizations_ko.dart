@@ -526,6 +526,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postScreenTitle => '게시글';
 
   @override
+  String get commentDetailTitle => '댓글 상세';
+
+  @override
   String get commentCreated => '댓글이 등록되었습니다.';
 
   @override

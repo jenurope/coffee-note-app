@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show PostgrestException, User;
@@ -106,16 +107,8 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-1'),
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(postId: 'post-1'),
           ),
         ),
       );
@@ -130,7 +123,7 @@ void main() {
       verify(() => postListCubit.reload()).called(1);
     });
 
-    testWidgets('일반 댓글에 답글 작성 시 parent_id를 포함해 등록한다', (tester) async {
+    testWidgets('일반 댓글의 답글 버튼을 누르면 댓글 상세 화면으로 이동한다', (tester) async {
       final authState = AuthState.authenticated(user: _testUser('viewer'));
       final postState = PostDetailState.loaded(
         post: _buildPostWithReplyTarget(commentOwnerId: 'comment-owner'),
@@ -139,11 +132,6 @@ void main() {
       when(() => authCubit.state).thenReturn(authState);
       when(() => postDetailCubit.state).thenReturn(postState);
       when(() => postListCubit.state).thenReturn(const PostListState.initial());
-      when(() => postDetailCubit.load(any())).thenAnswer((_) async {});
-      when(() => communityService.createComment(any())).thenAnswer(
-        (invocation) async =>
-            invocation.positionalArguments.first as CommunityComment,
-      );
       whenListen(
         authCubit,
         Stream<AuthState>.fromIterable([authState]),
@@ -160,6 +148,25 @@ void main() {
         initialState: const PostListState.initial(),
       );
 
+      final router = GoRouter(
+        initialLocation: '/community/post-with-reply-target',
+        routes: [
+          GoRoute(
+            path: '/community/:id',
+            builder: (context, state) =>
+                PostDetailScreen(postId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'comments/:commentId',
+                builder: (context, state) => Scaffold(
+                  body: Text('댓글상세:${state.pathParameters['commentId']}'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
       await tester.pumpWidget(
         MultiBlocProvider(
           providers: [
@@ -167,17 +174,7 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-with-reply-target'),
-          ),
+          child: _buildTestRouterApp(router),
         ),
       );
       await tester.pumpAndSettle();
@@ -186,24 +183,72 @@ void main() {
         find.byKey(const ValueKey('replyActionButton-comment-parent')),
       );
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey('replyInputField-comment-parent')),
-        '대댓글입니다.',
+
+      expect(find.text('댓글상세:comment-parent'), findsOneWidget);
+    });
+
+    testWidgets('프로필 게시글 상세에서도 답글 버튼으로 댓글 상세 화면으로 이동한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildPostWithReplyTarget(commentOwnerId: 'comment-owner'),
       );
-      await tester.tap(
-        find.byKey(const ValueKey('replySendButton-comment-parent')),
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      final router = GoRouter(
+        initialLocation: '/profile/posts/post-with-reply-target',
+        routes: [
+          GoRoute(
+            path: '/profile/posts/:id',
+            builder: (context, state) =>
+                PostDetailScreen(postId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'comments/:commentId',
+                builder: (context, state) => Scaffold(
+                  body: Text('프로필댓글상세:${state.pathParameters['commentId']}'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: _buildTestRouterApp(router),
+        ),
       );
       await tester.pumpAndSettle();
 
-      final capturedComment =
-          verify(
-                () => communityService.createComment(captureAny()),
-              ).captured.single
-              as CommunityComment;
-      expect(capturedComment.parentId, 'comment-parent');
-      expect(capturedComment.content, '대댓글입니다.');
-      verify(() => postDetailCubit.load('post-with-reply-target')).called(1);
-      verify(() => postListCubit.reload()).called(1);
+      await tester.tap(
+        find.byKey(const ValueKey('replyActionButton-comment-parent')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('프로필댓글상세:comment-parent'), findsOneWidget);
     });
 
     testWidgets('삭제/탈퇴/대댓글에는 답글 액션을 노출하지 않는다', (tester) async {
@@ -238,16 +283,10 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-reply-action-visibility'),
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(
+              postId: 'post-reply-action-visibility',
+            ),
           ),
         ),
       );
@@ -301,16 +340,8 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-withdrawn'),
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(postId: 'post-withdrawn'),
           ),
         ),
       );
@@ -358,16 +389,8 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-deleted-comment'),
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(postId: 'post-deleted-comment'),
           ),
         ),
       );
@@ -418,16 +441,8 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-1'),
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(postId: 'post-1'),
           ),
         ),
       );
@@ -494,16 +509,10 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-with-reportable-comment'),
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(
+              postId: 'post-with-reportable-comment',
+            ),
           ),
         ),
       );
@@ -564,16 +573,10 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-with-reportable-comment'),
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(
+              postId: 'post-with-reportable-comment',
+            ),
           ),
         ),
       );
@@ -631,16 +634,8 @@ void main() {
             BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
             BlocProvider<PostListCubit>.value(value: postListCubit),
           ],
-          child: const MaterialApp(
-            locale: Locale('ko'),
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [Locale('ko'), Locale('en'), Locale('ja')],
-            home: PostDetailScreen(postId: 'post-1'),
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(postId: 'post-1'),
           ),
         ),
       );
@@ -869,6 +864,36 @@ CommunityPost _buildPostForReplyActionVisibility() {
       ),
     ],
     commentCount: 4,
+  );
+}
+
+Widget _buildTestMaterialApp({required Widget home}) {
+  return MaterialApp(
+    theme: ThemeData(splashFactory: NoSplash.splashFactory),
+    locale: const Locale('ko'),
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+    home: home,
+  );
+}
+
+Widget _buildTestRouterApp(GoRouter router) {
+  return MaterialApp.router(
+    theme: ThemeData(splashFactory: NoSplash.splashFactory),
+    routerConfig: router,
+    locale: const Locale('ko'),
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
   );
 }
 

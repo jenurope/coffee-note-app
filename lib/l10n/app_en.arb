@@ -242,6 +242,7 @@
   "postUpdated": "Post has been updated.",
   "postSaveFailed": "An error occurred while saving post. Please try again later.",
   "postScreenTitle": "Post",
+  "commentDetailTitle": "Comment Detail",
   "commentCreated": "Comment has been registered.",
   "commentHint": "Enter a comment...",
   "commentsCount": "Comments {count}",

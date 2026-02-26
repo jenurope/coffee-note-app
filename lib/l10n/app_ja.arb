@@ -242,6 +242,7 @@
   "postUpdated": "投稿が更新されました。",
   "postSaveFailed": "投稿の保存中にエラーが発生しました。しばらくしてから再試行してください。",
   "postScreenTitle": "投稿",
+  "commentDetailTitle": "コメント詳細",
   "commentCreated": "コメントが登録されました。",
   "commentHint": "コメントを入力してください...",
   "commentsCount": "コメント {count}",

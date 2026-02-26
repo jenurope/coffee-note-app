@@ -541,6 +541,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postScreenTitle => 'Post';
 
   @override
+  String get commentDetailTitle => 'Comment Detail';
+
+  @override
   String get commentCreated => 'Comment has been registered.';
 
   @override

@@ -1090,6 +1090,12 @@ abstract class AppLocalizations {
   /// **'Post'**
   String get postScreenTitle;
 
+  /// No description provided for @commentDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment Detail'**
+  String get commentDetailTitle;
+
   /// No description provided for @commentCreated.
   ///
   /// In en, this message translates to:
