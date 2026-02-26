@@ -762,17 +762,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             if (canReply)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: TextButton.icon(
-                  key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
-                  onPressed: _isSubmittingReply
-                      ? null
-                      : () => _startReply(comment.id),
-                  icon: const Icon(Icons.reply_outlined, size: 18),
-                  label: Text(l10n.replyAction),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
+                    onPressed: _isSubmittingReply
+                        ? null
+                        : () => _startReply(comment.id),
+                    icon: const Icon(Icons.reply_outlined, size: 18),
+                    label: Text(l10n.replyAction),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
                 ),
               ),
