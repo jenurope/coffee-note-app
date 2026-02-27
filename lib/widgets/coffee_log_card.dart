@@ -105,10 +105,11 @@ class CoffeeLogCard extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   // 평점과 날짜
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       RatingStars(rating: log.rating, size: 16),
+                      const SizedBox(height: 4),
                       Text(
                         dateFormat.format(log.cafeVisitDate),
                         style: theme.textTheme.bodySmall?.copyWith(
