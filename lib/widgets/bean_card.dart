@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import '../core/image/app_image_cache_policy.dart';
 import '../domain/catalogs/roast_level_catalog.dart';
 import '../l10n/l10n.dart';
@@ -15,6 +16,9 @@ class BeanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final dateFormat = DateFormat.yMd(
+      Localizations.localeOf(context).toString(),
+    );
     final imageUrl = bean.imageUrl?.trim();
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
@@ -104,6 +108,13 @@ class BeanCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    dateFormat.format(bean.purchaseDate),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
 
                   // 테이스팅 노트
