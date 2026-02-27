@@ -168,8 +168,15 @@ class _MyPostListScreenState extends State<MyPostListScreen> {
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: InkWell(
-                                  onTap: () =>
-                                      context.push('/profile/posts/${post.id}'),
+                                  onTap: () async {
+                                    await context.push(
+                                      '/profile/posts/${post.id}',
+                                    );
+                                    if (!mounted) return;
+                                    await context
+                                        .read<PostListCubit>()
+                                        .reload();
+                                  },
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),

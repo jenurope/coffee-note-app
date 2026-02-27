@@ -152,6 +152,7 @@ void main() {
 
       expect(find.text('내 글 제목'), findsOneWidget);
       expect(find.text('DETAIL post-1'), findsNothing);
+      verify(() => postListCubit.reload()).called(1);
     });
 
     testWidgets('비인증 상태에서는 로그인 유도 UI를 노출한다', (tester) async {
