@@ -12,6 +12,7 @@ import '../../cubits/bean/bean_detail_cubit.dart';
 import '../../cubits/bean/bean_detail_state.dart';
 import '../../cubits/bean/bean_list_cubit.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
+import '../../domain/catalogs/brew_method_catalog.dart';
 import '../../domain/catalogs/roast_level_catalog.dart';
 import '../../l10n/l10n.dart';
 import '../../services/coffee_bean_service.dart';
@@ -168,7 +169,37 @@ class BeanDetailScreen extends StatelessWidget {
                                     label: l10n.beanInfoPurchaseLocation,
                                     value: bean.purchaseLocation!,
                                   ),
+                                if (bean.brewMethod != null)
+                                  _buildInfoRow(
+                                    theme,
+                                    icon: Icons.menu_book,
+                                    label: l10n.beanInfoBrewMethod,
+                                    value: BrewMethodCatalog.label(
+                                      l10n,
+                                      bean.brewMethod!,
+                                    ),
+                                  ),
                               ]),
+                              if (bean.recipe != null &&
+                                  bean.recipe!.trim().isNotEmpty) ...[
+                                const SizedBox(height: 24),
+                                Text(
+                                  l10n.recipeLabel,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Text(
+                                      bean.recipe!,
+                                      style: theme.textTheme.bodyLarge,
+                                    ),
+                                  ),
+                                ),
+                              ],
                               if (bean.tastingNotes != null &&
                                   bean.tastingNotes!.isNotEmpty) ...[
                                 const SizedBox(height: 24),

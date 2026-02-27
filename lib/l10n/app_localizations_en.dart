@@ -194,6 +194,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentCoffeeRecords => 'Recent Coffee Records';
 
   @override
+  String get dashboardRecipeManage => 'Recipe Management';
+
+  @override
+  String get dashboardRecipeManageSubtitle =>
+      'Manage your frequently used brew methods and recipes';
+
+  @override
   String get noBeanRecordsYet => 'No bean records yet';
 
   @override
@@ -286,6 +293,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get purchaseLocationHint => 'e.g. Official website';
 
   @override
+  String get beanRecipeSelectLabel => 'Load Managed Recipe';
+
+  @override
+  String get beanRecipeSelectHint =>
+      'Select a saved recipe to auto-fill fields';
+
+  @override
+  String get beanRecipeManualInput => 'Manual Input';
+
+  @override
+  String get brewMethodLabel => 'Brew Method';
+
+  @override
+  String get recipeLabel => 'Recipe';
+
+  @override
+  String get recipeHint => 'e.g. 16g / 250ml, 2:30';
+
+  @override
+  String get recipeRequired => 'Please enter recipe details';
+
+  @override
   String get tastingNotes => 'Tasting Notes';
 
   @override
@@ -337,6 +366,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get beanInfoPurchaseLocation => 'Purchase Location';
+
+  @override
+  String get beanInfoBrewMethod => 'Brew Method';
+
+  @override
+  String get beanRecipeManageTitle => 'Recipe Management';
+
+  @override
+  String get beanRecipeLoginRequired => 'Log in to manage your recipes.';
+
+  @override
+  String get beanRecipeAddAction => 'Add Recipe';
+
+  @override
+  String get beanRecipeEmptyTitle => 'No recipes yet';
+
+  @override
+  String get beanRecipeEmptySubtitle =>
+      'Add your go-to recipes and load them quickly in bean records.';
+
+  @override
+  String get beanRecipeCreateTitle => 'Add Recipe';
+
+  @override
+  String get beanRecipeEditTitle => 'Edit Recipe';
+
+  @override
+  String get beanRecipeNameLabel => 'Recipe Name';
+
+  @override
+  String get beanRecipeNameHint => 'e.g. Morning Pour Over';
+
+  @override
+  String get beanRecipeNameRequired => 'Please enter recipe name';
+
+  @override
+  String get beanRecipeLoadFailed => 'Failed to load recipe list.';
+
+  @override
+  String get beanRecipeSaveFailed =>
+      'Failed to save recipe. Please try again later.';
+
+  @override
+  String get beanRecipeCreated => 'Recipe has been added.';
+
+  @override
+  String get beanRecipeUpdated => 'Recipe has been updated.';
+
+  @override
+  String get beanRecipeDeleteTitle => 'Delete Recipe';
+
+  @override
+  String get beanRecipeDeleteConfirm => 'Do you want to delete this recipe?';
+
+  @override
+  String get beanRecipeDeleted => 'Recipe has been deleted.';
+
+  @override
+  String get beanRecipeDeleteFailed =>
+      'Failed to delete recipe. Please try again later.';
 
   @override
   String get beanDetailsSection => 'Bean Details';

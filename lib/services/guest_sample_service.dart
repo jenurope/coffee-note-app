@@ -4,6 +4,7 @@ import 'dart:ui' show Locale, PlatformDispatcher;
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 
 import '../domain/catalogs/coffee_type_catalog.dart';
+import '../domain/catalogs/brew_method_catalog.dart';
 import '../domain/catalogs/roast_level_catalog.dart';
 import '../models/coffee_bean.dart';
 import '../models/coffee_log.dart';
@@ -215,6 +216,8 @@ class GuestSampleService {
         rating: 4.6,
         tastingNotes: l10n.sampleBeanNote1,
         roastLevel: RoastLevelCatalog.light,
+        brewMethod: BrewMethodCatalog.pourOver,
+        recipe: '15g / 250ml, 2:30',
         price: 19000,
         purchaseLocation: l10n.sampleStoreOnline,
         imageUrl: null,
@@ -230,6 +233,8 @@ class GuestSampleService {
         rating: 4.3,
         tastingNotes: l10n.sampleBeanNote2,
         roastLevel: RoastLevelCatalog.medium,
+        brewMethod: BrewMethodCatalog.frenchPress,
+        recipe: '18g / 300ml, 4:00',
         price: 17500,
         purchaseLocation: l10n.sampleStoreOffline,
         imageUrl: null,
@@ -245,6 +250,8 @@ class GuestSampleService {
         rating: 4.8,
         tastingNotes: l10n.sampleBeanNote3,
         roastLevel: RoastLevelCatalog.mediumLight,
+        brewMethod: BrewMethodCatalog.aeroPress,
+        recipe: '16g / 240ml, 1:45',
         price: 22000,
         purchaseLocation: l10n.sampleStoreSubscription,
         imageUrl: null,

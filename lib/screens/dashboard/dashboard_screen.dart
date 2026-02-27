@@ -48,9 +48,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ? metadataName
                 : l10n.userDefault;
             return Scaffold(
-              appBar: AppBar(
-                title: Text(l10n.appTitle),
-              ),
+              appBar: AppBar(title: Text(l10n.appTitle)),
               body: RefreshIndicator(
                 onRefresh: () => context.read<DashboardCubit>().refresh(),
                 child: switch (dashState) {
@@ -171,6 +169,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                 ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          if (currentUser != null && !isGuest) ...[
+                            Card(
+                              clipBehavior: Clip.antiAlias,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.menu_book_rounded,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                title: Text(context.l10n.dashboardRecipeManage),
+                                subtitle: Text(
+                                  context.l10n.dashboardRecipeManageSubtitle,
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => context.push('/beans/recipes'),
                               ),
                             ),
                             const SizedBox(height: 24),

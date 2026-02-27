@@ -188,6 +188,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recentCoffeeRecords => '最近のコーヒー記録';
 
   @override
+  String get dashboardRecipeManage => 'レシピ管理';
+
+  @override
+  String get dashboardRecipeManageSubtitle => 'よく使う抽出方法とレシピを管理しましょう';
+
+  @override
   String get noBeanRecordsYet => 'まだ豆の記録がありません';
 
   @override
@@ -280,6 +286,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get purchaseLocationHint => '例: 公式サイト';
 
   @override
+  String get beanRecipeSelectLabel => '管理レシピを読み込む';
+
+  @override
+  String get beanRecipeSelectHint => '保存済みレシピを選ぶと自動入力されます';
+
+  @override
+  String get beanRecipeManualInput => '手入力';
+
+  @override
+  String get brewMethodLabel => '抽出方法';
+
+  @override
+  String get recipeLabel => 'レシピ';
+
+  @override
+  String get recipeHint => '例: 16g / 250ml, 2:30';
+
+  @override
+  String get recipeRequired => 'レシピを入力してください';
+
+  @override
   String get tastingNotes => 'テイスティングノート';
 
   @override
@@ -326,6 +353,63 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get beanInfoPurchaseLocation => '購入先';
+
+  @override
+  String get beanInfoBrewMethod => '抽出方法';
+
+  @override
+  String get beanRecipeManageTitle => 'レシピ管理';
+
+  @override
+  String get beanRecipeLoginRequired => 'ログイン後にレシピを管理できます。';
+
+  @override
+  String get beanRecipeAddAction => 'レシピ追加';
+
+  @override
+  String get beanRecipeEmptyTitle => '登録されたレシピがありません';
+
+  @override
+  String get beanRecipeEmptySubtitle => 'よく使うレシピを追加して豆記録で素早く読み込みましょう。';
+
+  @override
+  String get beanRecipeCreateTitle => 'レシピ追加';
+
+  @override
+  String get beanRecipeEditTitle => 'レシピ編集';
+
+  @override
+  String get beanRecipeNameLabel => 'レシピ名';
+
+  @override
+  String get beanRecipeNameHint => '例: 朝のハンドドリップ';
+
+  @override
+  String get beanRecipeNameRequired => 'レシピ名を入力してください';
+
+  @override
+  String get beanRecipeLoadFailed => 'レシピ一覧の読み込みに失敗しました。';
+
+  @override
+  String get beanRecipeSaveFailed => 'レシピ保存中にエラーが発生しました。しばらくしてから再試行してください。';
+
+  @override
+  String get beanRecipeCreated => 'レシピが追加されました。';
+
+  @override
+  String get beanRecipeUpdated => 'レシピが更新されました。';
+
+  @override
+  String get beanRecipeDeleteTitle => 'レシピ削除';
+
+  @override
+  String get beanRecipeDeleteConfirm => 'このレシピを削除しますか？';
+
+  @override
+  String get beanRecipeDeleted => 'レシピが削除されました。';
+
+  @override
+  String get beanRecipeDeleteFailed => 'レシピ削除中にエラーが発生しました。しばらくしてから再試行してください。';
 
   @override
   String get beanDetailsSection => '豆の詳細';

@@ -18,6 +18,7 @@ import '../screens/auth/terms_consent_screen.dart';
 import '../screens/beans/bean_detail_screen.dart';
 import '../screens/beans/bean_form_screen.dart';
 import '../screens/beans/bean_list_screen.dart';
+import '../screens/beans/bean_recipe_manage_screen.dart';
 import '../screens/community/community_screen.dart';
 import '../screens/community/comment_detail_screen.dart';
 import '../screens/community/post_detail_screen.dart';
@@ -43,6 +44,7 @@ abstract final class AppRoutePath {
   static const terms = '/auth/terms';
   static const dashboard = '/';
   static const beans = '/beans';
+  static const beanRecipes = '/beans/recipes';
   static const logs = '/logs';
   static const community = '/community';
   static const profile = '/profile';
@@ -120,6 +122,10 @@ class AppRouteBuilders {
     String? beanId,
   }) {
     return BeanFormScreen(beanId: beanId);
+  }
+
+  Widget buildBeanRecipeManage(BuildContext context, GoRouterState state) {
+    return const BeanRecipeManageScreen();
   }
 
   Widget buildLogs(BuildContext context, GoRouterState state) {
@@ -345,6 +351,12 @@ GoRouter createAppRouter({
                   ),
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'recipes',
+                    name: 'bean-recipes',
+                    builder: (context, state) =>
+                        routeBuilders.buildBeanRecipeManage(context, state),
+                  ),
                   GoRoute(
                     path: 'new',
                     name: 'bean-new',

@@ -9,6 +9,8 @@ class CoffeeBean {
   final double rating;
   final String? tastingNotes;
   final String? roastLevel;
+  final String? brewMethod;
+  final String? recipe;
   final int? price;
   final String? purchaseLocation;
   final String? imageUrl;
@@ -24,6 +26,8 @@ class CoffeeBean {
     required this.rating,
     this.tastingNotes,
     this.roastLevel,
+    this.brewMethod,
+    this.recipe,
     this.price,
     this.purchaseLocation,
     this.imageUrl,
@@ -41,6 +45,8 @@ class CoffeeBean {
       rating: (json['rating'] as num).toDouble(),
       tastingNotes: json['tasting_notes'] as String?,
       roastLevel: json['roast_level'] as String?,
+      brewMethod: json['brew_method'] as String?,
+      recipe: json['recipe'] as String?,
       price: json['price'] as int?,
       purchaseLocation: json['purchase_location'] as String?,
       imageUrl: json['image_url'] as String?,
@@ -59,6 +65,8 @@ class CoffeeBean {
       'rating': rating,
       'tasting_notes': tastingNotes,
       'roast_level': roastLevel,
+      'brew_method': brewMethod,
+      'recipe': recipe,
       'price': price,
       'purchase_location': purchaseLocation,
       'image_url': imageUrl,
@@ -76,6 +84,8 @@ class CoffeeBean {
       'rating': rating,
       'tasting_notes': tastingNotes,
       'roast_level': roastLevel,
+      'brew_method': brewMethod,
+      'recipe': recipe,
       'price': price,
       'purchase_location': purchaseLocation,
       'image_url': imageUrl,
@@ -91,6 +101,8 @@ class CoffeeBean {
     double? rating,
     String? tastingNotes,
     String? roastLevel,
+    String? brewMethod,
+    String? recipe,
     int? price,
     String? purchaseLocation,
     String? imageUrl,
@@ -106,6 +118,8 @@ class CoffeeBean {
       rating: rating ?? this.rating,
       tastingNotes: tastingNotes ?? this.tastingNotes,
       roastLevel: roastLevel ?? this.roastLevel,
+      brewMethod: brewMethod ?? this.brewMethod,
+      recipe: recipe ?? this.recipe,
       price: price ?? this.price,
       purchaseLocation: purchaseLocation ?? this.purchaseLocation,
       imageUrl: imageUrl ?? this.imageUrl,

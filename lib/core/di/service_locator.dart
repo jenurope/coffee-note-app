@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../config/supabase_config.dart';
 import '../../services/auth_service.dart';
+import '../../services/bean_recipe_service.dart';
 import '../../services/coffee_bean_service.dart';
 import '../../services/coffee_log_service.dart';
 import '../../services/community_service.dart';
@@ -34,6 +35,11 @@ void setupServiceLocator() {
   // Coffee Bean
   getIt.registerLazySingleton<CoffeeBeanService>(
     () => CoffeeBeanService(client),
+  );
+
+  // Bean Recipe
+  getIt.registerLazySingleton<BeanRecipeService>(
+    () => BeanRecipeService(client),
   );
 
   // Coffee Log

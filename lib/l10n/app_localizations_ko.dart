@@ -188,6 +188,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recentCoffeeRecords => '최근 커피 기록';
 
   @override
+  String get dashboardRecipeManage => '레시피 관리';
+
+  @override
+  String get dashboardRecipeManageSubtitle => '자주 쓰는 추출 방식과 레시피를 관리하세요';
+
+  @override
   String get noBeanRecordsYet => '아직 원두 기록이 없습니다';
 
   @override
@@ -280,6 +286,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String get purchaseLocationHint => '예: 공식 홈페이지';
 
   @override
+  String get beanRecipeSelectLabel => '관리 레시피 불러오기';
+
+  @override
+  String get beanRecipeSelectHint => '저장된 레시피를 선택하면 자동 입력됩니다';
+
+  @override
+  String get beanRecipeManualInput => '직접 입력';
+
+  @override
+  String get brewMethodLabel => '추출 방식';
+
+  @override
+  String get recipeLabel => '레시피';
+
+  @override
+  String get recipeHint => '예: 16g / 250ml, 2:30';
+
+  @override
+  String get recipeRequired => '레시피를 입력해주세요';
+
+  @override
   String get tastingNotes => '테이스팅 노트';
 
   @override
@@ -326,6 +353,63 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get beanInfoPurchaseLocation => '구매처';
+
+  @override
+  String get beanInfoBrewMethod => '추출 방식';
+
+  @override
+  String get beanRecipeManageTitle => '레시피 관리';
+
+  @override
+  String get beanRecipeLoginRequired => '로그인 후 레시피를 관리할 수 있습니다.';
+
+  @override
+  String get beanRecipeAddAction => '레시피 추가';
+
+  @override
+  String get beanRecipeEmptyTitle => '등록된 레시피가 없습니다';
+
+  @override
+  String get beanRecipeEmptySubtitle => '자주 쓰는 레시피를 추가해 원두 기록에서 빠르게 불러오세요.';
+
+  @override
+  String get beanRecipeCreateTitle => '레시피 추가';
+
+  @override
+  String get beanRecipeEditTitle => '레시피 수정';
+
+  @override
+  String get beanRecipeNameLabel => '레시피 이름';
+
+  @override
+  String get beanRecipeNameHint => '예: 아침 핸드드립';
+
+  @override
+  String get beanRecipeNameRequired => '레시피 이름을 입력해주세요';
+
+  @override
+  String get beanRecipeLoadFailed => '레시피 목록을 불러오지 못했습니다.';
+
+  @override
+  String get beanRecipeSaveFailed => '레시피 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get beanRecipeCreated => '레시피가 추가되었습니다.';
+
+  @override
+  String get beanRecipeUpdated => '레시피가 수정되었습니다.';
+
+  @override
+  String get beanRecipeDeleteTitle => '레시피 삭제';
+
+  @override
+  String get beanRecipeDeleteConfirm => '이 레시피를 삭제하시겠습니까?';
+
+  @override
+  String get beanRecipeDeleted => '레시피가 삭제되었습니다.';
+
+  @override
+  String get beanRecipeDeleteFailed => '레시피 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 
   @override
   String get beanDetailsSection => '원두 상세';
