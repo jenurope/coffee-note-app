@@ -26,6 +26,7 @@ drop table if exists public.community_reports cascade;
 drop table if exists public.community_comments cascade;
 drop table if exists public.community_posts cascade;
 drop table if exists public.coffee_logs cascade;
+drop table if exists public.bean_recipes cascade;
 drop table if exists public.coffee_beans cascade;
 drop table if exists public.profiles cascade;
 drop table if exists public.withdraw_storage_cleanup_failures cascade;
@@ -89,6 +90,8 @@ create table public.coffee_beans (
   rating numeric not null,
   tasting_notes text,
   roast_level text,
+  brew_method text,
+  recipe text,
   price integer,
   purchase_location text,
   image_url text,
@@ -100,7 +103,36 @@ create table public.coffee_beans (
       roast_level is null
       or roast_level in ('light','medium_light','medium','medium_dark','dark')
     ),
+  constraint coffee_beans_brew_method_check
+    check (
+      brew_method is null
+      or brew_method in (
+        'espresso','pour_over','french_press','moka_pot',
+        'aeropress','cold_brew','siphon','turkish','other'
+      )
+    ),
   constraint coffee_beans_user_id_fkey
+    foreign key (user_id)
+    references auth.users(id)
+    on delete cascade
+);
+
+create table public.bean_recipes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  name text not null,
+  brew_method text not null,
+  recipe text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint bean_recipes_brew_method_check
+    check (
+      brew_method in (
+        'espresso','pour_over','french_press','moka_pot',
+        'aeropress','cold_brew','siphon','turkish','other'
+      )
+    ),
+  constraint bean_recipes_user_id_fkey
     foreign key (user_id)
     references auth.users(id)
     on delete cascade
@@ -295,6 +327,9 @@ alter table public.service_inquiries
 create index idx_coffee_beans_user_id
   on public.coffee_beans(user_id);
 
+create index idx_bean_recipes_user_id_created_at_desc
+  on public.bean_recipes(user_id, created_at desc);
+
 create index idx_coffee_logs_user_id
   on public.coffee_logs(user_id);
 
@@ -369,6 +404,7 @@ create index withdraw_storage_cleanup_failures_user_id_idx
 
 -- ===== RLS 활성화 =====
 alter table public.coffee_beans enable row level security;
+alter table public.bean_recipes enable row level security;
 alter table public.coffee_logs enable row level security;
 alter table public.community_comments enable row level security;
 alter table public.community_posts enable row level security;
@@ -407,6 +443,36 @@ create policy "사용자는 자신의 커피 원두만 수정할 수 있음"
 
 create policy "사용자는 자신의 커피 원두만 삭제할 수 있음"
   on public.coffee_beans
+  for delete
+  to public
+  using ((select auth.uid() as uid) = user_id);
+
+-- bean_recipes
+drop policy if exists "사용자는 자신의 레시피만 조회할 수 있음" on public.bean_recipes;
+drop policy if exists "사용자는 자신의 레시피만 생성할 수 있음" on public.bean_recipes;
+drop policy if exists "사용자는 자신의 레시피만 수정할 수 있음" on public.bean_recipes;
+drop policy if exists "사용자는 자신의 레시피만 삭제할 수 있음" on public.bean_recipes;
+
+create policy "사용자는 자신의 레시피만 조회할 수 있음"
+  on public.bean_recipes
+  for select
+  to public
+  using ((select auth.uid() as uid) = user_id);
+
+create policy "사용자는 자신의 레시피만 생성할 수 있음"
+  on public.bean_recipes
+  for insert
+  to public
+  with check ((select auth.uid() as uid) = user_id);
+
+create policy "사용자는 자신의 레시피만 수정할 수 있음"
+  on public.bean_recipes
+  for update
+  to public
+  using ((select auth.uid() as uid) = user_id);
+
+create policy "사용자는 자신의 레시피만 삭제할 수 있음"
+  on public.bean_recipes
   for delete
   to public
   using ((select auth.uid() as uid) = user_id);
@@ -1144,6 +1210,11 @@ before update on public.coffee_beans
 for each row
 execute function public.update_updated_at_column();
 
+create trigger bean_recipes_updated_at
+before update on public.bean_recipes
+for each row
+execute function public.update_updated_at_column();
+
 create trigger coffee_logs_updated_at
 before update on public.coffee_logs
 for each row
@@ -1238,6 +1309,7 @@ grant select, insert, update on table public.profiles to authenticated;
 grant all privileges on table public.profiles to service_role;
 
 grant all privileges on table public.coffee_beans to anon, authenticated, service_role;
+grant all privileges on table public.bean_recipes to anon, authenticated, service_role;
 grant all privileges on table public.coffee_logs to anon, authenticated, service_role;
 grant all privileges on table public.community_posts to anon, authenticated, service_role;
 grant all privileges on table public.community_comments to anon, authenticated, service_role;

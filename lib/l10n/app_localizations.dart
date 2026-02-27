@@ -442,6 +442,18 @@ abstract class AppLocalizations {
   /// **'Recent Coffee Records'**
   String get recentCoffeeRecords;
 
+  /// No description provided for @dashboardRecipeManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Management'**
+  String get dashboardRecipeManage;
+
+  /// No description provided for @dashboardRecipeManageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your frequently used brew methods and recipes'**
+  String get dashboardRecipeManageSubtitle;
+
   /// No description provided for @noBeanRecordsYet.
   ///
   /// In en, this message translates to:
@@ -622,6 +634,48 @@ abstract class AppLocalizations {
   /// **'e.g. Official website'**
   String get purchaseLocationHint;
 
+  /// No description provided for @beanRecipeSelectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Load Managed Recipe'**
+  String get beanRecipeSelectLabel;
+
+  /// No description provided for @beanRecipeSelectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a saved recipe to auto-fill fields'**
+  String get beanRecipeSelectHint;
+
+  /// No description provided for @beanRecipeManualInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Input'**
+  String get beanRecipeManualInput;
+
+  /// No description provided for @brewMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Brew Method'**
+  String get brewMethodLabel;
+
+  /// No description provided for @recipeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe'**
+  String get recipeLabel;
+
+  /// No description provided for @recipeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 16g / 250ml, 2:30'**
+  String get recipeHint;
+
+  /// No description provided for @recipeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter recipe details'**
+  String get recipeRequired;
+
   /// No description provided for @tastingNotes.
   ///
   /// In en, this message translates to:
@@ -717,6 +771,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Purchase Location'**
   String get beanInfoPurchaseLocation;
+
+  /// No description provided for @beanInfoBrewMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Brew Method'**
+  String get beanInfoBrewMethod;
+
+  /// No description provided for @beanRecipeManageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Management'**
+  String get beanRecipeManageTitle;
+
+  /// No description provided for @beanRecipeLoginRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to manage your recipes.'**
+  String get beanRecipeLoginRequired;
+
+  /// No description provided for @beanRecipeAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Recipe'**
+  String get beanRecipeAddAction;
+
+  /// No description provided for @beanRecipeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipes yet'**
+  String get beanRecipeEmptyTitle;
+
+  /// No description provided for @beanRecipeEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your go-to recipes and load them quickly in bean records.'**
+  String get beanRecipeEmptySubtitle;
+
+  /// No description provided for @beanRecipeCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Recipe'**
+  String get beanRecipeCreateTitle;
+
+  /// No description provided for @beanRecipeEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Recipe'**
+  String get beanRecipeEditTitle;
+
+  /// No description provided for @beanRecipeNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Name'**
+  String get beanRecipeNameLabel;
+
+  /// No description provided for @beanRecipeNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Morning Pour Over'**
+  String get beanRecipeNameHint;
+
+  /// No description provided for @beanRecipeNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter recipe name'**
+  String get beanRecipeNameRequired;
+
+  /// No description provided for @beanRecipeLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load recipe list.'**
+  String get beanRecipeLoadFailed;
+
+  /// No description provided for @beanRecipeSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save recipe. Please try again later.'**
+  String get beanRecipeSaveFailed;
+
+  /// No description provided for @beanRecipeCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe has been added.'**
+  String get beanRecipeCreated;
+
+  /// No description provided for @beanRecipeUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe has been updated.'**
+  String get beanRecipeUpdated;
+
+  /// No description provided for @beanRecipeDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Recipe'**
+  String get beanRecipeDeleteTitle;
+
+  /// No description provided for @beanRecipeDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to delete this recipe?'**
+  String get beanRecipeDeleteConfirm;
+
+  /// No description provided for @beanRecipeDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe has been deleted.'**
+  String get beanRecipeDeleted;
+
+  /// No description provided for @beanRecipeDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete recipe. Please try again later.'**
+  String get beanRecipeDeleteFailed;
 
   /// No description provided for @beanDetailsSection.
   ///

@@ -9,10 +9,13 @@ import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/bean/bean_list_cubit.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
+import '../../domain/catalogs/brew_method_catalog.dart';
 import '../../domain/catalogs/roast_level_catalog.dart';
 import '../../l10n/l10n.dart';
+import '../../models/bean_recipe.dart';
 import '../../models/coffee_bean.dart';
 
+import '../../services/bean_recipe_service.dart';
 import '../../services/coffee_bean_service.dart';
 import '../../services/image_upload_service.dart';
 import '../../widgets/common/common_widgets.dart';
@@ -29,16 +32,24 @@ class BeanFormScreen extends StatefulWidget {
 }
 
 class _BeanFormScreenState extends State<BeanFormScreen> {
+  static const String _manualRecipeOption = '__manual__';
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _roasteryController = TextEditingController();
   final _tastingNotesController = TextEditingController();
   final _priceController = TextEditingController();
   final _purchaseLocationController = TextEditingController();
+  final _recipeController = TextEditingController();
 
   DateTime _purchaseDate = DateTime.now();
   double _rating = 3.0;
   String? _roastLevel = RoastLevelCatalog.medium;
+  String _selectedRecipeOption = _manualRecipeOption;
+  String _brewMethod = BrewMethodCatalog.pourOver;
+  List<BeanRecipe> _managedRecipes = const <BeanRecipe>[];
+  bool _isLoadingManagedRecipes = false;
+  bool _didLoadManagedRecipes = false;
   bool _isLoading = false;
   bool _isInitialized = false;
   bool _allowPop = false;
@@ -53,6 +64,16 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     } else {
       _captureInitialSnapshot();
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoadManagedRecipes) {
+      return;
+    }
+    _didLoadManagedRecipes = true;
+    _loadManagedRecipes();
   }
 
   void _loadBean() {
@@ -90,6 +111,33 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     });
   }
 
+  void _applyManagedRecipe(String? id) {
+    if (id == null || id == _manualRecipeOption) {
+      setState(() {
+        _selectedRecipeOption = _manualRecipeOption;
+      });
+      return;
+    }
+
+    BeanRecipe? recipe;
+    for (final item in _managedRecipes) {
+      if (item.id == id) {
+        recipe = item;
+        break;
+      }
+    }
+    if (recipe == null) {
+      return;
+    }
+    final selectedRecipe = recipe;
+
+    setState(() {
+      _selectedRecipeOption = id;
+      _brewMethod = selectedRecipe.brewMethod;
+      _recipeController.text = selectedRecipe.recipe;
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -97,6 +145,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     _tastingNotesController.dispose();
     _priceController.dispose();
     _purchaseLocationController.dispose();
+    _recipeController.dispose();
     super.dispose();
   }
 
@@ -112,8 +161,51 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     _purchaseDate = bean.purchaseDate;
     _rating = bean.rating;
     _roastLevel = bean.roastLevel;
+    _brewMethod = bean.brewMethod ?? BrewMethodCatalog.pourOver;
+    _recipeController.text = bean.recipe ?? '';
     _existingImageUrl = bean.imageUrl;
     _captureInitialSnapshot();
+  }
+
+  Future<void> _loadManagedRecipes() async {
+    AuthState? authState;
+    try {
+      authState = context.read<AuthCubit>().state;
+    } catch (_) {
+      authState = null;
+    }
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    if (currentUser == null) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingManagedRecipes = true;
+    });
+
+    try {
+      final service = getIt<BeanRecipeService>();
+      final recipes = await service.getRecipes(currentUser.id);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _managedRecipes = recipes;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.beanRecipeLoadFailed)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingManagedRecipes = false;
+        });
+      }
+    }
   }
 
   Future<void> _selectDate() async {
@@ -223,6 +315,8 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
       purchaseDate: _normalizedDate(_purchaseDate),
       rating: _rating,
       roastLevel: _roastLevel,
+      brewMethod: _brewMethod,
+      recipe: _normalizedText(_recipeController.text),
       imageReference: _normalizedExistingImageReference(),
       selectedImagePath: _selectedImage?.path,
     );
@@ -316,6 +410,10 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
             ? null
             : _tastingNotesController.text.trim(),
         roastLevel: _roastLevel,
+        brewMethod: _brewMethod,
+        recipe: _recipeController.text.trim().isEmpty
+            ? null
+            : _recipeController.text.trim(),
         price: _priceController.text.isEmpty
             ? null
             : int.tryParse(_priceController.text),
@@ -380,6 +478,10 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     final appBarActionColor =
         theme.appBarTheme.foregroundColor ?? theme.colorScheme.onPrimary;
     final appBarDisabledActionColor = appBarActionColor.withValues(alpha: 0.5);
+    final recipeIds = _managedRecipes.map((e) => e.id).toSet();
+    final recipeSelectionValue = recipeIds.contains(_selectedRecipeOption)
+        ? _selectedRecipeOption
+        : _manualRecipeOption;
 
     // 수정 모드일 때 기존 데이터 로드 (initState로 이동됨)
 
@@ -661,6 +763,99 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // 관리 레시피 불러오기
+                  DropdownButtonFormField<String>(
+                    key: const Key('bean_recipe_template_dropdown'),
+                    initialValue: recipeSelectionValue,
+                    decoration: InputDecoration(
+                      labelText: context.l10n.beanRecipeSelectLabel,
+                      hintText: context.l10n.beanRecipeSelectHint,
+                      prefixIcon: const Icon(Icons.menu_book_outlined),
+                      suffixIcon: IconButton(
+                        icon: _isLoadingManagedRecipes
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.refresh),
+                        onPressed: _isLoadingManagedRecipes
+                            ? null
+                            : _loadManagedRecipes,
+                      ),
+                    ),
+                    items: [
+                      DropdownMenuItem<String>(
+                        value: _manualRecipeOption,
+                        child: Text(context.l10n.beanRecipeManualInput),
+                      ),
+                      ..._managedRecipes.map(
+                        (recipe) => DropdownMenuItem<String>(
+                          value: recipe.id,
+                          child: Text(
+                            '${recipe.name} · ${BrewMethodCatalog.label(context.l10n, recipe.brewMethod)}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: _isLoadingManagedRecipes
+                        ? null
+                        : _applyManagedRecipe,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 추출 방식
+                  Text(
+                    context.l10n.brewMethodLabel,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: BrewMethodCatalog.codes
+                        .map((method) {
+                          return ChoiceChip(
+                            label: Text(
+                              BrewMethodCatalog.label(context.l10n, method),
+                            ),
+                            selected: _brewMethod == method,
+                            onSelected: (selected) {
+                              if (!selected) {
+                                return;
+                              }
+                              setState(() {
+                                _brewMethod = method;
+                                _selectedRecipeOption = _manualRecipeOption;
+                              });
+                            },
+                          );
+                        })
+                        .toList(growable: false),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 레시피
+                  CustomTextField(
+                    key: const Key('bean_recipe_text_field'),
+                    label: context.l10n.recipeLabel,
+                    hint: context.l10n.recipeHint,
+                    controller: _recipeController,
+                    maxLines: 5,
+                    textInputAction: TextInputAction.next,
+                    onChanged: (_) {
+                      if (_selectedRecipeOption != _manualRecipeOption) {
+                        setState(() {
+                          _selectedRecipeOption = _manualRecipeOption;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
                   // 가격
                   CustomTextField(
                     label: context.l10n.price,
@@ -710,6 +905,8 @@ class _BeanFormSnapshot {
     required this.purchaseDate,
     required this.rating,
     required this.roastLevel,
+    required this.brewMethod,
+    required this.recipe,
     required this.imageReference,
     required this.selectedImagePath,
   });
@@ -722,6 +919,8 @@ class _BeanFormSnapshot {
   final DateTime purchaseDate;
   final double rating;
   final String? roastLevel;
+  final String brewMethod;
+  final String recipe;
   final String? imageReference;
   final String? selectedImagePath;
 
@@ -737,6 +936,8 @@ class _BeanFormSnapshot {
         other.purchaseDate == purchaseDate &&
         other.rating == rating &&
         other.roastLevel == roastLevel &&
+        other.brewMethod == brewMethod &&
+        other.recipe == recipe &&
         other.imageReference == imageReference &&
         other.selectedImagePath == selectedImagePath;
   }
@@ -751,6 +952,8 @@ class _BeanFormSnapshot {
     purchaseDate,
     rating,
     roastLevel,
+    brewMethod,
+    recipe,
     imageReference,
     selectedImagePath,
   );
