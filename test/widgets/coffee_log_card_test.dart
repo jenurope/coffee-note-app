@@ -26,6 +26,7 @@ void main() {
       updatedAt: DateTime(2026, 2, 15),
     );
     final expectedDate = DateFormat.yMd('ko').format(log.cafeVisitDate);
+    final expectedRating = log.rating.toStringAsFixed(1);
 
     await tester.pumpWidget(
       _TestApp(
@@ -35,18 +36,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RatingStars), findsOneWidget);
+    expect(find.text(expectedRating), findsOneWidget);
     expect(find.text(expectedDate), findsOneWidget);
 
     final hasVerticalRatingDate = tester
         .widgetList<Column>(find.byType(Column))
         .any((column) {
-          final hasRating = column.children.any(
-            (child) => child is RatingStars,
-          );
+          final hasRatingRow = column.children.any((child) {
+            if (child is! Row) {
+              return false;
+            }
+            final hasRatingStars = child.children.any(
+              (rowChild) => rowChild is RatingStars,
+            );
+            final hasRatingText = child.children.any(
+              (rowChild) => rowChild is Text && rowChild.data == expectedRating,
+            );
+            return hasRatingStars && hasRatingText;
+          });
           final hasDateText = column.children.any(
             (child) => child is Text && child.data == expectedDate,
           );
-          return hasRating && hasDateText;
+          return hasRatingRow && hasDateText;
         });
     expect(hasVerticalRatingDate, isTrue);
 

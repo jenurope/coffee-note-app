@@ -108,7 +108,18 @@ class CoffeeLogCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      RatingStars(rating: log.rating, size: 16),
+                      Row(
+                        children: [
+                          RatingStars(rating: log.rating, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            log.rating.toStringAsFixed(1),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         dateFormat.format(log.cafeVisitDate),
