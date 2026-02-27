@@ -650,7 +650,12 @@ class CommunityService {
     required bool includeComments,
   }) {
     if (!includeProfiles) {
-      if (!includeComments) return '*';
+      if (!includeComments) {
+        return '''
+          *,
+          comment_stats:community_comments(count)
+        ''';
+      }
       return '''
         *,
         community_comments(*)
@@ -662,7 +667,8 @@ class CommunityService {
         *,
         profiles!community_posts_user_id_fkey(
           ${_profileColumns(includeAvatar)}
-        )
+        ),
+        comment_stats:community_comments(count)
       ''';
     }
 
