@@ -200,122 +200,10 @@ class _BeanRecipeManageScreenState extends State<BeanRecipeManageScreen> {
   }
 
   Future<_BeanRecipeDraft?> _showRecipeDialog({BeanRecipe? existing}) async {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController(text: existing?.name ?? '');
-    final recipeController = TextEditingController(
-      text: existing?.recipe ?? '',
-    );
-    var selectedBrewMethod = existing?.brewMethod ?? BrewMethodCatalog.pourOver;
-
-    final result = await showDialog<_BeanRecipeDraft>(
+    return showDialog<_BeanRecipeDraft>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            title: Text(
-              existing == null
-                  ? context.l10n.beanRecipeCreateTitle
-                  : context.l10n.beanRecipeEditTitle,
-            ),
-            content: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextFormField(
-                      key: const Key('bean_recipe_name_field'),
-                      controller: nameController,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: context.l10n.beanRecipeNameLabel,
-                        hintText: context.l10n.beanRecipeNameHint,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return context.l10n.beanRecipeNameRequired;
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      key: const Key('bean_recipe_brew_dropdown'),
-                      initialValue: selectedBrewMethod,
-                      decoration: InputDecoration(
-                        labelText: context.l10n.brewMethodLabel,
-                      ),
-                      items: BrewMethodCatalog.codes
-                          .map(
-                            (code) => DropdownMenuItem<String>(
-                              value: code,
-                              child: Text(
-                                BrewMethodCatalog.label(context.l10n, code),
-                              ),
-                            ),
-                          )
-                          .toList(growable: false),
-                      onChanged: (value) {
-                        if (value == null) {
-                          return;
-                        }
-                        setDialogState(() {
-                          selectedBrewMethod = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      key: const Key('bean_recipe_text_field'),
-                      controller: recipeController,
-                      minLines: 3,
-                      maxLines: 6,
-                      decoration: InputDecoration(
-                        labelText: context.l10n.recipeLabel,
-                        hintText: context.l10n.recipeHint,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return context.l10n.recipeRequired;
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text(context.l10n.cancel),
-              ),
-              TextButton(
-                onPressed: () {
-                  if (!formKey.currentState!.validate()) {
-                    return;
-                  }
-                  Navigator.pop(
-                    dialogContext,
-                    _BeanRecipeDraft(
-                      name: nameController.text.trim(),
-                      brewMethod: selectedBrewMethod,
-                      recipe: recipeController.text.trim(),
-                    ),
-                  );
-                },
-                child: Text(context.l10n.save),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (dialogContext) => _BeanRecipeDialog(existing: existing),
     );
-
-    nameController.dispose();
-    recipeController.dispose();
-    return result;
   }
 
   @override
@@ -449,4 +337,138 @@ class _BeanRecipeDraft {
   final String name;
   final String brewMethod;
   final String recipe;
+}
+
+class _BeanRecipeDialog extends StatefulWidget {
+  const _BeanRecipeDialog({this.existing});
+
+  final BeanRecipe? existing;
+
+  @override
+  State<_BeanRecipeDialog> createState() => _BeanRecipeDialogState();
+}
+
+class _BeanRecipeDialogState extends State<_BeanRecipeDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _recipeController;
+  late String _selectedBrewMethod;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.existing?.name ?? '');
+    _recipeController = TextEditingController(
+      text: widget.existing?.recipe ?? '',
+    );
+    _selectedBrewMethod =
+        widget.existing?.brewMethod ?? BrewMethodCatalog.pourOver;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _recipeController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    Navigator.pop(
+      context,
+      _BeanRecipeDraft(
+        name: _nameController.text.trim(),
+        brewMethod: _selectedBrewMethod,
+        recipe: _recipeController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final existing = widget.existing;
+    return AlertDialog(
+      title: Text(
+        existing == null
+            ? context.l10n.beanRecipeCreateTitle
+            : context.l10n.beanRecipeEditTitle,
+      ),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                key: const Key('bean_recipe_name_field'),
+                controller: _nameController,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: context.l10n.beanRecipeNameLabel,
+                  hintText: context.l10n.beanRecipeNameHint,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return context.l10n.beanRecipeNameRequired;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                key: const Key('bean_recipe_brew_dropdown'),
+                initialValue: _selectedBrewMethod,
+                decoration: InputDecoration(
+                  labelText: context.l10n.brewMethodLabel,
+                ),
+                items: BrewMethodCatalog.codes
+                    .map(
+                      (code) => DropdownMenuItem<String>(
+                        value: code,
+                        child: Text(
+                          BrewMethodCatalog.label(context.l10n, code),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _selectedBrewMethod = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('bean_recipe_text_field'),
+                controller: _recipeController,
+                minLines: 3,
+                maxLines: 6,
+                decoration: InputDecoration(
+                  labelText: context.l10n.recipeLabel,
+                  hintText: context.l10n.recipeHint,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return context.l10n.recipeRequired;
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(context.l10n.cancel),
+        ),
+        TextButton(onPressed: _save, child: Text(context.l10n.save)),
+      ],
+    );
+  }
 }
