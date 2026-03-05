@@ -259,7 +259,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get beanNameRequired => 'Please enter bean name';
 
   @override
-  String get roasteryLabel => 'Roastery *';
+  String get roasteryLabel => 'Roastery';
 
   @override
   String get roasteryHint => 'e.g. Coffee Libre';
@@ -402,7 +402,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coffeeNameHint => 'e.g. Signature Latte';
 
   @override
-  String get cafeName => 'Cafe Name *';
+  String get cafeName => 'Cafe Name';
 
   @override
   String get cafeNameHint => 'e.g. Blue Bottle Seongsu';
@@ -1029,6 +1029,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coffeeTypeFlatWhite => 'Flat White';
 
   @override
+  String get coffeeTypeHandDrip => 'Hand Drip';
+
+  @override
   String get coffeeTypeColdBrew => 'Cold Brew';
 
   @override
@@ -1036,6 +1039,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get coffeeTypeOther => 'Other';
+
+  @override
+  String get caffeineType => 'Caffeine';
+
+  @override
+  String get caffeineTypeCaffeinated => 'Caffeinated';
+
+  @override
+  String get caffeineTypeHalfCaf => 'Half Caf';
+
+  @override
+  String get caffeineTypeDecaf => 'Decaf';
 
   @override
   String get roastLight => 'Light';

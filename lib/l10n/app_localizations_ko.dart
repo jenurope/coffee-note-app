@@ -30,7 +30,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dashboard => '대시보드';
 
   @override
-  String get beanRecords => '원두 기록';
+  String get beanRecords => '원두 관리';
 
   @override
   String get coffeeRecords => '커피 기록';
@@ -176,31 +176,31 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get recordBean => '원두 기록하기';
+  String get recordBean => '원두 관리';
 
   @override
   String get recordCoffee => '커피 기록하기';
 
   @override
-  String get recentBeanRecords => '최근 원두 기록';
+  String get recentBeanRecords => '최근 원두';
 
   @override
   String get recentCoffeeRecords => '최근 커피 기록';
 
   @override
-  String get noBeanRecordsYet => '아직 원두 기록이 없습니다';
+  String get noBeanRecordsYet => '아직 원두가 없습니다';
 
   @override
   String get noCoffeeRecordsYet => '아직 커피 기록이 없습니다';
 
   @override
-  String get firstBeanRecord => '첫 원두 기록하기';
+  String get firstBeanRecord => '첫 원두 등록하기';
 
   @override
   String get firstCoffeeRecord => '첫 커피 기록하기';
 
   @override
-  String get beansScreenTitle => '원두 기록';
+  String get beansScreenTitle => '원두 관리';
 
   @override
   String get beansSearchHint => '원두 이름, 로스터리 검색...';
@@ -209,13 +209,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get beansEmptyTitle => '등록된 원두가 없습니다';
 
   @override
-  String get beansEmptySubtitleAuth => '첫 원두를 기록해보세요!';
+  String get beansEmptySubtitleAuth => '첫 원두를 등록해보세요!';
 
   @override
-  String get beansEmptySubtitleGuest => '로그인하면 원두를 기록할 수 있습니다.';
+  String get beansEmptySubtitleGuest => '로그인하면 원두를 관리할 수 있습니다.';
 
   @override
-  String get beansRecordButton => '원두 기록하기';
+  String get beansRecordButton => '원두 관리';
 
   @override
   String get sortNewest => '최신순';
@@ -235,7 +235,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get beanFormNewTitle => '새 원두 기록';
+  String get beanFormNewTitle => '새 원두 관리';
 
   @override
   String get beanFormEditTitle => '원두 수정';
@@ -253,7 +253,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get beanNameRequired => '원두 이름을 입력해주세요';
 
   @override
-  String get roasteryLabel => '로스터리 *';
+  String get roasteryLabel => '로스터리';
 
   @override
   String get roasteryHint => '예: 커피리브레';
@@ -382,7 +382,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coffeePhoto => '커피 사진';
 
   @override
-  String get coffeeType => '커피 종류';
+  String get coffeeType => '종류';
 
   @override
   String get coffeeName => '커피 이름';
@@ -391,7 +391,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coffeeNameHint => '예: 시그니처 라떼';
 
   @override
-  String get cafeName => '카페 이름 *';
+  String get cafeName => '카페 이름';
 
   @override
   String get cafeNameHint => '예: 블루보틀 성수점';
@@ -400,7 +400,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cafeNameRequired => '카페 이름을 입력해주세요';
 
   @override
-  String get visitDate => '방문일';
+  String get visitDate => '날짜';
 
   @override
   String get memo => '메모';
@@ -982,6 +982,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coffeeTypeFlatWhite => '플랫화이트';
 
   @override
+  String get coffeeTypeHandDrip => '핸드드립';
+
+  @override
   String get coffeeTypeColdBrew => '콜드브루';
 
   @override
@@ -989,6 +992,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get coffeeTypeOther => '기타';
+
+  @override
+  String get caffeineType => '카페인';
+
+  @override
+  String get caffeineTypeCaffeinated => '카페인';
+
+  @override
+  String get caffeineTypeHalfCaf => '하프카페인';
+
+  @override
+  String get caffeineTypeDecaf => '디카페인';
 
   @override
   String get roastLight => '라이트';

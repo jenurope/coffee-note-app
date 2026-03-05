@@ -571,7 +571,7 @@ abstract class AppLocalizations {
   /// No description provided for @roasteryLabel.
   ///
   /// In en, this message translates to:
-  /// **'Roastery *'**
+  /// **'Roastery'**
   String get roasteryLabel;
 
   /// No description provided for @roasteryHint.
@@ -835,7 +835,7 @@ abstract class AppLocalizations {
   /// No description provided for @cafeName.
   ///
   /// In en, this message translates to:
-  /// **'Cafe Name *'**
+  /// **'Cafe Name'**
   String get cafeName;
 
   /// No description provided for @cafeNameHint.
@@ -1984,6 +1984,12 @@ abstract class AppLocalizations {
   /// **'Flat White'**
   String get coffeeTypeFlatWhite;
 
+  /// No description provided for @coffeeTypeHandDrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Hand Drip'**
+  String get coffeeTypeHandDrip;
+
   /// No description provided for @coffeeTypeColdBrew.
   ///
   /// In en, this message translates to:
@@ -2001,6 +2007,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other'**
   String get coffeeTypeOther;
+
+  /// No description provided for @caffeineType.
+  ///
+  /// In en, this message translates to:
+  /// **'Caffeine'**
+  String get caffeineType;
+
+  /// No description provided for @caffeineTypeCaffeinated.
+  ///
+  /// In en, this message translates to:
+  /// **'Caffeinated'**
+  String get caffeineTypeCaffeinated;
+
+  /// No description provided for @caffeineTypeHalfCaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Half Caf'**
+  String get caffeineTypeHalfCaf;
+
+  /// No description provided for @caffeineTypeDecaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Decaf'**
+  String get caffeineTypeDecaf;
 
   /// No description provided for @roastLight.
   ///

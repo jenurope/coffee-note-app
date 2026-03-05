@@ -1,4 +1,5 @@
 import 'package:coffee_note_app/domain/catalogs/brew_method_catalog.dart';
+import 'package:coffee_note_app/domain/catalogs/caffeine_type_catalog.dart';
 import 'package:coffee_note_app/domain/catalogs/coffee_type_catalog.dart';
 import 'package:coffee_note_app/domain/catalogs/grind_size_catalog.dart';
 import 'package:coffee_note_app/domain/catalogs/roast_level_catalog.dart';
@@ -17,9 +18,16 @@ void main() {
         'mocha',
         'macchiato',
         'flat_white',
+        'hand_drip',
         'cold_brew',
         'affogato',
         'other',
+      ]);
+
+      expect(CaffeineTypeCatalog.codes, const <String>[
+        'caffeinated',
+        'half_caf',
+        'decaf',
       ]);
 
       expect(RoastLevelCatalog.codes, const <String>[
@@ -59,7 +67,10 @@ void main() {
 
       expect(CoffeeTypeCatalog.label(ko, 'americano'), '아메리카노');
       expect(CoffeeTypeCatalog.label(en, 'americano'), 'Americano');
+      expect(CoffeeTypeCatalog.label(ko, 'hand_drip'), '핸드드립');
       expect(CoffeeTypeCatalog.label(en, 'unknown_code'), 'Other');
+      expect(CaffeineTypeCatalog.label(ko, 'half_caf'), '하프카페인');
+      expect(CaffeineTypeCatalog.label(en, 'decaf'), 'Decaf');
 
       expect(RoastLevelCatalog.label(ko, 'light'), '라이트');
       expect(BrewMethodCatalog.label(en, 'pour_over'), 'Pour Over');

@@ -416,12 +416,6 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 이미지 선택
-                  Text(
-                    context.l10n.beanPhoto,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 8),
                   ImagePickerWidget(
                     imageUrl: _existingImageUrl,
                     localImagePath: _selectedImage?.path,
@@ -454,18 +448,12 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                     controller: _roasteryController,
                     prefixIcon: Icons.store,
                     textInputAction: TextInputAction.next,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return context.l10n.roasteryRequired;
-                      }
-                      return null;
-                    },
                   ),
                   const SizedBox(height: 16),
 
-                  // 구매일
+                  // 구매일 (필수)
                   Text(
-                    context.l10n.purchaseDate,
+                    '${context.l10n.purchaseDate} *',
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 8),
@@ -485,8 +473,11 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 평점
-                  Text(context.l10n.rating, style: theme.textTheme.bodyLarge),
+                  // 평점 (필수)
+                  Text(
+                    '${context.l10n.rating} *',
+                    style: theme.textTheme.bodyLarge,
+                  ),
                   const SizedBox(height: 8),
                   Card(
                     child: Padding(
@@ -524,9 +515,9 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 로스팅 레벨
+                  // 로스팅 레벨 (필수)
                   Text(
-                    context.l10n.roastLevel,
+                    '${context.l10n.roastLevel} *',
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 8),
