@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
@@ -12,7 +11,6 @@ import '../../cubits/community/post_list_state.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n.dart';
 import '../../models/community_post.dart';
-import '../../services/community_service.dart';
 import 'post_markdown_utils.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/common/user_avatar.dart';
@@ -25,7 +23,6 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
-  static const String _postLikeButtonKeyPrefix = 'communityPostLikeButton';
   final _searchController = TextEditingController();
   final _listScrollController = ScrollController();
 
@@ -123,55 +120,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
       return '';
     }
     return markdownToPlainTextSnippet(post.content);
-  }
-
-  bool _canLikePost({
-    required CommunityPost post,
-    required String? currentUserId,
-    required bool isGuest,
-  }) {
-    if (currentUserId == null || isGuest) {
-      return false;
-    }
-    if (post.userId == currentUserId) {
-      return false;
-    }
-    if (post.isWithdrawnContent || post.isDeletedContent) {
-      return false;
-    }
-    return true;
-  }
-
-  Future<void> _togglePostLike(CommunityPost post) async {
-    final authState = context.read<AuthCubit>().state;
-    final currentUser = authState is AuthAuthenticated ? authState.user : null;
-    final isGuest = authState is AuthGuest;
-
-    if (!_canLikePost(
-      post: post,
-      currentUserId: currentUser?.id,
-      isGuest: isGuest,
-    )) {
-      return;
-    }
-
-    try {
-      await getIt<CommunityService>().togglePostLike(postId: post.id);
-      if (!mounted) return;
-      await context.read<PostListCubit>().reload();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            UserErrorMessage.localize(
-              context.l10n,
-              UserErrorMessage.from(e, fallbackKey: 'errLoadPosts'),
-            ),
-          ),
-        ),
-      );
-    }
   }
 
   @override
@@ -402,15 +350,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                     final canOpenPostDetail =
                                         !post.isDeletedContent;
                                     final commentCount = post.commentCount ?? 0;
-                                    final canLikePost = _canLikePost(
-                                      post: post,
-                                      currentUserId: currentUser?.id,
-                                      isGuest: isGuest,
-                                    );
                                     final likeMetaColor = post.isLikedByMe
                                         ? theme.colorScheme.error
-                                        : canLikePost
-                                        ? theme.colorScheme.primary
                                         : theme.colorScheme.onSurface
                                               .withValues(alpha: 0.5);
                                     return Card(
@@ -535,35 +476,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               ),
                                               Row(
                                                 children: [
-                                                  IconButton(
-                                                    key: ValueKey(
-                                                      '$_postLikeButtonKeyPrefix-${post.id}',
-                                                    ),
-                                                    onPressed: canLikePost
-                                                        ? () => _togglePostLike(
-                                                            post,
-                                                          )
-                                                        : null,
-                                                    style: IconButton.styleFrom(
-                                                      padding: EdgeInsets.zero,
-                                                      minimumSize: const Size(
-                                                        16,
-                                                        16,
-                                                      ),
-                                                      tapTargetSize:
-                                                          MaterialTapTargetSize
-                                                              .shrinkWrap,
-                                                      visualDensity:
-                                                          VisualDensity.compact,
-                                                    ),
-                                                    icon: Icon(
-                                                      post.isLikedByMe
-                                                          ? Icons.favorite
-                                                          : Icons
-                                                                .favorite_border,
-                                                      color: likeMetaColor,
-                                                      size: 16,
-                                                    ),
+                                                  Icon(
+                                                    post.isLikedByMe
+                                                        ? Icons.favorite
+                                                        : Icons.favorite_border,
+                                                    color: likeMetaColor,
+                                                    size: 16,
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
