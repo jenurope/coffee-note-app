@@ -982,7 +982,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get coffeeTypeFlatWhite => 'フラットホワイト';
 
   @override
+  String get coffeeTypeHandDrip => 'ハンドドリップ';
+
+  @override
+  String get coffeeTypeBrewedCoffee => 'ブリュードコーヒー';
+
+  @override
   String get coffeeTypeColdBrew => 'コールドブリュー';
+
+  @override
+  String get coffeeTypeDecaf => 'デカフェ';
 
   @override
   String get coffeeTypeAffogato => 'アフォガート';

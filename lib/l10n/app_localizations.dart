@@ -1984,11 +1984,29 @@ abstract class AppLocalizations {
   /// **'Flat White'**
   String get coffeeTypeFlatWhite;
 
+  /// No description provided for @coffeeTypeHandDrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Hand Drip'**
+  String get coffeeTypeHandDrip;
+
+  /// No description provided for @coffeeTypeBrewedCoffee.
+  ///
+  /// In en, this message translates to:
+  /// **'Brewed Coffee'**
+  String get coffeeTypeBrewedCoffee;
+
   /// No description provided for @coffeeTypeColdBrew.
   ///
   /// In en, this message translates to:
   /// **'Cold Brew'**
   String get coffeeTypeColdBrew;
+
+  /// No description provided for @coffeeTypeDecaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Decaf'**
+  String get coffeeTypeDecaf;
 
   /// No description provided for @coffeeTypeAffogato.
   ///

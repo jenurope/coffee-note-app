@@ -123,7 +123,8 @@ create table public.coffee_logs (
     check (
       coffee_type in (
         'espresso','americano','latte','cappuccino','mocha',
-        'macchiato','flat_white','cold_brew','affogato','other'
+        'macchiato','flat_white','hand_drip','brewed_coffee',
+        'cold_brew','decaf','affogato','other'
       )
     ),
   constraint coffee_logs_user_id_fkey

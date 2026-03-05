@@ -17,7 +17,10 @@ void main() {
         'mocha',
         'macchiato',
         'flat_white',
+        'hand_drip',
+        'brewed_coffee',
         'cold_brew',
+        'decaf',
         'affogato',
         'other',
       ]);
@@ -59,6 +62,7 @@ void main() {
 
       expect(CoffeeTypeCatalog.label(ko, 'americano'), '아메리카노');
       expect(CoffeeTypeCatalog.label(en, 'americano'), 'Americano');
+      expect(CoffeeTypeCatalog.label(ko, 'hand_drip'), '핸드드립');
       expect(CoffeeTypeCatalog.label(en, 'unknown_code'), 'Other');
 
       expect(RoastLevelCatalog.label(ko, 'light'), '라이트');
