@@ -571,7 +571,7 @@ abstract class AppLocalizations {
   /// No description provided for @roasteryLabel.
   ///
   /// In en, this message translates to:
-  /// **'Roastery *'**
+  /// **'Roastery'**
   String get roasteryLabel;
 
   /// No description provided for @roasteryHint.

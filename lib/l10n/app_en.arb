@@ -113,7 +113,7 @@
   "beanNameLabel": "Bean Name *",
   "beanNameHint": "e.g. Ethiopia Yirgacheffe",
   "beanNameRequired": "Please enter bean name",
-  "roasteryLabel": "Roastery *",
+  "roasteryLabel": "Roastery",
   "roasteryHint": "e.g. Coffee Libre",
   "roasteryRequired": "Please enter roastery",
   "purchaseDate": "Purchase Date",

@@ -253,7 +253,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get beanNameRequired => '豆の名前を入力してください';
 
   @override
-  String get roasteryLabel => 'ロースタリー *';
+  String get roasteryLabel => 'ロースタリー';
 
   @override
   String get roasteryHint => '例: Coffee Libre';

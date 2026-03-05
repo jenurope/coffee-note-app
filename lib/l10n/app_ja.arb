@@ -113,7 +113,7 @@
   "beanNameLabel": "豆の名前 *",
   "beanNameHint": "例: エチオピア イルガチェフェ",
   "beanNameRequired": "豆の名前を入力してください",
-  "roasteryLabel": "ロースタリー *",
+  "roasteryLabel": "ロースタリー",
   "roasteryHint": "例: Coffee Libre",
   "roasteryRequired": "ロースタリーを入力してください",
   "purchaseDate": "購入日",

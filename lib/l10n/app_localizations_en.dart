@@ -259,7 +259,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get beanNameRequired => 'Please enter bean name';
 
   @override
-  String get roasteryLabel => 'Roastery *';
+  String get roasteryLabel => 'Roastery';
 
   @override
   String get roasteryHint => 'e.g. Coffee Libre';

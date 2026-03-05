@@ -113,7 +113,7 @@
   "beanNameLabel": "원두 이름 *",
   "beanNameHint": "예: 에티오피아 예가체프",
   "beanNameRequired": "원두 이름을 입력해주세요",
-  "roasteryLabel": "로스터리 *",
+  "roasteryLabel": "로스터리",
   "roasteryHint": "예: 커피리브레",
   "roasteryRequired": "로스터리를 입력해주세요",
   "purchaseDate": "구매일",

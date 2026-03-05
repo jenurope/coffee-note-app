@@ -253,7 +253,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get beanNameRequired => '원두 이름을 입력해주세요';
 
   @override
-  String get roasteryLabel => '로스터리 *';
+  String get roasteryLabel => '로스터리';
 
   @override
   String get roasteryHint => '예: 커피리브레';
