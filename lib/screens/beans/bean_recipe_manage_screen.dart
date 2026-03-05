@@ -10,6 +10,7 @@ import '../../l10n/l10n.dart';
 import '../../models/bean_recipe.dart';
 import '../../services/bean_recipe_service.dart';
 import '../../widgets/common/common_widgets.dart';
+import 'bean_recipe_form_screen.dart';
 
 class BeanRecipeManageScreen extends StatefulWidget {
   const BeanRecipeManageScreen({super.key, this.service});
@@ -79,75 +80,16 @@ class _BeanRecipeManageScreenState extends State<BeanRecipeManageScreen> {
     }
   }
 
-  Future<void> _createRecipe() async {
-    await _upsertRecipe();
-  }
+  Future<void> _openRecipeForm({BeanRecipe? existing}) async {
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) =>
+            BeanRecipeFormScreen(recipe: existing, service: _service),
+      ),
+    );
 
-  Future<void> _editRecipe(BeanRecipe recipe) async {
-    await _upsertRecipe(existing: recipe);
-  }
-
-  Future<void> _upsertRecipe({BeanRecipe? existing}) async {
-    final authState = context.read<AuthCubit>().state;
-    if (authState is! AuthAuthenticated) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.requiredLogin)));
-      return;
-    }
-
-    final draft = await _showRecipeDialog(existing: existing);
-    if (draft == null || !mounted) {
-      return;
-    }
-
-    try {
-      if (existing == null) {
-        await _service.createRecipe(
-          BeanRecipe(
-            id: '',
-            userId: authState.user.id,
-            name: draft.name,
-            brewMethod: draft.brewMethod,
-            recipe: draft.recipe,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-        );
-      } else {
-        await _service.updateRecipe(
-          existing.copyWith(
-            name: draft.name,
-            brewMethod: draft.brewMethod,
-            recipe: draft.recipe,
-            updatedAt: DateTime.now(),
-          ),
-        );
-      }
-
-      if (!mounted) {
-        return;
-      }
+    if (updated == true && mounted) {
       await _load();
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            existing == null
-                ? context.l10n.beanRecipeCreated
-                : context.l10n.beanRecipeUpdated,
-          ),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.beanRecipeSaveFailed)),
-      );
     }
   }
 
@@ -199,13 +141,6 @@ class _BeanRecipeManageScreenState extends State<BeanRecipeManageScreen> {
     }
   }
 
-  Future<_BeanRecipeDraft?> _showRecipeDialog({BeanRecipe? existing}) async {
-    return showDialog<_BeanRecipeDraft>(
-      context: context,
-      builder: (dialogContext) => _BeanRecipeDialog(existing: existing),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthCubit, AuthState>(
@@ -231,7 +166,7 @@ class _BeanRecipeManageScreenState extends State<BeanRecipeManageScreen> {
             appBar: AppBar(title: Text(context.l10n.beanRecipeManageTitle)),
             body: const Center(child: CircularProgressIndicator()),
             floatingActionButton: FloatingActionButton.extended(
-              onPressed: _createRecipe,
+              onPressed: () => _openRecipeForm(),
               icon: const Icon(Icons.add),
               label: Text(context.l10n.beanRecipeAddAction),
             ),
@@ -248,7 +183,7 @@ class _BeanRecipeManageScreenState extends State<BeanRecipeManageScreen> {
               onButtonPressed: _load,
             ),
             floatingActionButton: FloatingActionButton.extended(
-              onPressed: _createRecipe,
+              onPressed: () => _openRecipeForm(),
               icon: const Icon(Icons.add),
               label: Text(context.l10n.beanRecipeAddAction),
             ),
@@ -258,7 +193,7 @@ class _BeanRecipeManageScreenState extends State<BeanRecipeManageScreen> {
         return Scaffold(
           appBar: AppBar(title: Text(context.l10n.beanRecipeManageTitle)),
           floatingActionButton: FloatingActionButton.extended(
-            onPressed: _createRecipe,
+            onPressed: () => _openRecipeForm(),
             icon: const Icon(Icons.add),
             label: Text(context.l10n.beanRecipeAddAction),
           ),
@@ -301,14 +236,15 @@ class _BeanRecipeManageScreenState extends State<BeanRecipeManageScreen> {
                             ],
                           ),
                         ),
-                        onTap: () => _editRecipe(recipe),
+                        onTap: () => _openRecipeForm(existing: recipe),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               tooltip: context.l10n.edit,
                               icon: const Icon(Icons.edit_outlined),
-                              onPressed: () => _editRecipe(recipe),
+                              onPressed: () =>
+                                  _openRecipeForm(existing: recipe),
                             ),
                             IconButton(
                               tooltip: context.l10n.delete,
@@ -323,152 +259,6 @@ class _BeanRecipeManageScreenState extends State<BeanRecipeManageScreen> {
                 ),
         );
       },
-    );
-  }
-}
-
-class _BeanRecipeDraft {
-  const _BeanRecipeDraft({
-    required this.name,
-    required this.brewMethod,
-    required this.recipe,
-  });
-
-  final String name;
-  final String brewMethod;
-  final String recipe;
-}
-
-class _BeanRecipeDialog extends StatefulWidget {
-  const _BeanRecipeDialog({this.existing});
-
-  final BeanRecipe? existing;
-
-  @override
-  State<_BeanRecipeDialog> createState() => _BeanRecipeDialogState();
-}
-
-class _BeanRecipeDialogState extends State<_BeanRecipeDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _recipeController;
-  late String _selectedBrewMethod;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.existing?.name ?? '');
-    _recipeController = TextEditingController(
-      text: widget.existing?.recipe ?? '',
-    );
-    _selectedBrewMethod =
-        widget.existing?.brewMethod ?? BrewMethodCatalog.pourOver;
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _recipeController.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-    Navigator.pop(
-      context,
-      _BeanRecipeDraft(
-        name: _nameController.text.trim(),
-        brewMethod: _selectedBrewMethod,
-        recipe: _recipeController.text.trim(),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final existing = widget.existing;
-    return AlertDialog(
-      title: Text(
-        existing == null
-            ? context.l10n.beanRecipeCreateTitle
-            : context.l10n.beanRecipeEditTitle,
-      ),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                key: const Key('bean_recipe_name_field'),
-                controller: _nameController,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: context.l10n.beanRecipeNameLabel,
-                  hintText: context.l10n.beanRecipeNameHint,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return context.l10n.beanRecipeNameRequired;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                key: const Key('bean_recipe_brew_dropdown'),
-                initialValue: _selectedBrewMethod,
-                decoration: InputDecoration(
-                  labelText: context.l10n.brewMethodLabel,
-                ),
-                items: BrewMethodCatalog.codes
-                    .map(
-                      (code) => DropdownMenuItem<String>(
-                        value: code,
-                        child: Text(
-                          BrewMethodCatalog.label(context.l10n, code),
-                        ),
-                      ),
-                    )
-                    .toList(growable: false),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() {
-                    _selectedBrewMethod = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                key: const Key('bean_recipe_text_field'),
-                controller: _recipeController,
-                minLines: 3,
-                maxLines: 6,
-                decoration: InputDecoration(
-                  labelText: context.l10n.recipeLabel,
-                  hintText: context.l10n.recipeHint,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return context.l10n.recipeRequired;
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(context.l10n.cancel),
-        ),
-        TextButton(onPressed: _save, child: Text(context.l10n.save)),
-      ],
     );
   }
 }
