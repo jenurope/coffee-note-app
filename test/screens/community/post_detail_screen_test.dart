@@ -188,6 +188,80 @@ void main() {
       expect(find.text('댓글상세:comment-parent'), findsOneWidget);
     });
 
+    testWidgets('댓글 상세에서 돌아오면 게시글 상세를 다시 로드한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final postState = PostDetailState.loaded(
+        post: _buildPostWithReplyTarget(commentOwnerId: 'comment-owner'),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      when(() => postDetailCubit.load(any())).thenAnswer((_) async {});
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      final router = GoRouter(
+        initialLocation: '/community/post-with-reply-target',
+        routes: [
+          GoRoute(
+            path: '/community/:id',
+            builder: (context, state) =>
+                PostDetailScreen(postId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'comments/:commentId',
+                builder: (context, state) => Scaffold(
+                  body: Center(
+                    child: FilledButton(
+                      key: const ValueKey('closeCommentDetail'),
+                      onPressed: () => context.pop(true),
+                      child: const Text('닫기'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: _buildTestRouterApp(router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('replyActionButton-comment-parent')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('closeCommentDetail')));
+      await tester.pumpAndSettle();
+
+      verify(() => postDetailCubit.load('post-with-reply-target')).called(1);
+      verify(() => postListCubit.reload()).called(1);
+    });
+
     testWidgets('프로필 게시글 상세에서도 답글 버튼으로 댓글 상세 화면으로 이동한다', (tester) async {
       final authState = AuthState.authenticated(user: _testUser('viewer'));
       final postState = PostDetailState.loaded(

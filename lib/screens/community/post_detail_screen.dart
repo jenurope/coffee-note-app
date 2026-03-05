@@ -929,7 +929,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   ) {
     return TextButton.icon(
       key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
-      onPressed: () => context.push(_commentDetailPath(context, comment)),
+      onPressed: () async {
+        await context.push(_commentDetailPath(context, comment));
+        if (!context.mounted) return;
+        await context.read<PostDetailCubit>().load(widget.postId);
+        _reloadPostList();
+      },
       icon: const Icon(Icons.reply_outlined, size: 18),
       label: Text(label),
       style: TextButton.styleFrom(
