@@ -407,6 +407,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                       currentUserId: currentUser?.id,
                                       isGuest: isGuest,
                                     );
+                                    final likeMetaColor = post.isLikedByMe
+                                        ? theme.colorScheme.error
+                                        : canLikePost
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurface
+                                              .withValues(alpha: 0.5);
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 12),
                                       child: InkWell(
@@ -522,7 +528,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                   ],
                                                 ),
                                               ],
-                                              const SizedBox(height: 4),
+                                              SizedBox(
+                                                height: commentCount > 0
+                                                    ? 8
+                                                    : 12,
+                                              ),
                                               Row(
                                                 children: [
                                                   IconButton(
@@ -534,33 +544,35 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                             post,
                                                           )
                                                         : null,
+                                                    style: IconButton.styleFrom(
+                                                      padding: EdgeInsets.zero,
+                                                      minimumSize: const Size(
+                                                        16,
+                                                        16,
+                                                      ),
+                                                      tapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                      visualDensity:
+                                                          VisualDensity.compact,
+                                                    ),
                                                     icon: Icon(
                                                       post.isLikedByMe
                                                           ? Icons.favorite
                                                           : Icons
                                                                 .favorite_border,
-                                                      color: post.isLikedByMe
-                                                          ? theme
-                                                                .colorScheme
-                                                                .error
-                                                          : null,
-                                                      size: 20,
+                                                      color: likeMetaColor,
+                                                      size: 16,
                                                     ),
-                                                    visualDensity:
-                                                        VisualDensity.compact,
                                                   ),
+                                                  const SizedBox(width: 4),
                                                   Text(
                                                     '${post.likeCount}',
                                                     style: theme
                                                         .textTheme
                                                         .bodySmall
                                                         ?.copyWith(
-                                                          color: theme
-                                                              .colorScheme
-                                                              .onSurface
-                                                              .withValues(
-                                                                alpha: 0.7,
-                                                              ),
+                                                          color: likeMetaColor,
                                                         ),
                                                   ),
                                                 ],
