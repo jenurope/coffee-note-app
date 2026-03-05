@@ -151,6 +151,44 @@ void main() {
       expect(find.textContaining('댓글 '), findsNothing);
     });
 
+    testWidgets('본인 게시글은 좋아요 버튼이 비활성화된다', (tester) async {
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: _loadedState(userId: 'community-user'),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      final likeButton = tester.widget<IconButton>(
+        find.byKey(const ValueKey('communityPostLikeButton-post-1')),
+      );
+      expect(likeButton.onPressed, isNull);
+    });
+
+    testWidgets('타인 게시글은 좋아요 버튼이 활성화된다', (tester) async {
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: _loadedState(userId: 'other-user'),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      final likeButton = tester.widget<IconButton>(
+        find.byKey(const ValueKey('communityPostLikeButton-post-1')),
+      );
+      expect(likeButton.onPressed, isNotNull);
+    });
+
     testWidgets('탈퇴 사용자 게시글은 작성자와 제목만 안내 문구로 표시한다', (tester) async {
       final now = DateTime(2026, 2, 21, 14);
       final withdrawnPost = CommunityPost(
@@ -285,13 +323,17 @@ void _bindStates({
   );
 }
 
-PostListState _loadedState({String? searchQuery, int? commentCount}) {
+PostListState _loadedState({
+  String? searchQuery,
+  int? commentCount,
+  String userId = 'community-user',
+}) {
   final now = DateTime(2026, 2, 21, 14);
   return PostListState.loaded(
     posts: [
       CommunityPost(
         id: 'post-1',
-        userId: 'community-user',
+        userId: userId,
         title: '테스트 게시글',
         content: '테스트 내용',
         createdAt: now,

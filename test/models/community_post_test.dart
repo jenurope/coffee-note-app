@@ -57,6 +57,22 @@ void main() {
 
       expect(post.commentCount, isNull);
     });
+
+    test('like_count가 있으면 좋아요 수를 파싱한다', () {
+      final post = CommunityPost.fromJson(
+        _baseJson({'like_count': 9, 'is_liked_by_me': true}),
+      );
+
+      expect(post.likeCount, 9);
+      expect(post.isLikedByMe, isTrue);
+    });
+
+    test('like_count가 없으면 기본값 0을 사용한다', () {
+      final post = CommunityPost.fromJson(_baseJson({}));
+
+      expect(post.likeCount, 0);
+      expect(post.isLikedByMe, isFalse);
+    });
   });
 
   group('CommunityComment.fromJson', () {
@@ -88,6 +104,15 @@ void main() {
       );
 
       expect(comment.toInsertJson()['parent_id'], 'comment-parent');
+    });
+
+    test('like_count가 있으면 댓글 좋아요 수를 파싱한다', () {
+      final comment = CommunityComment.fromJson(
+        _baseCommentJson({'like_count': 4, 'is_liked_by_me': true}),
+      );
+
+      expect(comment.likeCount, 4);
+      expect(comment.isLikedByMe, isTrue);
     });
   });
 }

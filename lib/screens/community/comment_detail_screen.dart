@@ -33,6 +33,7 @@ class _CommentDetailScreenState extends State<CommentDetailScreen> {
   static const int _defaultReplyPageSize = 20;
   static const int _maxReportReasonLength = 500;
   static const Key _reportReasonFieldKey = Key('reportReasonField');
+  static const String _commentLikeButtonKeyPrefix = 'commentDetailLikeButton';
 
   final _replyController = TextEditingController();
   final _scrollController = ScrollController();
@@ -209,6 +210,38 @@ class _CommentDetailScreenState extends State<CommentDetailScreen> {
     return true;
   }
 
+  bool _canLikeComment(CommunityComment comment) {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is! AuthAuthenticated) return false;
+    if (authState is AuthGuest) return false;
+    if (authState.user.id == comment.userId) return false;
+    if (comment.isDeletedContent) return false;
+    if (comment.isWithdrawnContent) return false;
+    return true;
+  }
+
+  Future<void> _toggleCommentLike(CommunityComment comment) async {
+    if (!_canLikeComment(comment)) return;
+
+    try {
+      final service = getIt<CommunityService>();
+      await service.toggleCommentLike(commentId: comment.id);
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            UserErrorMessage.localize(
+              context.l10n,
+              UserErrorMessage.from(e, fallbackKey: 'errLoadPostDetail'),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _deleteComment(String commentId) async {
     try {
       final service = getIt<CommunityService>();
@@ -373,6 +406,7 @@ class _CommentDetailScreenState extends State<CommentDetailScreen> {
     final isGuest = authState is AuthGuest;
     final isOwner = currentUser?.id == comment.userId;
     final canReport = currentUser != null && !isGuest && !isOwner;
+    final canLike = _canLikeComment(comment);
     final showActionMenu =
         (isOwner || canReport) &&
         !comment.isDeletedContent &&
@@ -456,6 +490,35 @@ class _CommentDetailScreenState extends State<CommentDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(content),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    key: ValueKey('$_commentLikeButtonKeyPrefix-${comment.id}'),
+                    onPressed: canLike
+                        ? () => _toggleCommentLike(comment)
+                        : null,
+                    icon: Icon(
+                      comment.isLikedByMe
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: comment.isLikedByMe
+                          ? theme.colorScheme.error
+                          : null,
+                      size: 20,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  Text(
+                    '${comment.likeCount}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
