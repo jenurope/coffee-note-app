@@ -209,6 +209,47 @@ void main() {
       ).called(1);
     });
 
+    test('loadLikedByUser는 좋아요한 게시글 조회로 목록을 로드한다', () async {
+      final user = _testUser('auth-post-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 14, 12);
+      final post = _buildPost(
+        id: 'liked-post',
+        userId: 'other-user',
+        createdAt: now,
+      );
+
+      when(
+        () => communityService.getLikedPostsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeletedPosts: false,
+        ),
+      ).thenAnswer((_) async => [post]);
+
+      final cubit = PostListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadLikedByUser(user.id);
+
+      final state = cubit.state;
+      expect(state, isA<PostListLoaded>());
+      expect((state as PostListLoaded).posts.single.id, 'liked-post');
+      verify(
+        () => communityService.getLikedPostsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeletedPosts: false,
+        ),
+      ).called(1);
+    });
+
     test('loadForUser 이후 loadMore/reload도 동일한 userId 필터를 유지한다', () async {
       final user = _testUser('auth-post-user');
       final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
@@ -281,6 +322,74 @@ void main() {
           includeDeletedPosts: false,
           limit: 20,
           offset: 20,
+        ),
+      ).called(1);
+    });
+
+    test('loadLikedByUser 이후 loadMore/reload도 좋아요 조회 스코프를 유지한다', () async {
+      final user = _testUser('auth-post-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 14, 12);
+      final firstPagePosts = List.generate(
+        20,
+        (index) => _buildPost(
+          id: 'liked-post-$index',
+          userId: 'other-user',
+          createdAt: now.add(Duration(minutes: index)),
+        ),
+      );
+      final secondPagePosts = [
+        _buildPost(
+          id: 'liked-post-20',
+          userId: 'other-user',
+          createdAt: now.add(const Duration(minutes: 20)),
+        ),
+      ];
+
+      when(
+        () => communityService.getLikedPostsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeletedPosts: false,
+        ),
+      ).thenAnswer((_) async => firstPagePosts);
+      when(
+        () => communityService.getLikedPostsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 20,
+          ascending: false,
+          includeDeletedPosts: false,
+        ),
+      ).thenAnswer((_) async => secondPagePosts);
+
+      final cubit = PostListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadLikedByUser(user.id);
+      await cubit.loadMore();
+      await cubit.reload();
+
+      verify(
+        () => communityService.getLikedPostsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeletedPosts: false,
+        ),
+      ).called(2);
+      verify(
+        () => communityService.getLikedPostsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 20,
+          ascending: false,
+          includeDeletedPosts: false,
         ),
       ).called(1);
     });

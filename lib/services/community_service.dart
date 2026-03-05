@@ -76,6 +76,58 @@ class CommunityService {
     }
   }
 
+  Future<List<CommunityPost>> getLikedPostsByUser({
+    required String userId,
+    int limit = 20,
+    int offset = 0,
+    bool ascending = false,
+    bool includeDeletedPosts = false,
+  }) async {
+    try {
+      return await _getLikedPostsByUserInternal(
+        userId: userId,
+        includeAvatar: true,
+        includeProfiles: true,
+        limit: limit,
+        offset: offset,
+        ascending: ascending,
+        includeDeletedPosts: includeDeletedPosts,
+      );
+    } on PostgrestException catch (e) {
+      if (!_shouldRetryWithoutAvatar(e)) {
+        debugPrint('Get liked posts by user error: $e');
+        rethrow;
+      }
+
+      try {
+        return await _getLikedPostsByUserInternal(
+          userId: userId,
+          includeAvatar: false,
+          includeProfiles: true,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+          includeDeletedPosts: includeDeletedPosts,
+        );
+      } on PostgrestException catch (fallbackError) {
+        if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
+
+        return _getLikedPostsByUserInternal(
+          userId: userId,
+          includeAvatar: false,
+          includeProfiles: false,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+          includeDeletedPosts: includeDeletedPosts,
+        );
+      }
+    } catch (e) {
+      debugPrint('Get liked posts by user error: $e');
+      rethrow;
+    }
+  }
+
   // 게시글 상세 조회 (댓글 포함)
   Future<CommunityPost?> getPost(
     String id, {
@@ -542,6 +594,58 @@ class CommunityService {
     }
   }
 
+  Future<List<CommunityComment>> getLikedCommentsByUser({
+    required String userId,
+    int limit = 20,
+    int offset = 0,
+    bool ascending = false,
+    bool includeDeleted = false,
+  }) async {
+    try {
+      return await _getLikedCommentsByUserInternal(
+        userId: userId,
+        includeAvatar: true,
+        includeProfiles: true,
+        limit: limit,
+        offset: offset,
+        ascending: ascending,
+        includeDeleted: includeDeleted,
+      );
+    } on PostgrestException catch (e) {
+      if (!_shouldRetryWithoutAvatar(e)) {
+        debugPrint('Get liked comments by user error: $e');
+        rethrow;
+      }
+
+      try {
+        return await _getLikedCommentsByUserInternal(
+          userId: userId,
+          includeAvatar: false,
+          includeProfiles: true,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+          includeDeleted: includeDeleted,
+        );
+      } on PostgrestException catch (fallbackError) {
+        if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
+
+        return _getLikedCommentsByUserInternal(
+          userId: userId,
+          includeAvatar: false,
+          includeProfiles: false,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+          includeDeleted: includeDeleted,
+        );
+      }
+    } catch (e) {
+      debugPrint('Get liked comments by user error: $e');
+      rethrow;
+    }
+  }
+
   Future<Map<String, bool>> getCommentDeletionStatusByIds({
     required List<String> commentIds,
   }) async {
@@ -618,6 +722,50 @@ class CommunityService {
         .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
         .toList();
     return _attachPostLikeMetadata(posts);
+  }
+
+  Future<List<CommunityPost>> _getLikedPostsByUserInternal({
+    required String userId,
+    required bool includeAvatar,
+    required bool includeProfiles,
+    required int limit,
+    required int offset,
+    required bool ascending,
+    required bool includeDeletedPosts,
+  }) async {
+    final likeResponse = await _client
+        .from('community_post_likes')
+        .select('post_id')
+        .eq('user_id', userId)
+        .order('created_at', ascending: ascending)
+        .range(offset, offset + limit - 1);
+
+    final postIds = (likeResponse as List)
+        .map((e) => (e as Map<String, dynamic>)['post_id'] as String?)
+        .whereType<String>()
+        .toList(growable: false);
+    if (postIds.isEmpty) {
+      return const [];
+    }
+
+    var query = _client
+        .from('community_posts')
+        .select(_postListSelect(includeAvatar, includeProfiles))
+        .inFilter('id', postIds);
+    if (!includeDeletedPosts) {
+      query = query.eq('is_deleted_content', false);
+    }
+
+    final response = await query;
+    final unorderedPosts = (response as List)
+        .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
+        .toList(growable: false);
+    final postById = {for (final post in unorderedPosts) post.id: post};
+    final orderedPosts = postIds
+        .map((postId) => postById[postId])
+        .whereType<CommunityPost>()
+        .toList(growable: false);
+    return _attachPostLikeMetadata(orderedPosts);
   }
 
   String _sanitizeSearchQuery(String query) {
@@ -769,6 +917,52 @@ class CommunityService {
         .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
         .toList();
     return _attachCommentLikeMetadata(comments);
+  }
+
+  Future<List<CommunityComment>> _getLikedCommentsByUserInternal({
+    required String userId,
+    required bool includeAvatar,
+    required bool includeProfiles,
+    required int limit,
+    required int offset,
+    required bool ascending,
+    required bool includeDeleted,
+  }) async {
+    final likeResponse = await _client
+        .from('community_comment_likes')
+        .select('comment_id')
+        .eq('user_id', userId)
+        .order('created_at', ascending: ascending)
+        .range(offset, offset + limit - 1);
+
+    final commentIds = (likeResponse as List)
+        .map((e) => (e as Map<String, dynamic>)['comment_id'] as String?)
+        .whereType<String>()
+        .toList(growable: false);
+    if (commentIds.isEmpty) {
+      return const [];
+    }
+
+    var query = _client
+        .from('community_comments')
+        .select(_commentSelect(includeAvatar, includeProfiles))
+        .inFilter('id', commentIds);
+    if (!includeDeleted) {
+      query = query.eq('is_deleted_content', false);
+    }
+
+    final response = await query;
+    final unorderedComments = (response as List)
+        .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
+        .toList(growable: false);
+    final commentById = {
+      for (final comment in unorderedComments) comment.id: comment,
+    };
+    final orderedComments = commentIds
+        .map((commentId) => commentById[commentId])
+        .whereType<CommunityComment>()
+        .toList(growable: false);
+    return _attachCommentLikeMetadata(orderedComments);
   }
 
   String _postListSelect(bool includeAvatar, bool includeProfiles) {

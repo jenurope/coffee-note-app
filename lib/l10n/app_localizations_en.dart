@@ -642,6 +642,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myComments => 'My Comments';
 
   @override
+  String get likedContents => 'Liked Content';
+
+  @override
+  String get likedPosts => 'Liked Posts';
+
+  @override
+  String get likedComments => 'Liked Comments';
+
+  @override
+  String get likedPostsEmptyTitle => 'No liked posts yet';
+
+  @override
+  String get likedPostsEmptySubtitle => 'Tap like on posts you enjoy.';
+
+  @override
+  String get likedCommentsEmptyTitle => 'No liked comments yet';
+
+  @override
+  String get likedCommentsEmptySubtitle =>
+      'Tap like on comments you find helpful.';
+
+  @override
   String get contactReport => 'Contact/Report';
 
   @override

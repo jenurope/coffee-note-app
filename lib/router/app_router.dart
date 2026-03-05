@@ -33,6 +33,7 @@ import '../screens/profile/profile_screen.dart';
 import '../screens/profile/profile_edit_screen.dart';
 import '../screens/profile/my_comment_list_screen.dart';
 import '../screens/profile/my_post_list_screen.dart';
+import '../screens/profile/liked_content_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../widgets/navigation/guest_tab_root_back_guard.dart';
 
@@ -48,6 +49,9 @@ abstract final class AppRoutePath {
   static const profile = '/profile';
   static const profilePosts = '/profile/posts';
   static const profileComments = '/profile/comments';
+  static const profileLiked = '/profile/liked';
+  static const profileLikedPosts = '/profile/liked/posts';
+  static const profileLikedComments = '/profile/liked/comments';
   static const profileInquiries = '/profile/inquiries';
   static const profileInquiriesNew = '/profile/inquiries/new';
   static const profileEdit = '/profile/edit';
@@ -196,6 +200,32 @@ class AppRouteBuilders {
     return BlocProvider(
       create: (_) => MyCommentListCubit(authCubit: authCubit),
       child: const MyCommentListScreen(),
+    );
+  }
+
+  Widget buildLikedContents(BuildContext context, GoRouterState state) {
+    return const LikedContentScreen();
+  }
+
+  Widget buildLikedPosts(BuildContext context, GoRouterState state) {
+    final authCubit = context.read<AuthCubit>();
+    return BlocProvider(
+      create: (_) => PostListCubit(authCubit: authCubit),
+      child: const MyPostListScreen(
+        likedMode: true,
+        detailRoutePrefix: '/profile/liked/posts',
+      ),
+    );
+  }
+
+  Widget buildLikedComments(BuildContext context, GoRouterState state) {
+    final authCubit = context.read<AuthCubit>();
+    return BlocProvider(
+      create: (_) => MyCommentListCubit(authCubit: authCubit),
+      child: const MyCommentListScreen(
+        likedMode: true,
+        detailRoutePrefix: '/profile/liked/comments',
+      ),
     );
   }
 
@@ -553,6 +583,91 @@ GoRouter createAppRouter({
                                     'commentId',
                                   ),
                                 ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'liked',
+                    name: 'profile-liked',
+                    builder: (context, state) =>
+                        routeBuilders.buildLikedContents(context, state),
+                    routes: [
+                      GoRoute(
+                        path: 'posts',
+                        name: 'profile-liked-posts',
+                        builder: (context, state) =>
+                            routeBuilders.buildLikedPosts(context, state),
+                        routes: [
+                          GoRoute(
+                            path: ':id',
+                            name: 'profile-liked-post-detail',
+                            builder: (context, state) =>
+                                routeBuilders.buildPostDetail(
+                                  context,
+                                  state,
+                                  postId: _requiredPathParameter(state, 'id'),
+                                ),
+                            routes: [
+                              GoRoute(
+                                path: 'comments/:commentId',
+                                name: 'profile-liked-post-comment-detail',
+                                builder: (context, state) =>
+                                    routeBuilders.buildCommentDetail(
+                                      context,
+                                      state,
+                                      postId: _requiredPathParameter(
+                                        state,
+                                        'id',
+                                      ),
+                                      commentId: _requiredPathParameter(
+                                        state,
+                                        'commentId',
+                                      ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: 'comments',
+                        name: 'profile-liked-comments',
+                        builder: (context, state) =>
+                            routeBuilders.buildLikedComments(context, state),
+                        routes: [
+                          GoRoute(
+                            path: ':postId',
+                            name: 'profile-liked-comment-post-detail',
+                            builder: (context, state) =>
+                                routeBuilders.buildPostDetail(
+                                  context,
+                                  state,
+                                  postId: _requiredPathParameter(
+                                    state,
+                                    'postId',
+                                  ),
+                                ),
+                            routes: [
+                              GoRoute(
+                                path: 'comments/:commentId',
+                                name: 'profile-liked-comment-detail',
+                                builder: (context, state) =>
+                                    routeBuilders.buildCommentDetail(
+                                      context,
+                                      state,
+                                      postId: _requiredPathParameter(
+                                        state,
+                                        'postId',
+                                      ),
+                                      commentId: _requiredPathParameter(
+                                        state,
+                                        'commentId',
+                                      ),
+                                    ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

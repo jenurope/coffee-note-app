@@ -14,7 +14,14 @@ import '../../models/community_post.dart';
 import '../../widgets/common/common_widgets.dart';
 
 class MyCommentListScreen extends StatefulWidget {
-  const MyCommentListScreen({super.key});
+  const MyCommentListScreen({
+    super.key,
+    this.likedMode = false,
+    this.detailRoutePrefix = '/profile/comments',
+  });
+
+  final bool likedMode;
+  final String detailRoutePrefix;
 
   @override
   State<MyCommentListScreen> createState() => _MyCommentListScreenState();
@@ -48,6 +55,10 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
 
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthAuthenticated) {
+      if (widget.likedMode) {
+        context.read<MyCommentListCubit>().loadLikedByUser(authState.user.id);
+        return;
+      }
       context.read<MyCommentListCubit>().loadForUser(authState.user.id);
     }
   }
@@ -86,6 +97,13 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final screenTitle = widget.likedMode ? l10n.likedComments : l10n.myComments;
+    final emptyTitle = widget.likedMode
+        ? l10n.likedCommentsEmptyTitle
+        : l10n.commentNone;
+    final emptySubtitle = widget.likedMode
+        ? l10n.likedCommentsEmptySubtitle
+        : null;
     final dateFormat = DateFormat.Md(
       Localizations.localeOf(context).toString(),
     ).add_Hm();
@@ -94,7 +112,7 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
       builder: (context, authState) {
         if (authState is! AuthAuthenticated) {
           return Scaffold(
-            appBar: AppBar(title: Text(l10n.myComments)),
+            appBar: AppBar(title: Text(screenTitle)),
             body: EmptyState(
               icon: Icons.lock_outline,
               title: l10n.requiredLogin,
@@ -111,7 +129,7 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
         return BlocBuilder<MyCommentListCubit, MyCommentListState>(
           builder: (context, state) {
             return Scaffold(
-              appBar: AppBar(title: Text(l10n.myComments)),
+              appBar: AppBar(title: Text(screenTitle)),
               body: switch (state) {
                 MyCommentListInitial() || MyCommentListLoading() =>
                   const Center(child: CircularProgressIndicator()),
@@ -123,7 +141,8 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
                   comments.isEmpty
                       ? EmptyState(
                           icon: Icons.chat_bubble_outline,
-                          title: l10n.commentNone,
+                          title: emptyTitle,
+                          subtitle: emptySubtitle,
                         )
                       : RefreshIndicator(
                           onRefresh: () =>
@@ -168,20 +187,20 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
                                   onTap: () {
                                     if (comment.parentId != null) {
                                       context.push(
-                                        '/profile/comments/${comment.postId}',
+                                        '${widget.detailRoutePrefix}/${comment.postId}',
                                       );
                                       WidgetsBinding.instance.addPostFrameCallback((
                                         _,
                                       ) {
                                         if (!mounted) return;
                                         context.push(
-                                          '/profile/comments/${comment.postId}/comments/${comment.id}',
+                                          '${widget.detailRoutePrefix}/${comment.postId}/comments/${comment.id}',
                                         );
                                       });
                                       return;
                                     }
                                     context.push(
-                                      '/profile/comments/${comment.postId}',
+                                      '${widget.detailRoutePrefix}/${comment.postId}',
                                     );
                                   },
                                   borderRadius: BorderRadius.circular(16),

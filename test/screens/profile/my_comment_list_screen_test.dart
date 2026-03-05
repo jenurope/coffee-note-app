@@ -31,6 +31,9 @@ void main() {
       when(
         () => myCommentListCubit.loadForUser(any()),
       ).thenAnswer((_) async {});
+      when(
+        () => myCommentListCubit.loadLikedByUser(any()),
+      ).thenAnswer((_) async {});
       when(() => myCommentListCubit.loadMore()).thenAnswer((_) async {});
       when(() => myCommentListCubit.reload()).thenAnswer((_) async {});
     });
@@ -72,6 +75,44 @@ void main() {
 
       expect(find.text('내 댓글 내용'), findsOneWidget);
       verify(() => myCommentListCubit.loadForUser('my-user')).called(1);
+    });
+
+    testWidgets('좋아요 모드에서는 좋아요한 댓글 목록을 로드한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('my-user'));
+      final now = DateTime(2026, 2, 25, 10);
+      final commentState = MyCommentListState.loaded(
+        comments: [
+          CommunityComment(
+            id: 'liked-comment-1',
+            postId: 'post-1',
+            userId: 'other-user',
+            content: '좋아요한 댓글 내용',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+        hasMore: false,
+      );
+
+      _bindStates(
+        authCubit: authCubit,
+        myCommentListCubit: myCommentListCubit,
+        authState: authState,
+        commentState: commentState,
+      );
+
+      await _pumpMyCommentListScreen(
+        tester,
+        authCubit: authCubit,
+        myCommentListCubit: myCommentListCubit,
+        likedMode: true,
+        routePrefix: '/profile/liked/comments',
+      );
+
+      expect(find.text('좋아요한 댓글 내용'), findsOneWidget);
+      expect(find.text('좋아요 한 댓글'), findsOneWidget);
+      verify(() => myCommentListCubit.loadLikedByUser('my-user')).called(1);
+      verifyNever(() => myCommentListCubit.loadForUser(any()));
     });
 
     testWidgets('목록 아이템 탭 시 해당 게시글 상세 경로로 이동한다', (tester) async {
@@ -218,6 +259,7 @@ void main() {
       expect(find.text('로그인이 필요합니다.'), findsOneWidget);
       expect(find.text('로그인'), findsOneWidget);
       verifyNever(() => myCommentListCubit.loadForUser(any()));
+      verifyNever(() => myCommentListCubit.loadLikedByUser(any()));
     });
   });
 }
@@ -247,13 +289,18 @@ Future<void> _pumpMyCommentListScreen(
   WidgetTester tester, {
   required AuthCubit authCubit,
   required MyCommentListCubit myCommentListCubit,
+  bool likedMode = false,
+  String routePrefix = '/profile/comments',
 }) async {
   final router = GoRouter(
-    initialLocation: '/profile/comments',
+    initialLocation: routePrefix,
     routes: [
       GoRoute(
-        path: '/profile/comments',
-        builder: (context, state) => const MyCommentListScreen(),
+        path: routePrefix,
+        builder: (context, state) => MyCommentListScreen(
+          likedMode: likedMode,
+          detailRoutePrefix: routePrefix,
+        ),
         routes: [
           GoRoute(
             path: ':postId',

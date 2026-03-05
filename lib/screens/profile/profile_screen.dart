@@ -310,6 +310,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             title: l10n.myComments,
                             onTap: () => context.push('/profile/comments'),
                           ),
+                          const Divider(height: 1),
+                          _buildMenuTile(
+                            context,
+                            title: l10n.likedContents,
+                            onTap: () => context.push('/profile/liked'),
+                          ),
                         ],
                       ),
                     ),
