@@ -156,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 children: [
                                   Expanded(
                                     child: CustomButton(
-                                      text: l10n.recordBean,
+                                      text: l10n.beansRecordButton,
                                       icon: Icons.add,
                                       onPressed: () => context.go('/beans/new'),
                                     ),
@@ -164,7 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: CustomButton(
-                                      text: l10n.recordCoffee,
+                                      text: l10n.logsRecordButton,
                                       icon: Icons.add,
                                       isOutlined: true,
                                       onPressed: () => context.go('/logs/new'),

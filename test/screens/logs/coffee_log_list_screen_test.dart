@@ -6,6 +6,7 @@ import 'package:coffee_note_app/cubits/log/log_list_cubit.dart';
 import 'package:coffee_note_app/cubits/log/log_list_state.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:coffee_note_app/screens/logs/coffee_log_list_screen.dart';
+import 'package:coffee_note_app/widgets/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -64,6 +65,30 @@ void main() {
 
       verify(() => logListCubit.updateFilters(any())).called(1);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('빈 상태에서는 중앙 등록 버튼 없이 FAB에 커피 텍스트를 노출한다', (tester) async {
+      _bindStates(authCubit: authCubit, logListCubit: logListCubit);
+
+      await _pumpCoffeeLogListScreen(
+        tester,
+        authCubit: authCubit,
+        logListCubit: logListCubit,
+      );
+
+      final emptyState = find.byType(EmptyState);
+      expect(emptyState, findsOneWidget);
+      expect(
+        find.descendant(of: emptyState, matching: find.byType(CustomButton)),
+        findsNothing,
+      );
+
+      final fab = find.byType(FloatingActionButton);
+      expect(fab, findsOneWidget);
+      expect(
+        find.descendant(of: fab, matching: find.text('커피 추가')),
+        findsOneWidget,
+      );
     });
   });
 }

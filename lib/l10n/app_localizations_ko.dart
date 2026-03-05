@@ -215,7 +215,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get beansEmptySubtitleGuest => '로그인하면 원두를 관리할 수 있습니다.';
 
   @override
-  String get beansRecordButton => '원두 관리';
+  String get beansRecordButton => '원두 추가';
 
   @override
   String get sortNewest => '최신순';
@@ -367,7 +367,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logsEmptySubtitleGuest => '로그인하면 커피를 기록할 수 있습니다.';
 
   @override
-  String get logsRecordButton => '커피 기록하기';
+  String get logsRecordButton => '커피 추가';
 
   @override
   String get listLoadingMore => '추가 항목 불러오는 중...';

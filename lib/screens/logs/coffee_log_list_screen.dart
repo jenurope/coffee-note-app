@@ -172,12 +172,6 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
                                 subtitle: currentUser != null && !isGuest
                                     ? context.l10n.logsEmptySubtitleAuth
                                     : context.l10n.logsEmptySubtitleGuest,
-                                buttonText: currentUser != null && !isGuest
-                                    ? context.l10n.logsRecordButton
-                                    : null,
-                                onButtonPressed: currentUser != null && !isGuest
-                                    ? () => context.push('/logs/new')
-                                    : null,
                               )
                             : _buildLogList(logs),
                       LogListError(message: final message) => Center(
@@ -208,9 +202,10 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
                 ],
               ),
               floatingActionButton: currentUser != null && !isGuest
-                  ? FloatingActionButton(
+                  ? FloatingActionButton.extended(
                       onPressed: () => context.push('/logs/new'),
-                      child: const Icon(Icons.add),
+                      icon: const Icon(Icons.add),
+                      label: Text(context.l10n.logsRecordButton),
                     )
                   : null,
             );

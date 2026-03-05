@@ -141,9 +141,10 @@ class _BeanListScreenState extends State<BeanListScreen> {
                 ],
               ),
               floatingActionButton: isAuthenticated && !isGuest
-                  ? FloatingActionButton(
+                  ? FloatingActionButton.extended(
                       onPressed: () => context.push('/beans/new'),
-                      child: const Icon(Icons.add),
+                      icon: const Icon(Icons.add),
+                      label: Text(context.l10n.beansRecordButton),
                     )
                   : null,
             );
@@ -169,12 +170,6 @@ class _BeanListScreenState extends State<BeanListScreen> {
                 subtitle: isAuthenticated && !isGuest
                     ? context.l10n.beansEmptySubtitleAuth
                     : context.l10n.beansEmptySubtitleGuest,
-                buttonText: isAuthenticated && !isGuest
-                    ? context.l10n.beansRecordButton
-                    : null,
-                onButtonPressed: isAuthenticated && !isGuest
-                    ? () => context.push('/beans/new')
-                    : null,
               )
             : _buildBeanList(beans),
       BeanListError(message: final message) => Center(
