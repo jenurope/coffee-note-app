@@ -295,6 +295,80 @@ void main() {
         ),
       ).called(1);
     });
+
+    testWidgets('댓글 좋아요 시 전체 재로딩 없이 해당 댓글만 갱신한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('viewer'));
+      final parentComment = _comment(
+        id: 'comment-parent',
+        postId: 'post-1',
+        content: '원댓글',
+        userId: 'comment-owner',
+      );
+      final childComment = _comment(
+        id: 'comment-child',
+        postId: 'post-1',
+        content: '하위 댓글',
+        parentId: 'comment-parent',
+        userId: 'comment-owner',
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      when(
+        () => communityService.getCommentById(commentId: 'comment-parent'),
+      ).thenAnswer((_) async => parentComment);
+      when(
+        () => communityService.getReplies(
+          parentCommentId: 'comment-parent',
+          limit: 20,
+          offset: 0,
+          ascending: true,
+        ),
+      ).thenAnswer((_) async => [childComment]);
+      when(
+        () => communityService.toggleCommentLike(commentId: 'comment-child'),
+      ).thenAnswer(
+        (_) async => const LikeToggleResult(isLiked: true, likeCount: 99),
+      );
+
+      await tester.pumpWidget(
+        BlocProvider<AuthCubit>.value(
+          value: authCubit,
+          child: _buildTestMaterialApp(
+            home: const CommentDetailScreen(
+              postId: 'post-1',
+              commentId: 'comment-parent',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('commentDetailLikeButton-comment-child')),
+      );
+      await tester.pumpAndSettle();
+
+      verify(
+        () => communityService.toggleCommentLike(commentId: 'comment-child'),
+      ).called(1);
+      verify(
+        () => communityService.getCommentById(commentId: 'comment-parent'),
+      ).called(1);
+      verify(
+        () => communityService.getReplies(
+          parentCommentId: 'comment-parent',
+          limit: 20,
+          offset: 0,
+          ascending: true,
+        ),
+      ).called(1);
+      expect(find.text('99'), findsOneWidget);
+    });
   });
 }
 

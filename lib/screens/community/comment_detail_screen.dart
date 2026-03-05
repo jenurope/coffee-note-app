@@ -220,13 +220,46 @@ class _CommentDetailScreenState extends State<CommentDetailScreen> {
     return true;
   }
 
+  void _applyCommentLikeLocally({
+    required String commentId,
+    required bool isLikedByMe,
+    required int likeCount,
+  }) {
+    setState(() {
+      if (_parentComment?.id == commentId) {
+        _parentComment = _parentComment?.copyWith(
+          isLikedByMe: isLikedByMe,
+          likeCount: likeCount,
+        );
+        return;
+      }
+
+      _replies = _replies
+          .map((reply) {
+            if (reply.id != commentId) {
+              return reply;
+            }
+            return reply.copyWith(
+              isLikedByMe: isLikedByMe,
+              likeCount: likeCount,
+            );
+          })
+          .toList(growable: false);
+    });
+  }
+
   Future<void> _toggleCommentLike(CommunityComment comment) async {
     if (!_canLikeComment(comment)) return;
 
     try {
       final service = getIt<CommunityService>();
-      await service.toggleCommentLike(commentId: comment.id);
-      await _load();
+      final result = await service.toggleCommentLike(commentId: comment.id);
+      if (!mounted) return;
+      _applyCommentLikeLocally(
+        commentId: comment.id,
+        isLikedByMe: result.isLiked,
+        likeCount: result.likeCount,
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -209,10 +209,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
 
     try {
-      await getIt<CommunityService>().togglePostLike(postId: post.id);
+      final result = await getIt<CommunityService>().togglePostLike(
+        postId: post.id,
+      );
       if (!mounted) return;
-      await context.read<PostDetailCubit>().load(widget.postId);
-      _reloadPostList();
+      context.read<PostDetailCubit>().applyPostLike(
+        isLikedByMe: result.isLiked,
+        likeCount: result.likeCount,
+      );
+      try {
+        context.read<PostListCubit>().applyPostLike(
+          postId: post.id,
+          isLikedByMe: result.isLiked,
+          likeCount: result.likeCount,
+        );
+      } catch (_) {
+        // 목록 Cubit이 없는 컨텍스트(예: 딥링크 단독 진입)에서는 무시합니다.
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -241,10 +254,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
 
     try {
-      await getIt<CommunityService>().toggleCommentLike(commentId: comment.id);
+      final result = await getIt<CommunityService>().toggleCommentLike(
+        commentId: comment.id,
+      );
       if (!mounted) return;
-      await context.read<PostDetailCubit>().load(widget.postId);
-      _reloadPostList();
+      context.read<PostDetailCubit>().applyCommentLike(
+        commentId: comment.id,
+        isLikedByMe: result.isLiked,
+        likeCount: result.likeCount,
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

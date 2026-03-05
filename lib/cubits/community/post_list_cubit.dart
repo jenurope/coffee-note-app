@@ -154,6 +154,30 @@ class PostListCubit extends Cubit<PostListState> {
     await _loadScoped(filters: filters, userId: _activeUserId);
   }
 
+  void applyPostLike({
+    required String postId,
+    required bool isLikedByMe,
+    required int likeCount,
+  }) {
+    final currentState = state;
+    if (currentState is! PostListLoaded) return;
+
+    var updated = false;
+    final updatedPosts = currentState.posts
+        .map((post) {
+          if (post.id != postId) {
+            return post;
+          }
+          updated = true;
+          return post.copyWith(isLikedByMe: isLikedByMe, likeCount: likeCount);
+        })
+        .toList(growable: false);
+
+    if (!updated) return;
+
+    emit(currentState.copyWith(posts: updatedPosts));
+  }
+
   int _resolvePageSize(PostFilters filters) {
     final limit = filters.limit;
     if (limit == null || limit <= 0) {
