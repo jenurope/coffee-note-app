@@ -1996,12 +1996,6 @@ abstract class AppLocalizations {
   /// **'Cold Brew'**
   String get coffeeTypeColdBrew;
 
-  /// No description provided for @coffeeTypeDecaf.
-  ///
-  /// In en, this message translates to:
-  /// **'Decaf'**
-  String get coffeeTypeDecaf;
-
   /// No description provided for @coffeeTypeAffogato.
   ///
   /// In en, this message translates to:
@@ -2013,6 +2007,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other'**
   String get coffeeTypeOther;
+
+  /// No description provided for @caffeineType.
+  ///
+  /// In en, this message translates to:
+  /// **'Caffeine'**
+  String get caffeineType;
+
+  /// No description provided for @caffeineTypeCaffeinated.
+  ///
+  /// In en, this message translates to:
+  /// **'Caffeinated'**
+  String get caffeineTypeCaffeinated;
+
+  /// No description provided for @caffeineTypeHalfCaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Half Caf'**
+  String get caffeineTypeHalfCaf;
+
+  /// No description provided for @caffeineTypeDecaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Decaf'**
+  String get caffeineTypeDecaf;
 
   /// No description provided for @roastLight.
   ///

@@ -111,6 +111,7 @@ create table public.coffee_logs (
   user_id uuid not null,
   cafe_visit_date date not null,
   coffee_type text not null,
+  caffeine_type text not null default 'caffeinated',
   coffee_name text,
   cafe_name text not null,
   rating numeric not null,
@@ -124,8 +125,12 @@ create table public.coffee_logs (
       coffee_type in (
         'espresso','americano','latte','cappuccino','mocha',
         'macchiato','flat_white','hand_drip',
-        'cold_brew','decaf','affogato','other'
+        'cold_brew','affogato','other'
       )
+    ),
+  constraint coffee_logs_caffeine_type_check
+    check (
+      caffeine_type in ('caffeinated','half_caf','decaf')
     ),
   constraint coffee_logs_user_id_fkey
     foreign key (user_id)

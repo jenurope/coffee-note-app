@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../core/image/app_image_cache_policy.dart';
+import '../domain/catalogs/caffeine_type_catalog.dart';
 import '../domain/catalogs/coffee_type_catalog.dart';
 import '../l10n/l10n.dart';
 import '../models/coffee_log.dart';
@@ -23,6 +24,8 @@ class CoffeeLogCard extends StatelessWidget {
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
     final cafeName = log.cafeName.trim();
     final hasCafeName = cafeName.isNotEmpty;
+    final isSpecialCaffeine =
+        log.caffeineType != CaffeineTypeCatalog.caffeinated;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -55,23 +58,54 @@ class CoffeeLogCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 커피 종류 칩
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      CoffeeTypeCatalog.label(context.l10n, log.coffeeType),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                  // 커피 종류/카페인 칩
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          CoffeeTypeCatalog.label(context.l10n, log.coffeeType),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (isSpecialCaffeine)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.secondary.withValues(
+                              alpha: 0.15,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            CaffeineTypeCatalog.label(
+                              context.l10n,
+                              log.caffeineType,
+                            ),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 8),
 

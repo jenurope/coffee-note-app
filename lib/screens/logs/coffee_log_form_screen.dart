@@ -10,6 +10,7 @@ import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/log/log_list_cubit.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
+import '../../domain/catalogs/caffeine_type_catalog.dart';
 import '../../domain/catalogs/coffee_type_catalog.dart';
 import '../../l10n/l10n.dart';
 import '../../models/coffee_log.dart';
@@ -36,6 +37,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
 
   DateTime _visitDate = DateTime.now();
   String _coffeeType = CoffeeLog.coffeeTypes.first;
+  String _caffeineType = CoffeeLog.caffeineTypes.first;
   double _rating = 3.0;
   bool _isLoading = false;
   bool _isInitialized = false;
@@ -88,6 +90,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
     _notesController.text = log.notes ?? '';
     _visitDate = log.cafeVisitDate;
     _coffeeType = log.coffeeType;
+    _caffeineType = log.caffeineType;
     _rating = log.rating;
     _existingImageUrl = log.imageUrl;
     _captureInitialSnapshot();
@@ -197,6 +200,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
       notes: _normalizedText(_notesController.text),
       visitDate: _normalizedDate(_visitDate),
       coffeeType: _coffeeType,
+      caffeineType: _caffeineType,
       rating: _rating,
       imageReference: _normalizedExistingImageReference(),
       selectedImagePath: _selectedImage?.path,
@@ -285,6 +289,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
         userId: currentUser.id,
         cafeVisitDate: _visitDate,
         coffeeType: _coffeeType,
+        caffeineType: _caffeineType,
         coffeeName: _coffeeNameController.text.trim().isEmpty
             ? null
             : _coffeeNameController.text.trim(),
@@ -473,6 +478,33 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // 카페인
+                  Text(
+                    context.l10n.caffeineType,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: CoffeeLog.caffeineTypes.map((type) {
+                      return ChoiceChip(
+                        label: Text(
+                          CaffeineTypeCatalog.label(context.l10n, type),
+                        ),
+                        selected: _caffeineType == type,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _caffeineType = type;
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+
                   // 커피 이름
                   CustomTextField(
                     label: context.l10n.coffeeName,
@@ -580,6 +612,7 @@ class _CoffeeLogFormSnapshot {
     required this.notes,
     required this.visitDate,
     required this.coffeeType,
+    required this.caffeineType,
     required this.rating,
     required this.imageReference,
     required this.selectedImagePath,
@@ -590,6 +623,7 @@ class _CoffeeLogFormSnapshot {
   final String notes;
   final DateTime visitDate;
   final String coffeeType;
+  final String caffeineType;
   final double rating;
   final String? imageReference;
   final String? selectedImagePath;
@@ -603,6 +637,7 @@ class _CoffeeLogFormSnapshot {
         other.notes == notes &&
         other.visitDate == visitDate &&
         other.coffeeType == coffeeType &&
+        other.caffeineType == caffeineType &&
         other.rating == rating &&
         other.imageReference == imageReference &&
         other.selectedImagePath == selectedImagePath;
@@ -615,6 +650,7 @@ class _CoffeeLogFormSnapshot {
     notes,
     visitDate,
     coffeeType,
+    caffeineType,
     rating,
     imageReference,
     selectedImagePath,

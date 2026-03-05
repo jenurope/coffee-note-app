@@ -12,6 +12,7 @@ import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/log/log_detail_cubit.dart';
 import '../../cubits/log/log_detail_state.dart';
 import '../../cubits/log/log_list_cubit.dart';
+import '../../domain/catalogs/caffeine_type_catalog.dart';
 import '../../domain/catalogs/coffee_type_catalog.dart';
 import '../../l10n/l10n.dart';
 import '../../services/coffee_log_service.dart';
@@ -48,6 +49,8 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                 final hasImage = _hasValidImageUrl(imageUrl);
                 final cafeName = log.cafeName.trim();
                 final hasCafeName = cafeName.isNotEmpty;
+                final isSpecialCaffeine =
+                    log.caffeineType != CaffeineTypeCatalog.caffeinated;
                 return Scaffold(
                   body: CustomScrollView(
                     slivers: [
@@ -103,16 +106,42 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Chip(
-                                label: Text(
-                                  CoffeeTypeCatalog.label(l10n, log.coffeeType),
-                                ),
-                                backgroundColor: theme.colorScheme.primary
-                                    .withValues(alpha: 0.1),
-                                labelStyle: TextStyle(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  Chip(
+                                    label: Text(
+                                      CoffeeTypeCatalog.label(
+                                        l10n,
+                                        log.coffeeType,
+                                      ),
+                                    ),
+                                    backgroundColor: theme.colorScheme.primary
+                                        .withValues(alpha: 0.1),
+                                    labelStyle: TextStyle(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (isSpecialCaffeine)
+                                    Chip(
+                                      label: Text(
+                                        CaffeineTypeCatalog.label(
+                                          l10n,
+                                          log.caffeineType,
+                                        ),
+                                      ),
+                                      backgroundColor: theme
+                                          .colorScheme
+                                          .secondary
+                                          .withValues(alpha: 0.12),
+                                      labelStyle: TextStyle(
+                                        color: theme.colorScheme.secondary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                ],
                               ),
                               const SizedBox(height: 8),
                               Text(

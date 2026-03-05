@@ -988,13 +988,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coffeeTypeColdBrew => '콜드브루';
 
   @override
-  String get coffeeTypeDecaf => '디카페인';
-
-  @override
   String get coffeeTypeAffogato => '아포가토';
 
   @override
   String get coffeeTypeOther => '기타';
+
+  @override
+  String get caffeineType => '카페인';
+
+  @override
+  String get caffeineTypeCaffeinated => '카페인';
+
+  @override
+  String get caffeineTypeHalfCaf => '하프카페인';
+
+  @override
+  String get caffeineTypeDecaf => '디카페인';
 
   @override
   String get roastLight => '라이트';

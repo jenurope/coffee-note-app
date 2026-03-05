@@ -1035,13 +1035,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coffeeTypeColdBrew => 'Cold Brew';
 
   @override
-  String get coffeeTypeDecaf => 'Decaf';
-
-  @override
   String get coffeeTypeAffogato => 'Affogato';
 
   @override
   String get coffeeTypeOther => 'Other';
+
+  @override
+  String get caffeineType => 'Caffeine';
+
+  @override
+  String get caffeineTypeCaffeinated => 'Caffeinated';
+
+  @override
+  String get caffeineTypeHalfCaf => 'Half Caf';
+
+  @override
+  String get caffeineTypeDecaf => 'Decaf';
 
   @override
   String get roastLight => 'Light';

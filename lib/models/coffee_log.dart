@@ -1,3 +1,4 @@
+import '../domain/catalogs/caffeine_type_catalog.dart';
 import '../domain/catalogs/coffee_type_catalog.dart';
 
 class CoffeeLog {
@@ -5,6 +6,7 @@ class CoffeeLog {
   final String userId;
   final DateTime cafeVisitDate;
   final String coffeeType;
+  final String caffeineType;
   final String? coffeeName;
   final String cafeName;
   final double rating;
@@ -18,6 +20,7 @@ class CoffeeLog {
     required this.userId,
     required this.cafeVisitDate,
     required this.coffeeType,
+    this.caffeineType = CaffeineTypeCatalog.caffeinated,
     this.coffeeName,
     required this.cafeName,
     required this.rating,
@@ -33,6 +36,8 @@ class CoffeeLog {
       userId: json['user_id'] as String,
       cafeVisitDate: DateTime.parse(json['cafe_visit_date'] as String),
       coffeeType: json['coffee_type'] as String,
+      caffeineType:
+          json['caffeine_type'] as String? ?? CaffeineTypeCatalog.caffeinated,
       coffeeName: json['coffee_name'] as String?,
       cafeName: json['cafe_name'] as String,
       rating: (json['rating'] as num).toDouble(),
@@ -49,6 +54,7 @@ class CoffeeLog {
       'user_id': userId,
       'cafe_visit_date': cafeVisitDate.toIso8601String().split('T').first,
       'coffee_type': coffeeType,
+      'caffeine_type': caffeineType,
       'coffee_name': coffeeName,
       'cafe_name': cafeName,
       'rating': rating,
@@ -64,6 +70,7 @@ class CoffeeLog {
       'user_id': userId,
       'cafe_visit_date': cafeVisitDate.toIso8601String().split('T').first,
       'coffee_type': coffeeType,
+      'caffeine_type': caffeineType,
       'coffee_name': coffeeName,
       'cafe_name': cafeName,
       'rating': rating,
@@ -77,6 +84,7 @@ class CoffeeLog {
     String? userId,
     DateTime? cafeVisitDate,
     String? coffeeType,
+    String? caffeineType,
     String? coffeeName,
     String? cafeName,
     double? rating,
@@ -90,6 +98,7 @@ class CoffeeLog {
       userId: userId ?? this.userId,
       cafeVisitDate: cafeVisitDate ?? this.cafeVisitDate,
       coffeeType: coffeeType ?? this.coffeeType,
+      caffeineType: caffeineType ?? this.caffeineType,
       coffeeName: coffeeName ?? this.coffeeName,
       cafeName: cafeName ?? this.cafeName,
       rating: rating ?? this.rating,
@@ -101,4 +110,5 @@ class CoffeeLog {
   }
 
   static const List<String> coffeeTypes = CoffeeTypeCatalog.codes;
+  static const List<String> caffeineTypes = CaffeineTypeCatalog.codes;
 }
