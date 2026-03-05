@@ -1990,12 +1990,6 @@ abstract class AppLocalizations {
   /// **'Hand Drip'**
   String get coffeeTypeHandDrip;
 
-  /// No description provided for @coffeeTypeBrewedCoffee.
-  ///
-  /// In en, this message translates to:
-  /// **'Brewed Coffee'**
-  String get coffeeTypeBrewedCoffee;
-
   /// No description provided for @coffeeTypeColdBrew.
   ///
   /// In en, this message translates to:

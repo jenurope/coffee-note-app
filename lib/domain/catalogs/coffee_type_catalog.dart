@@ -9,7 +9,6 @@ abstract final class CoffeeTypeCatalog {
   static const String macchiato = 'macchiato';
   static const String flatWhite = 'flat_white';
   static const String handDrip = 'hand_drip';
-  static const String brewedCoffee = 'brewed_coffee';
   static const String coldBrew = 'cold_brew';
   static const String decaf = 'decaf';
   static const String affogato = 'affogato';
@@ -24,7 +23,6 @@ abstract final class CoffeeTypeCatalog {
     macchiato,
     flatWhite,
     handDrip,
-    brewedCoffee,
     coldBrew,
     decaf,
     affogato,
@@ -41,7 +39,6 @@ abstract final class CoffeeTypeCatalog {
       macchiato => l10n.coffeeTypeMacchiato,
       flatWhite => l10n.coffeeTypeFlatWhite,
       handDrip => l10n.coffeeTypeHandDrip,
-      brewedCoffee => l10n.coffeeTypeBrewedCoffee,
       coldBrew => l10n.coffeeTypeColdBrew,
       decaf => l10n.coffeeTypeDecaf,
       affogato => l10n.coffeeTypeAffogato,

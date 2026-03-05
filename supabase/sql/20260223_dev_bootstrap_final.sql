@@ -123,7 +123,7 @@ create table public.coffee_logs (
     check (
       coffee_type in (
         'espresso','americano','latte','cappuccino','mocha',
-        'macchiato','flat_white','hand_drip','brewed_coffee',
+        'macchiato','flat_white','hand_drip',
         'cold_brew','decaf','affogato','other'
       )
     ),

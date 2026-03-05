@@ -18,7 +18,6 @@ void main() {
         'macchiato',
         'flat_white',
         'hand_drip',
-        'brewed_coffee',
         'cold_brew',
         'decaf',
         'affogato',
