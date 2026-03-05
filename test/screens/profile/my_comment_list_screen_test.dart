@@ -190,6 +190,7 @@ void main() {
 
       expect(find.text('내 댓글 내용'), findsOneWidget);
       expect(find.text('DETAIL post-1'), findsNothing);
+      verify(() => myCommentListCubit.reload()).called(1);
     });
 
     testWidgets('대댓글 탭 시 댓글 상세로 이동하고 뒤로가면 게시글, 프로필 순으로 이동한다', (tester) async {
@@ -237,6 +238,7 @@ void main() {
       expect(find.text('내 대댓글 내용'), findsOneWidget);
       expect(find.text('DETAIL post-1'), findsNothing);
       expect(find.text('COMMENT comment-reply-1'), findsNothing);
+      verify(() => myCommentListCubit.reload()).called(1);
     });
 
     testWidgets('비인증 상태에서는 로그인 유도 UI를 노출한다', (tester) async {

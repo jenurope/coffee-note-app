@@ -93,6 +93,25 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
     return comment.content;
   }
 
+  Future<void> _openCommentDetail(CommunityComment comment) async {
+    final listCubit = context.read<MyCommentListCubit>();
+    final postDetailPath = '${widget.detailRoutePrefix}/${comment.postId}';
+
+    if (comment.parentId != null) {
+      final postDetailFuture = context.push(postDetailPath);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.push('$postDetailPath/comments/${comment.id}');
+      });
+      await postDetailFuture;
+    } else {
+      await context.push(postDetailPath);
+    }
+
+    if (!mounted) return;
+    await listCubit.reload();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -184,25 +203,7 @@ class _MyCommentListScreenState extends State<MyCommentListScreen> {
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: InkWell(
-                                  onTap: () {
-                                    if (comment.parentId != null) {
-                                      context.push(
-                                        '${widget.detailRoutePrefix}/${comment.postId}',
-                                      );
-                                      WidgetsBinding.instance.addPostFrameCallback((
-                                        _,
-                                      ) {
-                                        if (!mounted) return;
-                                        context.push(
-                                          '${widget.detailRoutePrefix}/${comment.postId}/comments/${comment.id}',
-                                        );
-                                      });
-                                      return;
-                                    }
-                                    context.push(
-                                      '${widget.detailRoutePrefix}/${comment.postId}',
-                                    );
-                                  },
+                                  onTap: () => _openCommentDetail(comment),
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),

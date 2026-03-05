@@ -393,6 +393,47 @@ void main() {
         ),
       ).called(1);
     });
+
+    test('좋아요 목록 스코프에서는 좋아요 해제 시 목록에서 즉시 제거한다', () async {
+      final user = _testUser('auth-post-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 14, 12);
+      final first = _buildPost(
+        id: 'liked-post-1',
+        userId: 'other-user',
+        createdAt: now,
+      );
+      final second = _buildPost(
+        id: 'liked-post-2',
+        userId: 'other-user',
+        createdAt: now.add(const Duration(minutes: 1)),
+      );
+
+      when(
+        () => communityService.getLikedPostsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeletedPosts: false,
+        ),
+      ).thenAnswer((_) async => [first, second]);
+
+      final cubit = PostListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadLikedByUser(user.id);
+      cubit.applyPostLike(
+        postId: 'liked-post-1',
+        isLikedByMe: false,
+        likeCount: 0,
+      );
+
+      final state = cubit.state as PostListLoaded;
+      expect(state.posts.map((post) => post.id).toList(), ['liked-post-2']);
+    });
   });
 }
 

@@ -191,6 +191,17 @@ class PostListCubit extends Cubit<PostListState> {
     final currentState = state;
     if (currentState is! PostListLoaded) return;
 
+    if (_activeScope == _PostListScope.liked && !isLikedByMe) {
+      final updatedPosts = currentState.posts
+          .where((post) => post.id != postId)
+          .toList(growable: false);
+      if (updatedPosts.length == currentState.posts.length) {
+        return;
+      }
+      emit(currentState.copyWith(posts: updatedPosts));
+      return;
+    }
+
     var updated = false;
     final updatedPosts = currentState.posts
         .map((post) {

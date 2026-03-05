@@ -108,6 +108,43 @@ class MyCommentListCubit extends Cubit<MyCommentListState> {
     await _loadScoped(userId: _activeUserId, scope: _activeScope);
   }
 
+  void applyCommentLike({
+    required String commentId,
+    required bool isLikedByMe,
+    required int likeCount,
+  }) {
+    final currentState = state;
+    if (currentState is! MyCommentListLoaded) return;
+
+    if (_activeScope == _MyCommentListScope.liked && !isLikedByMe) {
+      final updatedComments = currentState.comments
+          .where((comment) => comment.id != commentId)
+          .toList(growable: false);
+      if (updatedComments.length == currentState.comments.length) {
+        return;
+      }
+      emit(currentState.copyWith(comments: updatedComments));
+      return;
+    }
+
+    var updated = false;
+    final updatedComments = currentState.comments
+        .map((comment) {
+          if (comment.id != commentId) {
+            return comment;
+          }
+          updated = true;
+          return comment.copyWith(
+            isLikedByMe: isLikedByMe,
+            likeCount: likeCount,
+          );
+        })
+        .toList(growable: false);
+    if (!updated) return;
+
+    emit(currentState.copyWith(comments: updatedComments));
+  }
+
   void reset() {
     _activeUserId = null;
     _activeScope = _MyCommentListScope.authored;
