@@ -416,12 +416,6 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 이미지 선택
-                  Text(
-                    context.l10n.beanPhoto,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 8),
                   ImagePickerWidget(
                     imageUrl: _existingImageUrl,
                     localImagePath: _selectedImage?.path,

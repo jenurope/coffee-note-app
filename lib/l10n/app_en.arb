@@ -178,7 +178,7 @@
   "coffeeType": "Coffee Type",
   "coffeeName": "Coffee Name",
   "coffeeNameHint": "e.g. Signature Latte",
-  "cafeName": "Cafe Name *",
+  "cafeName": "Cafe Name",
   "cafeNameHint": "e.g. Blue Bottle Seongsu",
   "cafeNameRequired": "Please enter cafe name",
   "visitDate": "Visit Date",

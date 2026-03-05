@@ -402,7 +402,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coffeeNameHint => 'e.g. Signature Latte';
 
   @override
-  String get cafeName => 'Cafe Name *';
+  String get cafeName => 'Cafe Name';
 
   @override
   String get cafeNameHint => 'e.g. Blue Bottle Seongsu';

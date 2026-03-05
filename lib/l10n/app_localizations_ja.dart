@@ -391,7 +391,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get coffeeNameHint => '例: シグネチャーラテ';
 
   @override
-  String get cafeName => 'カフェ名 *';
+  String get cafeName => 'カフェ名';
 
   @override
   String get cafeNameHint => '例: Blue Bottle Seongsu';

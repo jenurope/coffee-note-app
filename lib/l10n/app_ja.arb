@@ -178,7 +178,7 @@
   "coffeeType": "コーヒー種類",
   "coffeeName": "コーヒー名",
   "coffeeNameHint": "例: シグネチャーラテ",
-  "cafeName": "カフェ名 *",
+  "cafeName": "カフェ名",
   "cafeNameHint": "例: Blue Bottle Seongsu",
   "cafeNameRequired": "カフェ名を入力してください",
   "visitDate": "訪問日",

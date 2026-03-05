@@ -835,7 +835,7 @@ abstract class AppLocalizations {
   /// No description provided for @cafeName.
   ///
   /// In en, this message translates to:
-  /// **'Cafe Name *'**
+  /// **'Cafe Name'**
   String get cafeName;
 
   /// No description provided for @cafeNameHint.

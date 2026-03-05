@@ -29,7 +29,7 @@ void main() {
       await tester.tap(find.text('취소'));
       await tester.pumpAndSettle();
 
-      expect(find.text('새 원두 기록'), findsOneWidget);
+      expect(find.text('새 원두 관리'), findsOneWidget);
 
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();

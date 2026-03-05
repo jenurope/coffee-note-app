@@ -21,6 +21,8 @@ class CoffeeLogCard extends StatelessWidget {
     );
     final imageUrl = log.imageUrl?.trim();
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+    final cafeName = log.cafeName.trim();
+    final hasCafeName = cafeName.isNotEmpty;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -86,23 +88,25 @@ class CoffeeLogCard extends StatelessWidget {
                   const SizedBox(height: 4),
 
                   // 카페 이름
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          log.cafeName,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
+                  if (hasCafeName) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            cafeName,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
 
                   // 평점과 날짜
                   Column(
@@ -184,6 +188,8 @@ class CoffeeLogListTile extends StatelessWidget {
     );
     final imageUrl = log.imageUrl?.trim();
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+    final cafeName = log.cafeName.trim();
+    final hasCafeName = cafeName.isNotEmpty;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -215,11 +221,9 @@ class CoffeeLogListTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(
-          log.cafeName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        subtitle: hasCafeName
+            ? Text(cafeName, maxLines: 1, overflow: TextOverflow.ellipsis)
+            : null,
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

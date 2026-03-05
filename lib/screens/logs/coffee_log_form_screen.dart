@@ -387,12 +387,6 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 이미지 선택
-                  Text(
-                    context.l10n.coffeePhoto,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 8),
                   if (_selectedImage != null)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
@@ -452,9 +446,9 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                     ),
                   const SizedBox(height: 16),
 
-                  // 커피 종류
+                  // 커피 종류 (필수)
                   Text(
-                    context.l10n.coffeeType,
+                    '${context.l10n.coffeeType} *',
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 8),
@@ -496,18 +490,12 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                     controller: _cafeNameController,
                     prefixIcon: Icons.storefront,
                     textInputAction: TextInputAction.next,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return context.l10n.cafeNameRequired;
-                      }
-                      return null;
-                    },
                   ),
                   const SizedBox(height: 16),
 
-                  // 방문일
+                  // 날짜 (필수)
                   Text(
-                    context.l10n.visitDate,
+                    '${context.l10n.visitDate} *',
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 8),
@@ -525,8 +513,11 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 평점
-                  Text(context.l10n.rating, style: theme.textTheme.bodyLarge),
+                  // 평점 (필수)
+                  Text(
+                    '${context.l10n.rating} *',
+                    style: theme.textTheme.bodyLarge,
+                  ),
                   const SizedBox(height: 8),
                   Card(
                     child: Padding(

@@ -46,6 +46,8 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                 final isOwner = currentUserId == log.userId;
                 final imageUrl = log.imageUrl?.trim();
                 final hasImage = _hasValidImageUrl(imageUrl);
+                final cafeName = log.cafeName.trim();
+                final hasCafeName = cafeName.isNotEmpty;
                 return Scaffold(
                   body: CustomScrollView(
                     slivers: [
@@ -124,26 +126,28 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.storefront,
-                                    size: 20,
-                                    color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.6),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    log.cafeName,
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(
-                                          color: theme.colorScheme.onSurface
-                                              .withValues(alpha: 0.7),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
+                              if (hasCafeName) ...[
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.storefront,
+                                      size: 20,
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      cafeName,
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            color: theme.colorScheme.onSurface
+                                                .withValues(alpha: 0.7),
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                              ],
                               Row(
                                 children: [
                                   RatingStars(rating: log.rating, size: 24),
