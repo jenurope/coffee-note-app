@@ -33,7 +33,6 @@ import '../screens/profile/profile_screen.dart';
 import '../screens/profile/profile_edit_screen.dart';
 import '../screens/profile/my_comment_list_screen.dart';
 import '../screens/profile/my_post_list_screen.dart';
-import '../screens/profile/liked_content_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../widgets/navigation/guest_tab_root_back_guard.dart';
 
@@ -49,7 +48,6 @@ abstract final class AppRoutePath {
   static const profile = '/profile';
   static const profilePosts = '/profile/posts';
   static const profileComments = '/profile/comments';
-  static const profileLiked = '/profile/liked';
   static const profileLikedPosts = '/profile/liked/posts';
   static const profileLikedComments = '/profile/liked/comments';
   static const profileInquiries = '/profile/inquiries';
@@ -201,10 +199,6 @@ class AppRouteBuilders {
       create: (_) => MyCommentListCubit(authCubit: authCubit),
       child: const MyCommentListScreen(),
     );
-  }
-
-  Widget buildLikedContents(BuildContext context, GoRouterState state) {
-    return const LikedContentScreen();
   }
 
   Widget buildLikedPosts(BuildContext context, GoRouterState state) {
@@ -589,85 +583,71 @@ GoRouter createAppRouter({
                     ],
                   ),
                   GoRoute(
-                    path: 'liked',
-                    name: 'profile-liked',
+                    path: 'liked/posts',
+                    name: 'profile-liked-posts',
                     builder: (context, state) =>
-                        routeBuilders.buildLikedContents(context, state),
+                        routeBuilders.buildLikedPosts(context, state),
                     routes: [
                       GoRoute(
-                        path: 'posts',
-                        name: 'profile-liked-posts',
+                        path: ':id',
+                        name: 'profile-liked-post-detail',
                         builder: (context, state) =>
-                            routeBuilders.buildLikedPosts(context, state),
+                            routeBuilders.buildPostDetail(
+                              context,
+                              state,
+                              postId: _requiredPathParameter(state, 'id'),
+                            ),
                         routes: [
                           GoRoute(
-                            path: ':id',
-                            name: 'profile-liked-post-detail',
+                            path: 'comments/:commentId',
+                            name: 'profile-liked-post-comment-detail',
                             builder: (context, state) =>
-                                routeBuilders.buildPostDetail(
+                                routeBuilders.buildCommentDetail(
                                   context,
                                   state,
                                   postId: _requiredPathParameter(state, 'id'),
+                                  commentId: _requiredPathParameter(
+                                    state,
+                                    'commentId',
+                                  ),
                                 ),
-                            routes: [
-                              GoRoute(
-                                path: 'comments/:commentId',
-                                name: 'profile-liked-post-comment-detail',
-                                builder: (context, state) =>
-                                    routeBuilders.buildCommentDetail(
-                                      context,
-                                      state,
-                                      postId: _requiredPathParameter(
-                                        state,
-                                        'id',
-                                      ),
-                                      commentId: _requiredPathParameter(
-                                        state,
-                                        'commentId',
-                                      ),
-                                    ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'liked/comments',
+                    name: 'profile-liked-comments',
+                    builder: (context, state) =>
+                        routeBuilders.buildLikedComments(context, state),
+                    routes: [
                       GoRoute(
-                        path: 'comments',
-                        name: 'profile-liked-comments',
+                        path: ':postId',
+                        name: 'profile-liked-comment-post-detail',
                         builder: (context, state) =>
-                            routeBuilders.buildLikedComments(context, state),
+                            routeBuilders.buildPostDetail(
+                              context,
+                              state,
+                              postId: _requiredPathParameter(state, 'postId'),
+                            ),
                         routes: [
                           GoRoute(
-                            path: ':postId',
-                            name: 'profile-liked-comment-post-detail',
+                            path: 'comments/:commentId',
+                            name: 'profile-liked-comment-detail',
                             builder: (context, state) =>
-                                routeBuilders.buildPostDetail(
+                                routeBuilders.buildCommentDetail(
                                   context,
                                   state,
                                   postId: _requiredPathParameter(
                                     state,
                                     'postId',
                                   ),
+                                  commentId: _requiredPathParameter(
+                                    state,
+                                    'commentId',
+                                  ),
                                 ),
-                            routes: [
-                              GoRoute(
-                                path: 'comments/:commentId',
-                                name: 'profile-liked-comment-detail',
-                                builder: (context, state) =>
-                                    routeBuilders.buildCommentDetail(
-                                      context,
-                                      state,
-                                      postId: _requiredPathParameter(
-                                        state,
-                                        'postId',
-                                      ),
-                                      commentId: _requiredPathParameter(
-                                        state,
-                                        'commentId',
-                                      ),
-                                    ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
