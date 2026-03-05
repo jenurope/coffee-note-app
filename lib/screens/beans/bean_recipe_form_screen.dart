@@ -117,6 +117,11 @@ class _BeanRecipeFormScreenState extends State<BeanRecipeFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appBarActionColor =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onPrimary;
+    final appBarDisabledActionColor = appBarActionColor.withValues(alpha: 0.5);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -127,6 +132,10 @@ class _BeanRecipeFormScreenState extends State<BeanRecipeFormScreen> {
         actions: [
           TextButton(
             onPressed: _isSubmitting ? null : _submit,
+            style: TextButton.styleFrom(
+              foregroundColor: appBarActionColor,
+              disabledForegroundColor: appBarDisabledActionColor,
+            ),
             child: Text(context.l10n.save),
           ),
         ],
