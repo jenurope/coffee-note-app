@@ -2,6 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/community_post.dart';
 
+class LikeToggleResult {
+  final bool isLiked;
+  final int likeCount;
+
+  const LikeToggleResult({required this.isLiked, required this.likeCount});
+}
+
 class CommunityService {
   final SupabaseClient _client;
   static const int _maxReportReasonLength = 500;
@@ -81,7 +88,12 @@ class CommunityService {
         includeProfiles: true,
         includeComments: includeComments,
       );
-      return response == null ? null : CommunityPost.fromJson(response);
+      if (response == null) {
+        return null;
+      }
+      return _attachPostAndCommentLikeMetadata(
+        CommunityPost.fromJson(response),
+      );
     } on PostgrestException catch (e) {
       if (!_shouldRetryWithoutAvatar(e)) {
         debugPrint('Get post error: $e');
@@ -95,7 +107,12 @@ class CommunityService {
           includeProfiles: true,
           includeComments: includeComments,
         );
-        return fallback == null ? null : CommunityPost.fromJson(fallback);
+        if (fallback == null) {
+          return null;
+        }
+        return _attachPostAndCommentLikeMetadata(
+          CommunityPost.fromJson(fallback),
+        );
       } on PostgrestException catch (fallbackError) {
         if (!_shouldRetryWithoutProfiles(fallbackError)) rethrow;
 
@@ -105,7 +122,12 @@ class CommunityService {
           includeProfiles: false,
           includeComments: includeComments,
         );
-        return noProfile == null ? null : CommunityPost.fromJson(noProfile);
+        if (noProfile == null) {
+          return null;
+        }
+        return _attachPostAndCommentLikeMetadata(
+          CommunityPost.fromJson(noProfile),
+        );
       }
     } catch (e) {
       debugPrint('Get post error: $e');
@@ -192,6 +214,122 @@ class CommunityService {
           .eq('is_deleted_content', false);
     } catch (e) {
       debugPrint('Delete comment error: $e');
+      rethrow;
+    }
+  }
+
+  Future<LikeToggleResult> togglePostLike({required String postId}) async {
+    final currentUserId = _requireCurrentUserId();
+
+    try {
+      final post = await _client
+          .from('community_posts')
+          .select('user_id,is_deleted_content,is_withdrawn_content')
+          .eq('id', postId)
+          .maybeSingle();
+
+      if (post == null) {
+        throw const FormatException('community_post_not_found');
+      }
+
+      final postOwnerId = post['user_id'] as String?;
+      if (postOwnerId == null) {
+        throw const FormatException('community_post_not_found');
+      }
+
+      if (postOwnerId == currentUserId) {
+        throw const FormatException('community_post_like_own_forbidden');
+      }
+
+      if ((post['is_deleted_content'] as bool? ?? false) ||
+          (post['is_withdrawn_content'] as bool? ?? false)) {
+        throw const FormatException('community_post_like_unavailable');
+      }
+
+      final existingLike = await _client
+          .from('community_post_likes')
+          .select('post_id')
+          .eq('post_id', postId)
+          .eq('user_id', currentUserId)
+          .maybeSingle();
+
+      final isLiked = existingLike == null;
+      if (isLiked) {
+        await _client.from('community_post_likes').insert({
+          'post_id': postId,
+          'user_id': currentUserId,
+        });
+      } else {
+        await _client
+            .from('community_post_likes')
+            .delete()
+            .eq('post_id', postId)
+            .eq('user_id', currentUserId);
+      }
+
+      final likeCount = await _countPostLikes(postId);
+      return LikeToggleResult(isLiked: isLiked, likeCount: likeCount);
+    } catch (e) {
+      debugPrint('Toggle post like error: $e');
+      rethrow;
+    }
+  }
+
+  Future<LikeToggleResult> toggleCommentLike({
+    required String commentId,
+  }) async {
+    final currentUserId = _requireCurrentUserId();
+
+    try {
+      final comment = await _client
+          .from('community_comments')
+          .select('user_id,is_deleted_content,is_withdrawn_content')
+          .eq('id', commentId)
+          .maybeSingle();
+
+      if (comment == null) {
+        throw const FormatException('community_comment_not_found');
+      }
+
+      final commentOwnerId = comment['user_id'] as String?;
+      if (commentOwnerId == null) {
+        throw const FormatException('community_comment_not_found');
+      }
+
+      if (commentOwnerId == currentUserId) {
+        throw const FormatException('community_comment_like_own_forbidden');
+      }
+
+      if ((comment['is_deleted_content'] as bool? ?? false) ||
+          (comment['is_withdrawn_content'] as bool? ?? false)) {
+        throw const FormatException('community_comment_like_unavailable');
+      }
+
+      final existingLike = await _client
+          .from('community_comment_likes')
+          .select('comment_id')
+          .eq('comment_id', commentId)
+          .eq('user_id', currentUserId)
+          .maybeSingle();
+
+      final isLiked = existingLike == null;
+      if (isLiked) {
+        await _client.from('community_comment_likes').insert({
+          'comment_id': commentId,
+          'user_id': currentUserId,
+        });
+      } else {
+        await _client
+            .from('community_comment_likes')
+            .delete()
+            .eq('comment_id', commentId)
+            .eq('user_id', currentUserId);
+      }
+
+      final likeCount = await _countCommentLikes(commentId);
+      return LikeToggleResult(isLiked: isLiked, likeCount: likeCount);
+    } catch (e) {
+      debugPrint('Toggle comment like error: $e');
       rethrow;
     }
   }
@@ -476,9 +614,10 @@ class CommunityService {
       response = await query.order(orderColumn, ascending: ascending);
     }
 
-    return (response as List)
+    final posts = (response as List)
         .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
         .toList();
+    return _attachPostLikeMetadata(posts);
   }
 
   String _sanitizeSearchQuery(String query) {
@@ -528,9 +667,10 @@ class CommunityService {
         .order('created_at', ascending: ascending)
         .range(offset, offset + limit - 1);
 
-    return (response as List)
+    final comments = (response as List)
         .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
         .toList();
+    return _attachCommentLikeMetadata(comments);
   }
 
   Future<CommunityComment?> _getCommentByIdInternal({
@@ -548,7 +688,9 @@ class CommunityService {
       return null;
     }
 
-    return CommunityComment.fromJson(response);
+    final comment = CommunityComment.fromJson(response);
+    final comments = await _attachCommentLikeMetadata([comment]);
+    return comments.first;
   }
 
   Future<List<CommunityComment>> _getRepliesInternal({
@@ -566,9 +708,10 @@ class CommunityService {
         .order('created_at', ascending: ascending)
         .range(offset, offset + limit - 1);
 
-    return (response as List)
+    final comments = (response as List)
         .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
         .toList();
+    return _attachCommentLikeMetadata(comments);
   }
 
   Future<void> _insertReport({
@@ -622,9 +765,10 @@ class CommunityService {
         .order('created_at', ascending: ascending)
         .range(offset, offset + limit - 1);
 
-    return (response as List)
+    final comments = (response as List)
         .map((e) => CommunityComment.fromJson(e as Map<String, dynamic>))
         .toList();
+    return _attachCommentLikeMetadata(comments);
   }
 
   String _postListSelect(bool includeAvatar, bool includeProfiles) {
@@ -714,6 +858,199 @@ class CommunityService {
           created_at,
           updated_at
         ''';
+  }
+
+  Future<CommunityPost> _attachPostAndCommentLikeMetadata(
+    CommunityPost post,
+  ) async {
+    final postWithLike = (await _attachPostLikeMetadata([post])).first;
+    final comments = postWithLike.comments;
+    if (comments == null || comments.isEmpty) {
+      return postWithLike;
+    }
+
+    final commentsWithLike = await _attachCommentLikeMetadata(comments);
+    return postWithLike.copyWith(comments: commentsWithLike);
+  }
+
+  Future<List<CommunityPost>> _attachPostLikeMetadata(
+    List<CommunityPost> posts,
+  ) async {
+    if (posts.isEmpty) {
+      return posts;
+    }
+
+    final postIds = posts.map((post) => post.id).toSet().toList();
+    final likeCountByPostId = await _loadPostLikeCountByPostIds(postIds);
+    final likedPostIds = await _loadLikedPostIds(postIds);
+
+    return posts
+        .map(
+          (post) => post.copyWith(
+            likeCount: likeCountByPostId[post.id] ?? 0,
+            isLikedByMe: likedPostIds.contains(post.id),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  Future<List<CommunityComment>> _attachCommentLikeMetadata(
+    List<CommunityComment> comments,
+  ) async {
+    if (comments.isEmpty) {
+      return comments;
+    }
+
+    final commentIds = comments.map((comment) => comment.id).toSet().toList();
+    final likeCountByCommentId = await _loadCommentLikeCountByCommentIds(
+      commentIds,
+    );
+    final likedCommentIds = await _loadLikedCommentIds(commentIds);
+
+    return comments
+        .map(
+          (comment) => comment.copyWith(
+            likeCount: likeCountByCommentId[comment.id] ?? 0,
+            isLikedByMe: likedCommentIds.contains(comment.id),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  Future<Map<String, int>> _loadPostLikeCountByPostIds(
+    List<String> postIds,
+  ) async {
+    if (postIds.isEmpty) {
+      return const <String, int>{};
+    }
+
+    try {
+      final response = await _client
+          .from('community_post_likes')
+          .select('post_id')
+          .inFilter('post_id', postIds);
+
+      final countByPostId = <String, int>{};
+      for (final row in response as List) {
+        final map = row as Map<String, dynamic>;
+        final postId = map['post_id'] as String?;
+        if (postId == null) continue;
+        countByPostId[postId] = (countByPostId[postId] ?? 0) + 1;
+      }
+
+      return countByPostId;
+    } catch (e) {
+      debugPrint('Load post like counts error: $e');
+      return const <String, int>{};
+    }
+  }
+
+  Future<Map<String, int>> _loadCommentLikeCountByCommentIds(
+    List<String> commentIds,
+  ) async {
+    if (commentIds.isEmpty) {
+      return const <String, int>{};
+    }
+
+    try {
+      final response = await _client
+          .from('community_comment_likes')
+          .select('comment_id')
+          .inFilter('comment_id', commentIds);
+
+      final countByCommentId = <String, int>{};
+      for (final row in response as List) {
+        final map = row as Map<String, dynamic>;
+        final commentId = map['comment_id'] as String?;
+        if (commentId == null) continue;
+        countByCommentId[commentId] = (countByCommentId[commentId] ?? 0) + 1;
+      }
+
+      return countByCommentId;
+    } catch (e) {
+      debugPrint('Load comment like counts error: $e');
+      return const <String, int>{};
+    }
+  }
+
+  Future<Set<String>> _loadLikedPostIds(List<String> postIds) async {
+    final currentUserId = _client.auth.currentUser?.id;
+    if (currentUserId == null || postIds.isEmpty) {
+      return const <String>{};
+    }
+
+    try {
+      final response = await _client
+          .from('community_post_likes')
+          .select('post_id')
+          .eq('user_id', currentUserId)
+          .inFilter('post_id', postIds);
+
+      final likedPostIds = <String>{};
+      for (final row in response as List) {
+        final map = row as Map<String, dynamic>;
+        final postId = map['post_id'] as String?;
+        if (postId == null) continue;
+        likedPostIds.add(postId);
+      }
+
+      return likedPostIds;
+    } catch (e) {
+      debugPrint('Load liked post ids error: $e');
+      return const <String>{};
+    }
+  }
+
+  Future<Set<String>> _loadLikedCommentIds(List<String> commentIds) async {
+    final currentUserId = _client.auth.currentUser?.id;
+    if (currentUserId == null || commentIds.isEmpty) {
+      return const <String>{};
+    }
+
+    try {
+      final response = await _client
+          .from('community_comment_likes')
+          .select('comment_id')
+          .eq('user_id', currentUserId)
+          .inFilter('comment_id', commentIds);
+
+      final likedCommentIds = <String>{};
+      for (final row in response as List) {
+        final map = row as Map<String, dynamic>;
+        final commentId = map['comment_id'] as String?;
+        if (commentId == null) continue;
+        likedCommentIds.add(commentId);
+      }
+
+      return likedCommentIds;
+    } catch (e) {
+      debugPrint('Load liked comment ids error: $e');
+      return const <String>{};
+    }
+  }
+
+  Future<int> _countPostLikes(String postId) async {
+    final response = await _client
+        .from('community_post_likes')
+        .select('post_id')
+        .eq('post_id', postId);
+    return (response as List).length;
+  }
+
+  Future<int> _countCommentLikes(String commentId) async {
+    final response = await _client
+        .from('community_comment_likes')
+        .select('comment_id')
+        .eq('comment_id', commentId);
+    return (response as List).length;
+  }
+
+  String _requireCurrentUserId() {
+    final currentUserId = _client.auth.currentUser?.id;
+    if (currentUserId == null || currentUserId.isEmpty) {
+      throw const FormatException('requiredLogin');
+    }
+    return currentUserId;
   }
 
   bool _shouldRetryWithoutAvatar(PostgrestException e) {

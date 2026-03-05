@@ -259,6 +259,83 @@ void main() {
       ]);
       expect(loaded.hasMoreComments, isFalse);
     });
+
+    test('게시글 좋아요 상태를 전체 재로드 없이 부분 갱신한다', () async {
+      final user = _testUser('detail-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final post = _buildPost(id: 'post-1', userId: user.id, commentCount: 0);
+
+      when(
+        () => communityService.getPost(post.id, includeComments: false),
+      ).thenAnswer((_) async => post);
+      when(
+        () => communityService.getComments(
+          postId: post.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+        ),
+      ).thenAnswer((_) async => []);
+
+      final cubit = PostDetailCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.load(post.id);
+      cubit.applyPostLike(isLikedByMe: true, likeCount: 3);
+
+      final loaded = cubit.state as PostDetailLoaded;
+      expect(loaded.post.isLikedByMe, isTrue);
+      expect(loaded.post.likeCount, 3);
+    });
+
+    test('댓글 좋아요 상태를 대상 댓글만 부분 갱신한다', () async {
+      final user = _testUser('detail-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final post = _buildPost(id: 'post-1', userId: user.id, commentCount: 2);
+      final comments = [
+        _buildComment(id: 'comment-1', postId: post.id),
+        _buildComment(id: 'comment-2', postId: post.id),
+      ];
+
+      when(
+        () => communityService.getPost(post.id, includeComments: false),
+      ).thenAnswer((_) async => post);
+      when(
+        () => communityService.getComments(
+          postId: post.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+        ),
+      ).thenAnswer((_) async => comments);
+
+      final cubit = PostDetailCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.load(post.id);
+      cubit.applyCommentLike(
+        commentId: 'comment-1',
+        isLikedByMe: true,
+        likeCount: 5,
+      );
+
+      final loaded = cubit.state as PostDetailLoaded;
+      final updatedComment = loaded.post.comments?.firstWhere(
+        (comment) => comment.id == 'comment-1',
+      );
+      final untouchedComment = loaded.post.comments?.firstWhere(
+        (comment) => comment.id == 'comment-2',
+      );
+
+      expect(updatedComment?.isLikedByMe, isTrue);
+      expect(updatedComment?.likeCount, 5);
+      expect(untouchedComment?.isLikedByMe, isFalse);
+      expect(untouchedComment?.likeCount, 0);
+    });
   });
 }
 

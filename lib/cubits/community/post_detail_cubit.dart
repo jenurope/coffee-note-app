@@ -109,6 +109,53 @@ class PostDetailCubit extends Cubit<PostDetailState> {
     }
   }
 
+  void applyPostLike({required bool isLikedByMe, required int likeCount}) {
+    final currentState = state;
+    if (currentState is! PostDetailLoaded) return;
+
+    emit(
+      currentState.copyWith(
+        post: currentState.post.copyWith(
+          isLikedByMe: isLikedByMe,
+          likeCount: likeCount,
+        ),
+      ),
+    );
+  }
+
+  void applyCommentLike({
+    required String commentId,
+    required bool isLikedByMe,
+    required int likeCount,
+  }) {
+    final currentState = state;
+    if (currentState is! PostDetailLoaded) return;
+    final comments = currentState.post.comments;
+    if (comments == null || comments.isEmpty) return;
+
+    var updated = false;
+    final updatedComments = comments
+        .map((comment) {
+          if (comment.id != commentId) {
+            return comment;
+          }
+          updated = true;
+          return comment.copyWith(
+            isLikedByMe: isLikedByMe,
+            likeCount: likeCount,
+          );
+        })
+        .toList(growable: false);
+
+    if (!updated) return;
+
+    emit(
+      currentState.copyWith(
+        post: currentState.post.copyWith(comments: updatedComments),
+      ),
+    );
+  }
+
   bool _hasMoreComments({
     required int? totalCount,
     required int loadedCount,

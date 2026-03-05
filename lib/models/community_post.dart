@@ -14,6 +14,8 @@ class CommunityPost {
   final UserProfile? author;
   final List<CommunityComment>? comments;
   final int? commentCount;
+  final int likeCount;
+  final bool isLikedByMe;
 
   CommunityPost({
     required this.id,
@@ -27,12 +29,17 @@ class CommunityPost {
     this.author,
     this.comments,
     this.commentCount,
+    this.likeCount = 0,
+    this.isLikedByMe = false,
   });
 
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
     final commentCount =
         _parseInt(json['comment_count']) ??
         _parseCommentStatsCount(json['comment_stats']);
+    final likeCount =
+        _parseInt(json['like_count']) ??
+        _parseLikeStatsCount(json['like_stats']);
 
     return CommunityPost(
       id: json['id'] as String,
@@ -54,7 +61,28 @@ class CommunityPost {
                 .toList()
           : null,
       commentCount: commentCount,
+      likeCount: likeCount ?? 0,
+      isLikedByMe: json['is_liked_by_me'] as bool? ?? false,
     );
+  }
+
+  static int? _parseLikeStatsCount(Object? raw) {
+    if (raw == null) return null;
+
+    if (raw is List) {
+      if (raw.isEmpty) return null;
+      return _parseLikeStatsCount(raw.first);
+    }
+
+    if (raw is Map<String, dynamic>) {
+      return _parseInt(raw['count']);
+    }
+
+    if (raw is Map) {
+      return _parseInt(raw['count']);
+    }
+
+    return _parseInt(raw);
   }
 
   static int? _parseCommentStatsCount(Object? raw) {
@@ -94,6 +122,8 @@ class CommunityPost {
       'updated_at': updatedAt.toIso8601String(),
       'is_withdrawn_content': isWithdrawnContent,
       'is_deleted_content': isDeletedContent,
+      'like_count': likeCount,
+      'is_liked_by_me': isLikedByMe,
     };
   }
 
@@ -113,6 +143,8 @@ class CommunityPost {
     UserProfile? author,
     List<CommunityComment>? comments,
     int? commentCount,
+    int? likeCount,
+    bool? isLikedByMe,
   }) {
     return CommunityPost(
       id: id ?? this.id,
@@ -126,6 +158,8 @@ class CommunityPost {
       author: author ?? this.author,
       comments: comments ?? this.comments,
       commentCount: commentCount ?? this.commentCount,
+      likeCount: likeCount ?? this.likeCount,
+      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
     );
   }
 }
@@ -140,6 +174,8 @@ class CommunityComment {
   final DateTime updatedAt;
   final bool isWithdrawnContent;
   final bool isDeletedContent;
+  final int likeCount;
+  final bool isLikedByMe;
 
   // 관계 데이터
   final UserProfile? author;
@@ -155,6 +191,8 @@ class CommunityComment {
     required this.updatedAt,
     this.isWithdrawnContent = false,
     this.isDeletedContent = false,
+    this.likeCount = 0,
+    this.isLikedByMe = false,
     this.author,
     this.replies,
   });
@@ -170,10 +208,42 @@ class CommunityComment {
       updatedAt: DateTime.parse(json['updated_at'] as String),
       isWithdrawnContent: json['is_withdrawn_content'] as bool? ?? false,
       isDeletedContent: json['is_deleted_content'] as bool? ?? false,
+      likeCount:
+          _parseInt(json['like_count']) ??
+          _parseLikeStatsCount(json['like_stats']) ??
+          0,
+      isLikedByMe: json['is_liked_by_me'] as bool? ?? false,
       author: json['profiles'] != null
           ? UserProfile.fromJson(json['profiles'] as Map<String, dynamic>)
           : null,
     );
+  }
+
+  static int? _parseLikeStatsCount(Object? raw) {
+    if (raw == null) return null;
+
+    if (raw is List) {
+      if (raw.isEmpty) return null;
+      return _parseLikeStatsCount(raw.first);
+    }
+
+    if (raw is Map<String, dynamic>) {
+      return _parseInt(raw['count']);
+    }
+
+    if (raw is Map) {
+      return _parseInt(raw['count']);
+    }
+
+    return _parseInt(raw);
+  }
+
+  static int? _parseInt(Object? raw) {
+    if (raw == null) return null;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw);
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -187,6 +257,8 @@ class CommunityComment {
       'updated_at': updatedAt.toIso8601String(),
       'is_withdrawn_content': isWithdrawnContent,
       'is_deleted_content': isDeletedContent,
+      'like_count': likeCount,
+      'is_liked_by_me': isLikedByMe,
     };
   }
 
@@ -209,6 +281,8 @@ class CommunityComment {
     DateTime? updatedAt,
     bool? isWithdrawnContent,
     bool? isDeletedContent,
+    int? likeCount,
+    bool? isLikedByMe,
     UserProfile? author,
     List<CommunityComment>? replies,
   }) {
@@ -222,6 +296,8 @@ class CommunityComment {
       updatedAt: updatedAt ?? this.updatedAt,
       isWithdrawnContent: isWithdrawnContent ?? this.isWithdrawnContent,
       isDeletedContent: isDeletedContent ?? this.isDeletedContent,
+      likeCount: likeCount ?? this.likeCount,
+      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
       author: author ?? this.author,
       replies: replies ?? this.replies,
     );

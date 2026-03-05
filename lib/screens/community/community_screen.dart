@@ -350,6 +350,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                     final canOpenPostDetail =
                                         !post.isDeletedContent;
                                     final commentCount = post.commentCount ?? 0;
+                                    final likeMetaColor = post.isLikedByMe
+                                        ? theme.colorScheme.error
+                                        : theme.colorScheme.onSurface
+                                              .withValues(alpha: 0.5);
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 12),
                                       child: InkWell(
@@ -465,6 +469,32 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                   ],
                                                 ),
                                               ],
+                                              SizedBox(
+                                                height: commentCount > 0
+                                                    ? 8
+                                                    : 12,
+                                              ),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    post.isLikedByMe
+                                                        ? Icons.favorite
+                                                        : Icons.favorite_border,
+                                                    color: likeMetaColor,
+                                                    size: 16,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${post.likeCount}',
+                                                    style: theme
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          color: likeMetaColor,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
                                             ],
                                           ),
                                         ),

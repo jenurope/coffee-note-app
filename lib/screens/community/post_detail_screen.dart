@@ -32,8 +32,10 @@ enum _ReportTargetType { post, comment }
 class _PostDetailScreenState extends State<PostDetailScreen> {
   static const int _maxReportReasonLength = 500;
   static const Key _postReportButtonKey = Key('postReportButton');
+  static const Key _postLikeButtonKey = Key('postLikeButton');
   static const Key _reportReasonFieldKey = Key('reportReasonField');
   static const String _replyActionButtonKeyPrefix = 'replyActionButton';
+  static const String _commentLikeButtonKeyPrefix = 'commentLikeButton';
   final _commentController = TextEditingController();
   final _detailScrollController = ScrollController();
   bool _isSubmitting = false;
@@ -157,6 +159,122 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       context.read<PostListCubit>().reload();
     } catch (_) {
       // 목록 Cubit이 없는 컨텍스트(예: 딥링크 단독 진입)에서는 무시합니다.
+    }
+  }
+
+  bool _canLikePost({
+    required CommunityPost post,
+    required String? currentUserId,
+    required bool isGuest,
+  }) {
+    if (currentUserId == null || isGuest) {
+      return false;
+    }
+    if (post.userId == currentUserId) {
+      return false;
+    }
+    if (post.isDeletedContent || post.isWithdrawnContent) {
+      return false;
+    }
+    return true;
+  }
+
+  bool _canLikeComment({
+    required CommunityComment comment,
+    required String? currentUserId,
+    required bool isGuest,
+  }) {
+    if (currentUserId == null || isGuest) {
+      return false;
+    }
+    if (comment.userId == currentUserId) {
+      return false;
+    }
+    if (comment.isDeletedContent || comment.isWithdrawnContent) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _togglePostLike(CommunityPost post) async {
+    final authState = context.read<AuthCubit>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    final isGuest = authState is AuthGuest;
+    if (!_canLikePost(
+      post: post,
+      currentUserId: currentUser?.id,
+      isGuest: isGuest,
+    )) {
+      return;
+    }
+
+    try {
+      final result = await getIt<CommunityService>().togglePostLike(
+        postId: post.id,
+      );
+      if (!mounted) return;
+      context.read<PostDetailCubit>().applyPostLike(
+        isLikedByMe: result.isLiked,
+        likeCount: result.likeCount,
+      );
+      try {
+        context.read<PostListCubit>().applyPostLike(
+          postId: post.id,
+          isLikedByMe: result.isLiked,
+          likeCount: result.likeCount,
+        );
+      } catch (_) {
+        // 목록 Cubit이 없는 컨텍스트(예: 딥링크 단독 진입)에서는 무시합니다.
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            UserErrorMessage.localize(
+              context.l10n,
+              UserErrorMessage.from(e, fallbackKey: 'errLoadPostDetail'),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _toggleCommentLike(CommunityComment comment) async {
+    final authState = context.read<AuthCubit>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    final isGuest = authState is AuthGuest;
+    if (!_canLikeComment(
+      comment: comment,
+      currentUserId: currentUser?.id,
+      isGuest: isGuest,
+    )) {
+      return;
+    }
+
+    try {
+      final result = await getIt<CommunityService>().toggleCommentLike(
+        commentId: comment.id,
+      );
+      if (!mounted) return;
+      context.read<PostDetailCubit>().applyCommentLike(
+        commentId: comment.id,
+        isLikedByMe: result.isLiked,
+        likeCount: result.likeCount,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            UserErrorMessage.localize(
+              context.l10n,
+              UserErrorMessage.from(e, fallbackKey: 'errLoadPostDetail'),
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -353,6 +471,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       currentUser != null &&
                       !isGuest &&
                       !post.isWithdrawnContent;
+                  final canLikePost = _canLikePost(
+                    post: post,
+                    currentUserId: currentUser?.id,
+                    isGuest: isGuest,
+                  );
                   final appBarActions = <Widget>[
                     if (isOwner) ...[
                       IconButton(
@@ -466,6 +589,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                             fontWeight: FontWeight.bold,
                                           ),
                                     ),
+                                    const Spacer(),
+                                    IconButton(
+                                      key: _postLikeButtonKey,
+                                      onPressed: canLikePost
+                                          ? () => _togglePostLike(post)
+                                          : null,
+                                      icon: Icon(
+                                        post.isLikedByMe
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: post.isLikedByMe
+                                            ? theme.colorScheme.error
+                                            : null,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${post.likeCount}',
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
@@ -486,6 +631,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                           currentUser.id != comment.userId &&
                                           !comment.isDeletedContent &&
                                           !comment.isWithdrawnContent,
+                                      canLike: _canLikeComment(
+                                        comment: comment,
+                                        currentUserId: currentUser?.id,
+                                        isGuest: isGuest,
+                                      ),
                                       canReply: canReply,
                                       isReply: false,
                                       replyCount:
@@ -614,6 +764,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     CommunityComment comment,
     bool isOwner,
     bool canReport, {
+    required bool canLike,
     required bool canReply,
     required bool isReply,
     required int replyCount,
@@ -751,18 +902,38 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(commentContent),
-            if (canReply)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: _buildReplyDetailButton(
-                    context,
-                    comment,
-                    replyActionLabel,
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    key: ValueKey('$_commentLikeButtonKeyPrefix-${comment.id}'),
+                    onPressed: canLike
+                        ? () => _toggleCommentLike(comment)
+                        : null,
+                    icon: Icon(
+                      comment.isLikedByMe
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: comment.isLikedByMe
+                          ? theme.colorScheme.error
+                          : null,
+                      size: 20,
+                    ),
+                    visualDensity: VisualDensity.compact,
                   ),
-                ),
+                  Text(
+                    '${comment.likeCount}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (canReply)
+                    _buildReplyDetailButton(context, comment, replyActionLabel),
+                ],
               ),
+            ),
           ],
         ),
       ),
@@ -776,7 +947,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   ) {
     return TextButton.icon(
       key: ValueKey('$_replyActionButtonKeyPrefix-${comment.id}'),
-      onPressed: () => context.push(_commentDetailPath(context, comment)),
+      onPressed: () async {
+        await context.push(_commentDetailPath(context, comment));
+        if (!context.mounted) return;
+        await context.read<PostDetailCubit>().load(widget.postId);
+        _reloadPostList();
+      },
       icon: const Icon(Icons.reply_outlined, size: 18),
       label: Text(label),
       style: TextButton.styleFrom(
