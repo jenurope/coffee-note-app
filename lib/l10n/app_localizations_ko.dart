@@ -619,6 +619,34 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsPreparing => '설정 기능은 준비 중입니다.';
 
   @override
+  String get profileSettingsTitle => '기능 설정';
+
+  @override
+  String get profileSettingsSubtitle => '대시보드와 하단 탭에 노출할 기록 기능을 선택하세요.';
+
+  @override
+  String get profileSettingsBeanTitle => '원두 관리 사용';
+
+  @override
+  String get profileSettingsBeanSubtitle => '원두 관리 탭과 대시보드 영역을 노출합니다.';
+
+  @override
+  String get profileSettingsCoffeeTitle => '커피 기록 사용';
+
+  @override
+  String get profileSettingsCoffeeSubtitle => '커피 기록 탭과 대시보드 영역을 노출합니다.';
+
+  @override
+  String get profileSettingsEmptyState =>
+      '모든 기록 기능이 꺼져 있습니다. 프로필 탭의 설정에서 다시 켤 수 있습니다.';
+
+  @override
+  String get profileSettingsSaveSuccess => '설정이 저장되었습니다.';
+
+  @override
+  String get profileSettingsSaveFailed => '설정 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
+  @override
   String get myPosts => '내 게시글';
 
   @override

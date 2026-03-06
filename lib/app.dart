@@ -27,7 +27,10 @@ class _CoffeeNoteAppState extends State<CoffeeNoteApp> {
   void initState() {
     super.initState();
     final authCubit = context.read<AuthCubit>();
-    _router = createRouterFromCubit(authCubit);
+    _router = createRouterFromCubit(
+      authCubit,
+      dashboardCubit: context.read<DashboardCubit>(),
+    );
   }
 
   @override

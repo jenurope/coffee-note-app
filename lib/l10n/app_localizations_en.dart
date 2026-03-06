@@ -640,6 +640,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPreparing => 'Settings feature is in preparation.';
 
   @override
+  String get profileSettingsTitle => 'Feature Settings';
+
+  @override
+  String get profileSettingsSubtitle =>
+      'Choose which record features appear on the dashboard and bottom tabs.';
+
+  @override
+  String get profileSettingsBeanTitle => 'Use Bean Records';
+
+  @override
+  String get profileSettingsBeanSubtitle =>
+      'Show bean record tabs and dashboard sections.';
+
+  @override
+  String get profileSettingsCoffeeTitle => 'Use Coffee Records';
+
+  @override
+  String get profileSettingsCoffeeSubtitle =>
+      'Show coffee record tabs and dashboard sections.';
+
+  @override
+  String get profileSettingsEmptyState =>
+      'All record features are turned off. You can turn them back on from Profile settings.';
+
+  @override
+  String get profileSettingsSaveSuccess => 'Settings have been saved.';
+
+  @override
+  String get profileSettingsSaveFailed =>
+      'An error occurred while saving settings. Please try again later.';
+
+  @override
   String get myPosts => 'My Posts';
 
   @override

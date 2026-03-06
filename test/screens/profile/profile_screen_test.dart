@@ -7,6 +7,7 @@ import 'package:coffee_note_app/models/coffee_bean.dart';
 import 'package:coffee_note_app/models/coffee_log.dart';
 import 'package:coffee_note_app/models/user_profile.dart';
 import 'package:coffee_note_app/screens/profile/profile_screen.dart';
+import 'package:coffee_note_app/screens/profile/profile_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
@@ -166,6 +167,59 @@ void main() {
       expect(find.text('좋아요한 댓글 화면'), findsOneWidget);
     });
 
+    testWidgets('설정 버튼 탭 시 기능 설정 화면으로 이동한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await _pumpProfileScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await tester.tap(find.byIcon(Icons.settings));
+      await tester.pumpAndSettle();
+
+      expect(find.text('기능설정 화면'), findsOneWidget);
+    });
+
+    testWidgets('설정 저장 후 프로필 화면에서 Dashboard 상태를 반영한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await _pumpProfileScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await tester.tap(find.byIcon(Icons.settings));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('설정저장'));
+      await tester.pump();
+
+      verifyNever(
+        () => dashboardCubit.updateFeatureVisibility(
+          isBeanRecordsEnabled: any(named: 'isBeanRecordsEnabled'),
+          isCoffeeRecordsEnabled: any(named: 'isCoffeeRecordsEnabled'),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      verify(
+        () => dashboardCubit.updateFeatureVisibility(
+          isBeanRecordsEnabled: false,
+          isCoffeeRecordsEnabled: true,
+        ),
+      ).called(1);
+      expect(find.text('설정이 저장되었습니다.'), findsOneWidget);
+    });
+
     testWidgets('앱 정보는 다이얼로그 없이 고정 표시된다', (tester) async {
       _stubAuthenticatedState(
         authCubit: authCubit,
@@ -317,6 +371,29 @@ Future<void> _pumpProfileScreen(
                   path: 'profile/edit',
                   builder: (context, state) =>
                       const Scaffold(body: Center(child: Text('프로필수정 화면'))),
+                ),
+                GoRoute(
+                  path: 'profile/settings',
+                  builder: (context, state) => Scaffold(
+                    body: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('기능설정 화면'),
+                          TextButton(
+                            onPressed: () => Navigator.pop(
+                              context,
+                              const ProfileSettingsSaveResult(
+                                isBeanRecordsEnabled: false,
+                                isCoffeeRecordsEnabled: true,
+                              ),
+                            ),
+                            child: const Text('설정저장'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

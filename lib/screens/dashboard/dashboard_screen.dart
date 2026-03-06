@@ -47,10 +47,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             final authenticatedFallbackName = metadataName.isNotEmpty
                 ? metadataName
                 : l10n.userDefault;
+            final loadedProfile = dashState is DashboardLoaded
+                ? dashState.userProfile
+                : null;
+            final beanRecordsVisible =
+                loadedProfile?.isBeanRecordsEnabled ?? true;
+            final coffeeRecordsVisible =
+                loadedProfile?.isCoffeeRecordsEnabled ?? true;
+            final anyFeatureVisible =
+                beanRecordsVisible || coffeeRecordsVisible;
             return Scaffold(
-              appBar: AppBar(
-                title: Text(l10n.appTitle),
-              ),
+              appBar: AppBar(title: Text(l10n.appTitle)),
               body: RefreshIndicator(
                 onRefresh: () => context.read<DashboardCubit>().refresh(),
                 child: switch (dashState) {
@@ -122,172 +129,244 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 24),
 
                           // 통계 카드
-                          Row(
-                            children: [
-                              Expanded(
-                                child: StatCard(
-                                  title: l10n.beanRecords,
-                                  value: l10n.countBeans(totalBeans),
-                                  icon: Icons.coffee,
-                                  onTap: () => context.go('/beans'),
+                          if (beanRecordsVisible && coffeeRecordsVisible) ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: StatCard(
+                                    title: l10n.beanRecords,
+                                    value: l10n.countBeans(totalBeans),
+                                    icon: Icons.coffee,
+                                    onTap: () => context.go('/beans'),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: StatCard(
-                                  title: l10n.coffeeRecords,
-                                  value: l10n.countLogs(totalLogs),
-                                  icon: Icons.local_cafe,
-                                  onTap: () => context.go('/logs'),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: StatCard(
+                                    title: l10n.coffeeRecords,
+                                    value: l10n.countLogs(totalLogs),
+                                    icon: Icons.local_cafe,
+                                    onTap: () => context.go('/logs'),
+                                  ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                          ] else if (beanRecordsVisible) ...[
+                            SizedBox(
+                              width: double.infinity,
+                              child: StatCard(
+                                title: l10n.beanRecords,
+                                value: l10n.countBeans(totalBeans),
+                                icon: Icons.coffee,
+                                onTap: () => context.go('/beans'),
                               ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
+                            ),
+                            const SizedBox(height: 24),
+                          ] else if (coffeeRecordsVisible) ...[
+                            SizedBox(
+                              width: double.infinity,
+                              child: StatCard(
+                                title: l10n.coffeeRecords,
+                                value: l10n.countLogs(totalLogs),
+                                icon: Icons.local_cafe,
+                                onTap: () => context.go('/logs'),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
 
                           // 빠른 액션 버튼
-                          if (currentUser != null && !isGuest) ...[
+                          if (currentUser != null &&
+                              !isGuest &&
+                              anyFeatureVisible) ...[
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 4,
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: CustomButton(
-                                      text: l10n.beansRecordButton,
+                              child: beanRecordsVisible && coffeeRecordsVisible
+                                  ? Row(
+                                      children: [
+                                        Expanded(
+                                          child: CustomButton(
+                                            text: l10n.beansRecordButton,
+                                            icon: Icons.add,
+                                            onPressed: () =>
+                                                context.go('/beans/new'),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: CustomButton(
+                                            text: l10n.logsRecordButton,
+                                            icon: Icons.add,
+                                            isOutlined: true,
+                                            onPressed: () =>
+                                                context.go('/logs/new'),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : CustomButton(
+                                      text: beanRecordsVisible
+                                          ? l10n.beansRecordButton
+                                          : l10n.logsRecordButton,
                                       icon: Icons.add,
-                                      onPressed: () => context.go('/beans/new'),
+                                      isOutlined: !beanRecordsVisible,
+                                      onPressed: () => context.go(
+                                        beanRecordsVisible
+                                            ? '/beans/new'
+                                            : '/logs/new',
+                                      ),
+                                      width: double.infinity,
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: CustomButton(
-                                      text: l10n.logsRecordButton,
-                                      icon: Icons.add,
-                                      isOutlined: true,
-                                      onPressed: () => context.go('/logs/new'),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          if (!anyFeatureVisible) ...[
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: theme.colorScheme.onSurfaceVariant,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        l10n.profileSettingsEmptyState,
+                                        style: theme.textTheme.bodyMedium,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             const SizedBox(height: 24),
                           ],
 
                           // 최근 원두 기록
-                          _buildSectionHeader(
-                            context,
-                            title: l10n.recentBeanRecords,
-                            onViewAll: () => context.go('/beans'),
-                          ),
-                          const SizedBox(height: 12),
-                          recentBeans.isEmpty
-                              ? Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24),
-                                    child: Column(
-                                      children: [
-                                        Icon(
-                                          Icons.coffee,
-                                          size: 48,
-                                          color: theme.colorScheme.primary
-                                              .withValues(alpha: 0.5),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(l10n.noBeanRecordsYet),
-                                        if (currentUser != null &&
-                                            !isGuest) ...[
-                                          const SizedBox(height: 12),
-                                          TextButton(
-                                            onPressed: () =>
-                                                context.go('/beans/new'),
-                                            child: Text(l10n.firstBeanRecord),
+                          if (beanRecordsVisible) ...[
+                            _buildSectionHeader(
+                              context,
+                              title: l10n.recentBeanRecords,
+                              onViewAll: () => context.go('/beans'),
+                            ),
+                            const SizedBox(height: 12),
+                            recentBeans.isEmpty
+                                ? Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.coffee,
+                                            size: 48,
+                                            color: theme.colorScheme.primary
+                                                .withValues(alpha: 0.5),
                                           ),
+                                          const SizedBox(height: 12),
+                                          Text(l10n.noBeanRecordsYet),
+                                          if (currentUser != null &&
+                                              !isGuest) ...[
+                                            const SizedBox(height: 12),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  context.go('/beans/new'),
+                                              child: Text(l10n.firstBeanRecord),
+                                            ),
+                                          ],
                                         ],
-                                      ],
+                                      ),
+                                    ),
+                                  )
+                                : SizedBox(
+                                    width: MediaQuery.sizeOf(context).width,
+                                    height: 280,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      clipBehavior: Clip.none,
+                                      itemCount: recentBeans.length,
+                                      itemBuilder: (context, index) {
+                                        final bean = recentBeans[index];
+                                        return Container(
+                                          width: 200,
+                                          margin: EdgeInsets.only(
+                                            right:
+                                                index < recentBeans.length - 1
+                                                ? 12
+                                                : 0,
+                                          ),
+                                          child: BeanCard(
+                                            bean: bean,
+                                            onTap: () =>
+                                                context.go('/beans/${bean.id}'),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
-                                )
-                              : SizedBox(
-                                  width: MediaQuery.sizeOf(context).width,
-                                  height: 280,
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    clipBehavior: Clip.none,
-                                    itemCount: recentBeans.length,
-                                    itemBuilder: (context, index) {
-                                      final bean = recentBeans[index];
-                                      return Container(
-                                        width: 200,
-                                        margin: EdgeInsets.only(
-                                          right: index < recentBeans.length - 1
-                                              ? 12
-                                              : 0,
-                                        ),
-                                        child: BeanCard(
-                                          bean: bean,
-                                          onTap: () =>
-                                              context.go('/beans/${bean.id}'),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-
-                          const SizedBox(height: 24),
+                            const SizedBox(height: 24),
+                          ],
 
                           // 최근 커피 기록
-                          _buildSectionHeader(
-                            context,
-                            title: l10n.recentCoffeeRecords,
-                            onViewAll: () => context.go('/logs'),
-                          ),
-                          const SizedBox(height: 12),
-                          recentLogs.isEmpty
-                              ? Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24),
-                                    child: Column(
-                                      children: [
-                                        Icon(
-                                          Icons.local_cafe,
-                                          size: 48,
-                                          color: theme.colorScheme.secondary
-                                              .withValues(alpha: 0.5),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(l10n.noCoffeeRecordsYet),
-                                        if (currentUser != null &&
-                                            !isGuest) ...[
+                          if (coffeeRecordsVisible) ...[
+                            _buildSectionHeader(
+                              context,
+                              title: l10n.recentCoffeeRecords,
+                              onViewAll: () => context.go('/logs'),
+                            ),
+                            const SizedBox(height: 12),
+                            recentLogs.isEmpty
+                                ? Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.local_cafe,
+                                            size: 48,
+                                            color: theme.colorScheme.secondary
+                                                .withValues(alpha: 0.5),
+                                          ),
                                           const SizedBox(height: 12),
-                                          TextButton(
-                                            onPressed: () =>
-                                                context.go('/logs/new'),
-                                            child: Text(l10n.firstCoffeeRecord),
-                                          ),
+                                          Text(l10n.noCoffeeRecordsYet),
+                                          if (currentUser != null &&
+                                              !isGuest) ...[
+                                            const SizedBox(height: 12),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  context.go('/logs/new'),
+                                              child: Text(
+                                                l10n.firstCoffeeRecord,
+                                              ),
+                                            ),
+                                          ],
                                         ],
-                                      ],
+                                      ),
                                     ),
+                                  )
+                                : Column(
+                                    children: recentLogs
+                                        .map(
+                                          (log) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 8,
+                                            ),
+                                            child: CoffeeLogListTile(
+                                              log: log,
+                                              onTap: () =>
+                                                  context.go('/logs/${log.id}'),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
                                   ),
-                                )
-                              : Column(
-                                  children: recentLogs
-                                      .map(
-                                        (log) => Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 8,
-                                          ),
-                                          child: CoffeeLogListTile(
-                                            log: log,
-                                            onTap: () =>
-                                                context.go('/logs/${log.id}'),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
+                          ],
 
                           const SizedBox(height: 32),
                         ],

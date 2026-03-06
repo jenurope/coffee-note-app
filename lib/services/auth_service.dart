@@ -15,6 +15,10 @@ class AuthService {
     'avatars',
     'community',
   ];
+  static const String _profileColumns =
+      'id, nickname, email, avatar_url, is_withdrawn, '
+      'is_bean_records_enabled, is_coffee_records_enabled, '
+      'created_at, updated_at';
 
   // 환경변수로 주입되는 Google OAuth 클라이언트 ID
   static const String _iosClientId = String.fromEnvironment(
@@ -227,9 +231,7 @@ class AuthService {
     try {
       final response = await _client
           .from('profiles')
-          .select(
-            'id, nickname, email, avatar_url, is_withdrawn, created_at, updated_at',
-          )
+          .select(_profileColumns)
           .eq('id', userId)
           .maybeSingle();
 
@@ -277,6 +279,60 @@ class AuthService {
       debugPrint('Update profile error: $e');
       rethrow;
     }
+  }
+
+  Future<void> updateFeatureVisibilitySettings({
+    required String userId,
+    required bool isBeanRecordsEnabled,
+    required bool isCoffeeRecordsEnabled,
+  }) async {
+    try {
+      final now = DateTime.now().toIso8601String();
+      final existing = await _client
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (existing == null) {
+        final baseProfile = _buildDefaultProfileInsert(userId);
+        await _client.from('profiles').insert({
+          ...baseProfile,
+          'is_bean_records_enabled': isBeanRecordsEnabled,
+          'is_coffee_records_enabled': isCoffeeRecordsEnabled,
+          'updated_at': now,
+        });
+        return;
+      }
+
+      await _client
+          .from('profiles')
+          .update({
+            'is_bean_records_enabled': isBeanRecordsEnabled,
+            'is_coffee_records_enabled': isCoffeeRecordsEnabled,
+            'updated_at': now,
+          })
+          .eq('id', userId);
+    } catch (e) {
+      debugPrint('Update feature visibility settings error: $e');
+      rethrow;
+    }
+  }
+
+  Map<String, dynamic> _buildDefaultProfileInsert(String userId) {
+    final current = _auth.currentUser;
+    final email = current?.email ?? '';
+    final rawNickname =
+        current?.userMetadata?['name'] ??
+        current?.userMetadata?['full_name'] ??
+        (email.isNotEmpty ? email.split('@').first : null);
+    final normalizedNickname = rawNickname is String ? rawNickname.trim() : '';
+    final fallbackSuffix = userId.length > 8 ? userId.substring(0, 8) : userId;
+    final nickname = normalizedNickname.isNotEmpty
+        ? normalizedNickname
+        : 'user_$fallbackSuffix';
+
+    return {'id': userId, 'email': email, 'nickname': nickname};
   }
 
   Future<bool> hasPendingRequiredTerms(String userId) async {

@@ -1,5 +1,9 @@
 import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
 import 'package:coffee_note_app/cubits/auth/auth_state.dart';
+import 'package:coffee_note_app/cubits/dashboard/dashboard_cubit.dart';
+import 'package:coffee_note_app/cubits/dashboard/dashboard_state.dart';
+import 'package:coffee_note_app/models/user_profile.dart';
+import 'package:coffee_note_app/router/app_feature_visibility.dart';
 import 'package:coffee_note_app/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +11,7 @@ import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
 void main() {
   group('App navigation flow', () {
@@ -92,6 +97,50 @@ void main() {
 
       expect(find.text('LOGIN'), findsNothing);
       expect(find.text('DASHBOARD'), findsOneWidget);
+    });
+
+    testWidgets('인증 직후 기능 설정이 준비될 때까지 splash를 유지한다', (
+      WidgetTester tester,
+    ) async {
+      final authController = _TestAuthController(
+        AppAuthSnapshot.unauthenticated,
+      );
+      authController.authenticatedShellReady = false;
+      authController.featureVisibility = const AppFeatureVisibility(
+        beanRecordsVisible: false,
+        coffeeRecordsVisible: true,
+      );
+
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        featureVisibility: () => authController.featureVisibility,
+        authenticatedShellReady: () => authController.authenticatedShellReady,
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      expect(find.text('LOGIN'), findsOneWidget);
+
+      authController.update(AppAuthSnapshot.authenticated);
+      await tester.pumpAndSettle();
+
+      expect(find.text('SPLASH'), findsOneWidget);
+
+      authController.updateShellReady(
+        true,
+        featureVisibility: const AppFeatureVisibility(
+          beanRecordsVisible: false,
+          coffeeRecordsVisible: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(find.byIcon(Icons.coffee), findsNothing);
+      expect(find.byIcon(Icons.local_cafe), findsOneWidget);
     });
 
     testWidgets(
@@ -352,6 +401,25 @@ void main() {
       expect(find.byIcon(Icons.person), findsOneWidget);
     });
 
+    testWidgets('기록 기능 설정에 따라 하단 탭을 숨긴다', (WidgetTester tester) async {
+      final authController = _TestAuthController(AppAuthSnapshot.authenticated);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        featureVisibility: () => const AppFeatureVisibility(
+          beanRecordsVisible: false,
+          coffeeRecordsVisible: true,
+        ),
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.coffee), findsNothing);
+      expect(find.byIcon(Icons.local_cafe), findsOneWidget);
+    });
+
     testWidgets('en + KR 조합에서는 커뮤니티 탭을 노출한다', (WidgetTester tester) async {
       final authController = _TestAuthController(AppAuthSnapshot.guest);
       final router = createAppRouter(
@@ -392,6 +460,80 @@ void main() {
       expect(find.text('DASHBOARD'), findsOneWidget);
       expect(find.text('COMMUNITY_ROOT'), findsNothing);
     });
+
+    testWidgets('원두 관리 비노출 상태에서 /beans 초기 진입 시 대시보드로 리다이렉트한다', (
+      WidgetTester tester,
+    ) async {
+      final authController = _TestAuthController(AppAuthSnapshot.authenticated);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        initialLocation: AppRoutePath.beans,
+        featureVisibility: () =>
+            const AppFeatureVisibility(beanRecordsVisible: false),
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(find.text('BEANS_ROOT'), findsNothing);
+    });
+
+    testWidgets('현재 화면 이동 없이도 기능 설정 변경이 하단 탭에 즉시 반영된다', (
+      WidgetTester tester,
+    ) async {
+      final user = _testUser('router-feature-visibility');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final dashboardCubit = _TestDashboardCubit(_buildDashboardState(user));
+      final router = createRouterFromCubit(
+        authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      addTearDown(() async {
+        await authCubit.close();
+        await dashboardCubit.close();
+      });
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          router,
+          authCubit: authCubit,
+          dashboardCubit: dashboardCubit,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final bottomNavigationBar = find.byType(BottomNavigationBar);
+      expect(
+        find.descendant(of: bottomNavigationBar, matching: find.text('원두 관리')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: bottomNavigationBar, matching: find.text('커피 기록')),
+        findsOneWidget,
+      );
+
+      dashboardCubit.setState(
+        _buildDashboardState(
+          user,
+          beanRecordsVisible: false,
+          coffeeRecordsVisible: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(of: bottomNavigationBar, matching: find.text('원두 관리')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: bottomNavigationBar, matching: find.text('커피 기록')),
+        findsOneWidget,
+      );
+    });
   });
 }
 
@@ -399,22 +541,38 @@ Widget _buildTestApp(
   GoRouter router, {
   bool isGuestMode = false,
   Locale locale = const Locale('ko'),
+  AuthCubit? authCubit,
+  DashboardCubit? dashboardCubit,
 }) {
-  return BlocProvider<AuthCubit>(
-    create: (_) => AuthCubit.test(
-      isGuestMode ? const AuthState.guest() : const AuthState.unauthenticated(),
-    ),
-    child: MaterialApp.router(
-      routerConfig: router,
-      locale: locale,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
-    ),
+  final defaultAuthCubit =
+      authCubit ??
+      AuthCubit.test(
+        isGuestMode
+            ? const AuthState.guest()
+            : const AuthState.unauthenticated(),
+      );
+  final app = MaterialApp.router(
+    routerConfig: router,
+    locale: locale,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+  );
+
+  if (dashboardCubit == null) {
+    return BlocProvider<AuthCubit>.value(value: defaultAuthCubit, child: app);
+  }
+
+  return MultiBlocProvider(
+    providers: [
+      BlocProvider<AuthCubit>.value(value: defaultAuthCubit),
+      BlocProvider<DashboardCubit>.value(value: dashboardCubit),
+    ],
+    child: app,
   );
 }
 
@@ -437,11 +595,32 @@ class _TestAuthController extends ChangeNotifier {
   _TestAuthController(this.snapshot);
 
   AppAuthSnapshot snapshot;
+  bool authenticatedShellReady = true;
+  AppFeatureVisibility featureVisibility = const AppFeatureVisibility();
 
   void update(AppAuthSnapshot next) {
     snapshot = next;
     notifyListeners();
   }
+
+  void updateShellReady(bool next, {AppFeatureVisibility? featureVisibility}) {
+    authenticatedShellReady = next;
+    if (featureVisibility != null) {
+      this.featureVisibility = featureVisibility;
+    }
+    notifyListeners();
+  }
+}
+
+class _TestDashboardCubit extends DashboardCubit {
+  _TestDashboardCubit(DashboardState initialState) : super() {
+    emit(initialState);
+  }
+
+  @override
+  bool get hasResolvedInitialLoad => true;
+
+  void setState(DashboardState next) => emit(next);
 }
 
 class _TestRouteBuilders extends AppRouteBuilders {
@@ -634,4 +813,41 @@ class _LabelScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(body: Center(child: Text(label)));
   }
+}
+
+DashboardState _buildDashboardState(
+  User user, {
+  bool beanRecordsVisible = true,
+  bool coffeeRecordsVisible = true,
+}) {
+  final now = DateTime(2026, 3, 6, 12);
+  return DashboardState.loaded(
+    totalBeans: 0,
+    averageBeanRating: 0,
+    totalLogs: 0,
+    averageLogRating: 0,
+    coffeeTypeCount: const {},
+    recentBeans: const [],
+    recentLogs: const [],
+    userProfile: UserProfile(
+      id: user.id,
+      nickname: '테스터',
+      email: user.email ?? '',
+      isBeanRecordsEnabled: beanRecordsVisible,
+      isCoffeeRecordsEnabled: coffeeRecordsVisible,
+      createdAt: now,
+      updatedAt: now,
+    ),
+  );
+}
+
+User _testUser(String id) {
+  return User(
+    id: id,
+    appMetadata: const {},
+    userMetadata: const {},
+    aud: 'authenticated',
+    email: '$id@example.com',
+    createdAt: '2026-03-06T00:00:00.000Z',
+  );
 }

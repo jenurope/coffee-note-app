@@ -11,6 +11,8 @@ import '../cubits/bean/bean_detail_cubit.dart';
 import '../cubits/community/my_comment_list_cubit.dart';
 import '../cubits/community/post_detail_cubit.dart';
 import '../cubits/community/post_list_cubit.dart';
+import '../cubits/dashboard/dashboard_cubit.dart';
+import '../cubits/dashboard/dashboard_state.dart';
 import '../cubits/log/log_detail_cubit.dart';
 
 import '../screens/auth/login_screen.dart';
@@ -31,10 +33,12 @@ import '../screens/inquiries/service_inquiry_form_screen.dart';
 import '../screens/inquiries/service_inquiry_list_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/profile_edit_screen.dart';
+import '../screens/profile/profile_settings_screen.dart';
 import '../screens/profile/my_comment_list_screen.dart';
 import '../screens/profile/my_post_list_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../widgets/navigation/guest_tab_root_back_guard.dart';
+import 'app_feature_visibility.dart';
 
 abstract final class AppRoutePath {
   static const splash = '/splash';
@@ -53,6 +57,7 @@ abstract final class AppRoutePath {
   static const profileInquiries = '/profile/inquiries';
   static const profileInquiriesNew = '/profile/inquiries/new';
   static const profileEdit = '/profile/edit';
+  static const profileSettings = '/profile/settings';
 }
 
 enum AppAuthStatus {
@@ -238,6 +243,10 @@ class AppRouteBuilders {
   Widget buildProfileEdit(BuildContext context, GoRouterState state) {
     return const ProfileEditScreen();
   }
+
+  Widget buildProfileSettings(BuildContext context, GoRouterState state) {
+    return const ProfileSettingsScreen();
+  }
 }
 
 @visibleForTesting
@@ -245,11 +254,17 @@ String? resolveAppRedirect({
   required AppAuthSnapshot authSnapshot,
   required String location,
   bool communityVisible = true,
+  AppFeatureVisibility featureVisibility = const AppFeatureVisibility(),
+  bool authenticatedShellReady = true,
 }) {
   final isAuthRoute = location.startsWith('/auth');
   final isTermsRoute = location == AppRoutePath.terms;
 
   if (authSnapshot.isResolving) {
+    return location == AppRoutePath.splash ? null : AppRoutePath.splash;
+  }
+
+  if (authSnapshot.isAuthenticated && !authenticatedShellReady) {
     return location == AppRoutePath.splash ? null : AppRoutePath.splash;
   }
 
@@ -284,6 +299,14 @@ String? resolveAppRedirect({
     return AppRoutePath.dashboard;
   }
 
+  if (!featureVisibility.beanRecordsVisible && _isBeansPath(location)) {
+    return AppRoutePath.dashboard;
+  }
+
+  if (!featureVisibility.coffeeRecordsVisible && _isLogsPath(location)) {
+    return AppRoutePath.dashboard;
+  }
+
   return null;
 }
 
@@ -296,9 +319,15 @@ GoRouter createAppRouter({
   GlobalKey<NavigatorState>? rootNavigatorKey,
   String initialLocation = AppRoutePath.splash,
   DeviceLocaleProvider? deviceLocaleProvider,
+  AppFeatureVisibility Function()? featureVisibility,
+  bool Function()? authenticatedShellReady,
 }) {
   final resolvedDeviceLocaleProvider =
       deviceLocaleProvider ?? _defaultDeviceLocaleProvider;
+  final resolvedFeatureVisibility =
+      featureVisibility ?? (() => const AppFeatureVisibility());
+  final resolvedAuthenticatedShellReady =
+      authenticatedShellReady ?? (() => true);
   final branchKeys =
       branchNavigatorKeys ??
       List.generate(
@@ -328,6 +357,8 @@ GoRouter createAppRouter({
         authSnapshot: authSnapshot(),
         location: state.uri.path,
         communityVisible: communityVisible,
+        featureVisibility: resolvedFeatureVisibility(),
+        authenticatedShellReady: resolvedAuthenticatedShellReady(),
       );
     },
     routes: [
@@ -341,6 +372,7 @@ GoRouter createAppRouter({
           navigationShell: navigationShell,
           branchNavigatorKeys: branchKeys,
           deviceLocaleProvider: resolvedDeviceLocaleProvider,
+          featureVisibility: resolvedFeatureVisibility(),
         ),
         branches: [
           StatefulShellBranch(
@@ -677,6 +709,12 @@ GoRouter createAppRouter({
                     builder: (context, state) =>
                         routeBuilders.buildProfileEdit(context, state),
                   ),
+                  GoRoute(
+                    path: 'settings',
+                    name: 'profile-settings',
+                    builder: (context, state) =>
+                        routeBuilders.buildProfileSettings(context, state),
+                  ),
                 ],
               ),
             ],
@@ -737,10 +775,26 @@ String _requiredPathParameter(GoRouterState state, String key) {
   return value;
 }
 
+bool _isBeansPath(String location) {
+  return location == AppRoutePath.beans ||
+      location.startsWith('${AppRoutePath.beans}/');
+}
+
+bool _isLogsPath(String location) {
+  return location == AppRoutePath.logs ||
+      location.startsWith('${AppRoutePath.logs}/');
+}
+
 /// AuthCubit 기반 라우터 생성 함수.
 /// AuthCubit의 상태 변화를 listen하여 GoRouter를 자동 refresh.
-GoRouter createRouterFromCubit(AuthCubit authCubit) {
-  final refreshNotifier = _AuthCubitRefreshNotifier(authCubit);
+GoRouter createRouterFromCubit(
+  AuthCubit authCubit, {
+  DashboardCubit? dashboardCubit,
+}) {
+  final refreshNotifier = _RouterRefreshNotifier(
+    authCubit: authCubit,
+    dashboardCubit: dashboardCubit,
+  );
 
   AppAuthSnapshot readAuthSnapshot() {
     final state = authCubit.state;
@@ -764,25 +818,57 @@ GoRouter createRouterFromCubit(AuthCubit authCubit) {
     return AppAuthSnapshot.unauthenticated;
   }
 
+  AppFeatureVisibility readFeatureVisibility() {
+    final state = dashboardCubit?.state;
+    if (state is! DashboardLoaded) {
+      return const AppFeatureVisibility();
+    }
+
+    final profile = state.userProfile;
+    return AppFeatureVisibility(
+      beanRecordsVisible: profile?.isBeanRecordsEnabled ?? true,
+      coffeeRecordsVisible: profile?.isCoffeeRecordsEnabled ?? true,
+    );
+  }
+
+  bool readAuthenticatedShellReady() {
+    final state = authCubit.state;
+    if (state is! AuthAuthenticated) {
+      return true;
+    }
+
+    return dashboardCubit?.hasResolvedInitialLoad ?? true;
+  }
+
   return createAppRouter(
     authSnapshot: readAuthSnapshot,
     refreshListenable: refreshNotifier,
+    featureVisibility: readFeatureVisibility,
+    authenticatedShellReady: readAuthenticatedShellReady,
   );
 }
 
-/// AuthCubit의 상태 변화를 ChangeNotifier(Listenable)로 변환.
-class _AuthCubitRefreshNotifier extends ChangeNotifier {
-  _AuthCubitRefreshNotifier(AuthCubit cubit) {
-    _subscription = cubit.stream.listen((_) {
+/// AuthCubit/DashboardCubit 상태 변화를 ChangeNotifier(Listenable)로 변환.
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier({
+    required AuthCubit authCubit,
+    DashboardCubit? dashboardCubit,
+  }) {
+    _authSubscription = authCubit.stream.listen((_) {
+      notifyListeners();
+    });
+    _dashboardSubscription = dashboardCubit?.stream.listen((_) {
       notifyListeners();
     });
   }
 
-  late final dynamic _subscription;
+  late final dynamic _authSubscription;
+  dynamic _dashboardSubscription;
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _authSubscription.cancel();
+    _dashboardSubscription?.cancel();
     super.dispose();
   }
 }

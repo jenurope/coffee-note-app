@@ -199,6 +199,70 @@ void main() {
       await cubit.onAuthStateChanged(const AuthState.unauthenticated());
       expect(cubit.state, isA<DashboardInitial>());
     });
+
+    test('기능 설정 변경 시 loaded 상태를 유지한 채 노출 설정만 갱신한다', () async {
+      final user = _testUser('auth-dashboard-user-3');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 14, 12);
+
+      when(() => authService.getProfile(user.id)).thenAnswer(
+        (_) async => UserProfile(
+          id: user.id,
+          nickname: '로그인유저',
+          email: user.email ?? '',
+          isBeanRecordsEnabled: true,
+          isCoffeeRecordsEnabled: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      when(
+        () => beanService.getUserBeanStats(user.id),
+      ).thenAnswer((_) async => {'totalCount': 1, 'averageRating': 4.0});
+      when(() => logService.getUserLogStats(user.id)).thenAnswer(
+        (_) async => {
+          'totalCount': 1,
+          'averageRating': 4.0,
+          'typeCount': {'아메리카노': 1},
+        },
+      );
+      when(
+        () => beanService.getBeans(
+          userId: user.id,
+          sortBy: 'created_at',
+          ascending: false,
+          limit: 5,
+        ),
+      ).thenAnswer((_) async => []);
+      when(
+        () => logService.getLogs(
+          userId: user.id,
+          sortBy: 'created_at',
+          ascending: false,
+          limit: 5,
+        ),
+      ).thenAnswer((_) async => []);
+
+      final cubit = DashboardCubit(
+        authCubit: authCubit,
+        authService: authService,
+        beanService: beanService,
+        logService: logService,
+        sampleService: sampleService,
+      );
+
+      await cubit.load();
+      cubit.updateFeatureVisibility(
+        isBeanRecordsEnabled: false,
+        isCoffeeRecordsEnabled: true,
+      );
+
+      final state = cubit.state;
+      expect(state, isA<DashboardLoaded>());
+      final loaded = state as DashboardLoaded;
+      expect(loaded.userProfile?.isBeanRecordsEnabled, isFalse);
+      expect(loaded.userProfile?.isCoffeeRecordsEnabled, isTrue);
+    });
   });
 }
 

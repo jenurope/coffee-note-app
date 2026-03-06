@@ -1,3 +1,4 @@
+import 'package:coffee_note_app/router/app_feature_visibility.dart';
 import 'package:coffee_note_app/router/app_router.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -66,6 +67,16 @@ void main() {
       expect(redirect, AppRoutePath.dashboard);
     });
 
+    test('인증 완료 후 기능 설정 로드 전에는 splash에 머문다', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.authenticated,
+        location: AppRoutePath.dashboard,
+        authenticatedShellReady: false,
+      );
+
+      expect(redirect, AppRoutePath.splash);
+    });
+
     test('커뮤니티 비노출 상태에서는 /community 를 대시보드로 리다이렉트한다', () {
       final redirect = resolveAppRedirect(
         authSnapshot: AppAuthSnapshot.authenticated,
@@ -81,6 +92,30 @@ void main() {
         authSnapshot: AppAuthSnapshot.authenticated,
         location: '${AppRoutePath.community}/new',
         communityVisible: false,
+      );
+
+      expect(redirect, AppRoutePath.dashboard);
+    });
+
+    test('원두 관리 비노출 상태에서는 /beans 를 대시보드로 리다이렉트한다', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.authenticated,
+        location: AppRoutePath.beans,
+        featureVisibility: const AppFeatureVisibility(
+          beanRecordsVisible: false,
+        ),
+      );
+
+      expect(redirect, AppRoutePath.dashboard);
+    });
+
+    test('커피 기록 비노출 상태에서는 /logs/new 를 대시보드로 리다이렉트한다', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.authenticated,
+        location: '${AppRoutePath.logs}/new',
+        featureVisibility: const AppFeatureVisibility(
+          coffeeRecordsVisible: false,
+        ),
       );
 
       expect(redirect, AppRoutePath.dashboard);

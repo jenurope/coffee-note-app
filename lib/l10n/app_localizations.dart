@@ -1270,6 +1270,60 @@ abstract class AppLocalizations {
   /// **'Settings feature is in preparation.'**
   String get settingsPreparing;
 
+  /// No description provided for @profileSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature Settings'**
+  String get profileSettingsTitle;
+
+  /// No description provided for @profileSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which record features appear on the dashboard and bottom tabs.'**
+  String get profileSettingsSubtitle;
+
+  /// No description provided for @profileSettingsBeanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Bean Records'**
+  String get profileSettingsBeanTitle;
+
+  /// No description provided for @profileSettingsBeanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show bean record tabs and dashboard sections.'**
+  String get profileSettingsBeanSubtitle;
+
+  /// No description provided for @profileSettingsCoffeeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Coffee Records'**
+  String get profileSettingsCoffeeTitle;
+
+  /// No description provided for @profileSettingsCoffeeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show coffee record tabs and dashboard sections.'**
+  String get profileSettingsCoffeeSubtitle;
+
+  /// No description provided for @profileSettingsEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'All record features are turned off. You can turn them back on from Profile settings.'**
+  String get profileSettingsEmptyState;
+
+  /// No description provided for @profileSettingsSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings have been saved.'**
+  String get profileSettingsSaveSuccess;
+
+  /// No description provided for @profileSettingsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while saving settings. Please try again later.'**
+  String get profileSettingsSaveFailed;
+
   /// No description provided for @myPosts.
   ///
   /// In en, this message translates to:

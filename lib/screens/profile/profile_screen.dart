@@ -10,6 +10,7 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/dashboard/dashboard_state.dart';
 import '../../l10n/l10n.dart';
+import 'profile_settings_screen.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/common/user_avatar.dart';
 
@@ -21,6 +22,10 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const Duration _featureSettingsApplyDelay = Duration(
+    milliseconds: 250,
+  );
+
   late final Future<String> _versionFuture;
   bool _isWithdrawing = false;
   BuildContext? _withdrawProgressDialogContext;
@@ -157,6 +162,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.of(dialogContext, rootNavigator: true).pop();
   }
 
+  Future<void> _openFeatureSettings() async {
+    final result = await context.push<ProfileSettingsSaveResult>(
+      '/profile/settings',
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    // Wait until the settings pop transition is out of view before
+    // rebuilding the shell and tab configuration.
+    await Future<void>.delayed(_featureSettingsApplyDelay);
+
+    if (!mounted) {
+      return;
+    }
+
+    context.read<DashboardCubit>().updateFeatureVisibility(
+      isBeanRecordsEnabled: result.isBeanRecordsEnabled,
+      isCoffeeRecordsEnabled: result.isCoffeeRecordsEnabled,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.profileSettingsSaveSuccess)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -249,11 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.settingsPreparing)),
-                      );
-                    },
+                    onPressed: _openFeatureSettings,
                   ),
                 ],
               ),
