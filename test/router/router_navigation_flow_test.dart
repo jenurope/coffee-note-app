@@ -95,6 +95,50 @@ void main() {
       expect(find.text('DASHBOARD'), findsOneWidget);
     });
 
+    testWidgets('인증 직후 기능 설정이 준비될 때까지 splash를 유지한다', (
+      WidgetTester tester,
+    ) async {
+      final authController = _TestAuthController(
+        AppAuthSnapshot.unauthenticated,
+      );
+      authController.authenticatedShellReady = false;
+      authController.featureVisibility = const AppFeatureVisibility(
+        beanRecordsVisible: false,
+        coffeeRecordsVisible: true,
+      );
+
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        featureVisibility: () => authController.featureVisibility,
+        authenticatedShellReady: () => authController.authenticatedShellReady,
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      expect(find.text('LOGIN'), findsOneWidget);
+
+      authController.update(AppAuthSnapshot.authenticated);
+      await tester.pumpAndSettle();
+
+      expect(find.text('SPLASH'), findsOneWidget);
+
+      authController.updateShellReady(
+        true,
+        featureVisibility: const AppFeatureVisibility(
+          beanRecordsVisible: false,
+          coffeeRecordsVisible: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(find.byIcon(Icons.coffee), findsNothing);
+      expect(find.byIcon(Icons.local_cafe), findsOneWidget);
+    });
+
     testWidgets(
       'guest back pops tab page stack then moves to login at tab root',
       (WidgetTester tester) async {
@@ -477,9 +521,19 @@ class _TestAuthController extends ChangeNotifier {
   _TestAuthController(this.snapshot);
 
   AppAuthSnapshot snapshot;
+  bool authenticatedShellReady = true;
+  AppFeatureVisibility featureVisibility = const AppFeatureVisibility();
 
   void update(AppAuthSnapshot next) {
     snapshot = next;
+    notifyListeners();
+  }
+
+  void updateShellReady(bool next, {AppFeatureVisibility? featureVisibility}) {
+    authenticatedShellReady = next;
+    if (featureVisibility != null) {
+      this.featureVisibility = featureVisibility;
+    }
     notifyListeners();
   }
 }

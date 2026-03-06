@@ -36,6 +36,9 @@ class DashboardCubit extends Cubit<DashboardState> {
   CoffeeBeanService? _beanService;
   CoffeeLogService? _logService;
   GuestSampleService? _sampleService;
+  bool _hasResolvedInitialLoad = false;
+
+  bool get hasResolvedInitialLoad => _hasResolvedInitialLoad;
 
   Future<void> load() async {
     emit(const DashboardState.loading());
@@ -69,6 +72,7 @@ class DashboardCubit extends Cubit<DashboardState> {
             userProfile: snapshot.userProfile,
           ),
         );
+        _hasResolvedInitialLoad = true;
         return;
       }
 
@@ -84,6 +88,7 @@ class DashboardCubit extends Cubit<DashboardState> {
             recentLogs: [],
           ),
         );
+        _hasResolvedInitialLoad = true;
         return;
       }
 
@@ -117,8 +122,10 @@ class DashboardCubit extends Cubit<DashboardState> {
           userProfile: userProfile,
         ),
       );
+      _hasResolvedInitialLoad = true;
     } catch (e) {
       debugPrint('DashboardCubit.load error: $e');
+      _hasResolvedInitialLoad = true;
       emit(
         DashboardState.error(
           message: UserErrorMessage.from(e, fallbackKey: 'errLoadDashboard'),
@@ -128,7 +135,13 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   Future<void> onAuthStateChanged(AuthState authState) async {
-    if (authState is AuthGuest || authState is AuthAuthenticated) {
+    if (authState is AuthAuthenticated) {
+      _hasResolvedInitialLoad = false;
+      await load();
+      return;
+    }
+
+    if (authState is AuthGuest) {
       await load();
       return;
     }
@@ -137,6 +150,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   void reset() {
+    _hasResolvedInitialLoad = false;
     emit(const DashboardState.initial());
   }
 

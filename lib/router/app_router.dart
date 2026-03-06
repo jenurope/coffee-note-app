@@ -255,11 +255,16 @@ String? resolveAppRedirect({
   required String location,
   bool communityVisible = true,
   AppFeatureVisibility featureVisibility = const AppFeatureVisibility(),
+  bool authenticatedShellReady = true,
 }) {
   final isAuthRoute = location.startsWith('/auth');
   final isTermsRoute = location == AppRoutePath.terms;
 
   if (authSnapshot.isResolving) {
+    return location == AppRoutePath.splash ? null : AppRoutePath.splash;
+  }
+
+  if (authSnapshot.isAuthenticated && !authenticatedShellReady) {
     return location == AppRoutePath.splash ? null : AppRoutePath.splash;
   }
 
@@ -315,11 +320,14 @@ GoRouter createAppRouter({
   String initialLocation = AppRoutePath.splash,
   DeviceLocaleProvider? deviceLocaleProvider,
   AppFeatureVisibility Function()? featureVisibility,
+  bool Function()? authenticatedShellReady,
 }) {
   final resolvedDeviceLocaleProvider =
       deviceLocaleProvider ?? _defaultDeviceLocaleProvider;
   final resolvedFeatureVisibility =
       featureVisibility ?? (() => const AppFeatureVisibility());
+  final resolvedAuthenticatedShellReady =
+      authenticatedShellReady ?? (() => true);
   final branchKeys =
       branchNavigatorKeys ??
       List.generate(
@@ -350,6 +358,7 @@ GoRouter createAppRouter({
         location: state.uri.path,
         communityVisible: communityVisible,
         featureVisibility: resolvedFeatureVisibility(),
+        authenticatedShellReady: resolvedAuthenticatedShellReady(),
       );
     },
     routes: [
@@ -822,10 +831,20 @@ GoRouter createRouterFromCubit(
     );
   }
 
+  bool readAuthenticatedShellReady() {
+    final state = authCubit.state;
+    if (state is! AuthAuthenticated) {
+      return true;
+    }
+
+    return dashboardCubit?.hasResolvedInitialLoad ?? true;
+  }
+
   return createAppRouter(
     authSnapshot: readAuthSnapshot,
     refreshListenable: refreshNotifier,
     featureVisibility: readFeatureVisibility,
+    authenticatedShellReady: readAuthenticatedShellReady,
   );
 }
 

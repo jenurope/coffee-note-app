@@ -67,6 +67,16 @@ void main() {
       expect(redirect, AppRoutePath.dashboard);
     });
 
+    test('인증 완료 후 기능 설정 로드 전에는 splash에 머문다', () {
+      final redirect = resolveAppRedirect(
+        authSnapshot: AppAuthSnapshot.authenticated,
+        location: AppRoutePath.dashboard,
+        authenticatedShellReady: false,
+      );
+
+      expect(redirect, AppRoutePath.splash);
+    });
+
     test('커뮤니티 비노출 상태에서는 /community 를 대시보드로 리다이렉트한다', () {
       final redirect = resolveAppRedirect(
         authSnapshot: AppAuthSnapshot.authenticated,
