@@ -129,7 +129,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
-    final allDisabled = !_isBeanRecordsEnabled && !_isCoffeeRecordsEnabled;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileSettingsTitle)),
@@ -183,31 +182,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                         ],
                       ),
                     ),
-                    if (allDisabled) ...[
-                      const SizedBox(height: 16),
-                      Card(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  l10n.profileSettingsEmptyState,
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 24),
                     CustomButton(
                       text: l10n.save,

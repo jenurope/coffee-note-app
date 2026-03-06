@@ -108,7 +108,7 @@ void main() {
       verifyNever(() => dashboardCubit.refresh());
     });
 
-    testWidgets('모든 기록 기능을 끄면 안내 문구를 노출한다', (tester) async {
+    testWidgets('모든 기록 기능을 꺼도 추가 안내 카드는 노출하지 않는다', (tester) async {
       _stubAuthenticatedState(
         authCubit: authCubit,
         dashboardCubit: dashboardCubit,
@@ -124,7 +124,7 @@ void main() {
 
       expect(
         find.text('모든 기록 기능이 꺼져 있습니다. 프로필 탭의 설정에서 다시 켤 수 있습니다.'),
-        findsOneWidget,
+        findsNothing,
       );
     });
 
