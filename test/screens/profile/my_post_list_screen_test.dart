@@ -30,6 +30,7 @@ void main() {
       postListCubit = _MockPostListCubit();
 
       when(() => postListCubit.loadForUser(any())).thenAnswer((_) async {});
+      when(() => postListCubit.loadLikedByUser(any())).thenAnswer((_) async {});
       when(() => postListCubit.loadMore()).thenAnswer((_) async {});
       when(() => postListCubit.reload()).thenAnswer((_) async {});
     });
@@ -73,6 +74,45 @@ void main() {
 
       expect(find.text('내 글 제목'), findsOneWidget);
       verify(() => postListCubit.loadForUser('my-user')).called(1);
+    });
+
+    testWidgets('좋아요 모드에서는 좋아요한 게시글 목록을 로드한다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('my-user'));
+      final now = DateTime(2026, 2, 24, 10);
+      final postState = PostListState.loaded(
+        posts: [
+          CommunityPost(
+            id: 'liked-post-1',
+            userId: 'other-user',
+            title: '좋아요한 글',
+            content: '좋아요한 게시글 내용',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+        filters: const PostFilters(),
+        hasMore: false,
+      );
+
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        authState: authState,
+        postState: postState,
+      );
+
+      await _pumpMyPostListScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        likedMode: true,
+        routePrefix: '/profile/liked/posts',
+      );
+
+      expect(find.text('좋아요한 글'), findsOneWidget);
+      expect(find.text('좋아요 한 게시글'), findsOneWidget);
+      verify(() => postListCubit.loadLikedByUser('my-user')).called(1);
+      verifyNever(() => postListCubit.loadForUser(any()));
     });
 
     testWidgets('목록 아이템 탭 시 해당 게시글 상세 경로로 이동한다', (tester) async {
@@ -175,6 +215,7 @@ void main() {
       expect(find.text('로그인이 필요합니다.'), findsOneWidget);
       expect(find.text('로그인'), findsOneWidget);
       verifyNever(() => postListCubit.loadForUser(any()));
+      verifyNever(() => postListCubit.loadLikedByUser(any()));
     });
   });
 }
@@ -204,13 +245,18 @@ Future<void> _pumpMyPostListScreen(
   WidgetTester tester, {
   required AuthCubit authCubit,
   required PostListCubit postListCubit,
+  bool likedMode = false,
+  String routePrefix = '/profile/posts',
 }) async {
   final router = GoRouter(
-    initialLocation: '/profile/posts',
+    initialLocation: routePrefix,
     routes: [
       GoRoute(
-        path: '/profile/posts',
-        builder: (context, state) => const MyPostListScreen(),
+        path: routePrefix,
+        builder: (context, state) => MyPostListScreen(
+          likedMode: likedMode,
+          detailRoutePrefix: routePrefix,
+        ),
         routes: [
           GoRoute(
             path: ':id',

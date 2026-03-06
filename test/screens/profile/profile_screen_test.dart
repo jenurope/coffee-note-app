@@ -57,6 +57,8 @@ void main() {
       );
 
       expect(find.text('문의/제보하기'), findsOneWidget);
+      expect(find.text('좋아요 한 게시글'), findsOneWidget);
+      expect(find.text('좋아요 한 댓글'), findsOneWidget);
       expect(find.text('앱 정보'), findsOneWidget);
       expect(find.text('버전 1.0.0'), findsOneWidget);
       expect(find.byIcon(Icons.edit), findsOneWidget);
@@ -81,6 +83,11 @@ void main() {
         dashboardCubit: dashboardCubit,
       );
 
+      await tester.scrollUntilVisible(
+        find.text('문의/제보하기'),
+        200,
+        scrollable: find.byType(Scrollable),
+      );
       await tester.tap(find.text('문의/제보하기'));
       await tester.pumpAndSettle();
 
@@ -123,6 +130,42 @@ void main() {
       expect(find.text('내 댓글 목록 화면'), findsOneWidget);
     });
 
+    testWidgets('좋아요 한 게시글 탭 시 좋아요 게시글 화면으로 이동한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await _pumpProfileScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await tester.tap(find.text('좋아요 한 게시글'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('좋아요한 게시글 화면'), findsOneWidget);
+    });
+
+    testWidgets('좋아요 한 댓글 탭 시 좋아요 댓글 화면으로 이동한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await _pumpProfileScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await tester.tap(find.text('좋아요 한 댓글'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('좋아요한 댓글 화면'), findsOneWidget);
+    });
+
     testWidgets('앱 정보는 다이얼로그 없이 고정 표시된다', (tester) async {
       _stubAuthenticatedState(
         authCubit: authCubit,
@@ -135,6 +178,11 @@ void main() {
         dashboardCubit: dashboardCubit,
       );
 
+      await tester.scrollUntilVisible(
+        find.text('앱 정보'),
+        200,
+        scrollable: find.byType(Scrollable),
+      );
       await tester.tap(find.text('앱 정보'));
       await tester.pumpAndSettle();
 
@@ -249,6 +297,21 @@ Future<void> _pumpProfileScreen(
                   path: 'profile/inquiries',
                   builder: (context, state) =>
                       const Scaffold(body: Center(child: Text('문의내역 화면'))),
+                ),
+                GoRoute(
+                  path: 'profile/liked',
+                  builder: (context, state) =>
+                      const Scaffold(body: Center(child: Text('좋아요한 콘텐츠 화면'))),
+                ),
+                GoRoute(
+                  path: 'profile/liked/posts',
+                  builder: (context, state) =>
+                      const Scaffold(body: Center(child: Text('좋아요한 게시글 화면'))),
+                ),
+                GoRoute(
+                  path: 'profile/liked/comments',
+                  builder: (context, state) =>
+                      const Scaffold(body: Center(child: Text('좋아요한 댓글 화면'))),
                 ),
                 GoRoute(
                   path: 'profile/edit',

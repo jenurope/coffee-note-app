@@ -621,6 +621,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String get myComments => '내 댓글';
 
   @override
+  String get likedContents => '좋아요 한 콘텐츠';
+
+  @override
+  String get likedPosts => '좋아요 한 게시글';
+
+  @override
+  String get likedComments => '좋아요 한 댓글';
+
+  @override
+  String get likedPostsEmptyTitle => '좋아요 한 게시글이 없습니다';
+
+  @override
+  String get likedPostsEmptySubtitle => '마음에 드는 게시글에 좋아요를 눌러보세요.';
+
+  @override
+  String get likedCommentsEmptyTitle => '좋아요 한 댓글이 없습니다';
+
+  @override
+  String get likedCommentsEmptySubtitle => '유용한 댓글에 좋아요를 눌러보세요.';
+
+  @override
   String get contactReport => '문의/제보하기';
 
   @override

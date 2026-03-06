@@ -1276,6 +1276,48 @@ abstract class AppLocalizations {
   /// **'My Comments'**
   String get myComments;
 
+  /// No description provided for @likedContents.
+  ///
+  /// In en, this message translates to:
+  /// **'Liked Content'**
+  String get likedContents;
+
+  /// No description provided for @likedPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Liked Posts'**
+  String get likedPosts;
+
+  /// No description provided for @likedComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Liked Comments'**
+  String get likedComments;
+
+  /// No description provided for @likedPostsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No liked posts yet'**
+  String get likedPostsEmptyTitle;
+
+  /// No description provided for @likedPostsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap like on posts you enjoy.'**
+  String get likedPostsEmptySubtitle;
+
+  /// No description provided for @likedCommentsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No liked comments yet'**
+  String get likedCommentsEmptyTitle;
+
+  /// No description provided for @likedCommentsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap like on comments you find helpful.'**
+  String get likedCommentsEmptySubtitle;
+
   /// No description provided for @contactReport.
   ///
   /// In en, this message translates to:

@@ -15,7 +15,14 @@ import '../../widgets/common/common_widgets.dart';
 import '../community/post_markdown_utils.dart';
 
 class MyPostListScreen extends StatefulWidget {
-  const MyPostListScreen({super.key});
+  const MyPostListScreen({
+    super.key,
+    this.likedMode = false,
+    this.detailRoutePrefix = '/profile/posts',
+  });
+
+  final bool likedMode;
+  final String detailRoutePrefix;
 
   @override
   State<MyPostListScreen> createState() => _MyPostListScreenState();
@@ -49,6 +56,10 @@ class _MyPostListScreenState extends State<MyPostListScreen> {
 
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthAuthenticated) {
+      if (widget.likedMode) {
+        context.read<PostListCubit>().loadLikedByUser(authState.user.id);
+        return;
+      }
       context.read<PostListCubit>().loadForUser(authState.user.id);
     }
   }
@@ -88,6 +99,13 @@ class _MyPostListScreenState extends State<MyPostListScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final screenTitle = widget.likedMode ? l10n.likedPosts : l10n.myPosts;
+    final emptyTitle = widget.likedMode
+        ? l10n.likedPostsEmptyTitle
+        : l10n.postsEmptyTitle;
+    final emptySubtitle = widget.likedMode
+        ? l10n.likedPostsEmptySubtitle
+        : l10n.postsEmptySubtitle;
     final dateFormat = DateFormat.Md(
       Localizations.localeOf(context).toString(),
     ).add_Hm();
@@ -96,7 +114,7 @@ class _MyPostListScreenState extends State<MyPostListScreen> {
       builder: (context, authState) {
         if (authState is! AuthAuthenticated) {
           return Scaffold(
-            appBar: AppBar(title: Text(l10n.myPosts)),
+            appBar: AppBar(title: Text(screenTitle)),
             body: EmptyState(
               icon: Icons.lock_outline,
               title: l10n.requiredLogin,
@@ -113,7 +131,7 @@ class _MyPostListScreenState extends State<MyPostListScreen> {
         return BlocBuilder<PostListCubit, PostListState>(
           builder: (context, state) {
             return Scaffold(
-              appBar: AppBar(title: Text(l10n.myPosts)),
+              appBar: AppBar(title: Text(screenTitle)),
               body: switch (state) {
                 PostListInitial() || PostListLoading() => const Center(
                   child: CircularProgressIndicator(),
@@ -126,8 +144,8 @@ class _MyPostListScreenState extends State<MyPostListScreen> {
                   posts.isEmpty
                       ? EmptyState(
                           icon: Icons.forum_outlined,
-                          title: l10n.postsEmptyTitle,
-                          subtitle: l10n.postsEmptySubtitle,
+                          title: emptyTitle,
+                          subtitle: emptySubtitle,
                         )
                       : RefreshIndicator(
                           onRefresh: () =>
@@ -169,13 +187,13 @@ class _MyPostListScreenState extends State<MyPostListScreen> {
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: InkWell(
                                   onTap: () async {
+                                    final postListCubit = context
+                                        .read<PostListCubit>();
                                     await context.push(
-                                      '/profile/posts/${post.id}',
+                                      '${widget.detailRoutePrefix}/${post.id}',
                                     );
                                     if (!mounted) return;
-                                    await context
-                                        .read<PostListCubit>()
-                                        .reload();
+                                    await postListCubit.reload();
                                   },
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(

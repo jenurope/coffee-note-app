@@ -7,6 +7,7 @@ import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
+import '../../cubits/community/my_comment_list_cubit.dart';
 import '../../cubits/community/post_detail_cubit.dart';
 import '../../cubits/community/post_detail_state.dart';
 import '../../cubits/community/post_list_cubit.dart';
@@ -263,6 +264,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         isLikedByMe: result.isLiked,
         likeCount: result.likeCount,
       );
+      try {
+        context.read<MyCommentListCubit>().applyCommentLike(
+          commentId: comment.id,
+          isLikedByMe: result.isLiked,
+          likeCount: result.likeCount,
+        );
+      } catch (_) {
+        // 목록 Cubit이 없는 컨텍스트(예: 커뮤니티 상세 단독 진입)에서는 무시합니다.
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

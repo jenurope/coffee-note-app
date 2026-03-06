@@ -90,6 +90,51 @@ void main() {
       ).called(1);
     });
 
+    test('loadLikedByUser는 좋아요한 댓글 목록을 조회한다', () async {
+      final user = _testUser('auth-comment-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 25, 11);
+      final comment = _buildComment(
+        id: 'liked-comment-1',
+        postId: 'post-1',
+        userId: 'other-user',
+        createdAt: now,
+      );
+
+      when(
+        () => communityService.getLikedCommentsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeleted: false,
+        ),
+      ).thenAnswer((_) async => [comment]);
+
+      final cubit = MyCommentListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadLikedByUser(user.id);
+
+      final state = cubit.state;
+      expect(state, isA<MyCommentListLoaded>());
+      expect(
+        (state as MyCommentListLoaded).comments.single.id,
+        'liked-comment-1',
+      );
+      verify(
+        () => communityService.getLikedCommentsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeleted: false,
+        ),
+      ).called(1);
+    });
+
     test('loadForUser 이후 loadMore/reload도 동일한 userId를 유지한다', () async {
       final user = _testUser('auth-comment-user');
       final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
@@ -162,6 +207,121 @@ void main() {
           includeDeleted: false,
         ),
       ).called(1);
+    });
+
+    test('loadLikedByUser 이후 loadMore/reload도 좋아요 조회 스코프를 유지한다', () async {
+      final user = _testUser('auth-comment-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 25, 11);
+      final firstPageComments = List.generate(
+        20,
+        (index) => _buildComment(
+          id: 'liked-comment-$index',
+          postId: 'post-$index',
+          userId: 'other-user',
+          createdAt: now.add(Duration(minutes: index)),
+        ),
+      );
+      final secondPageComments = [
+        _buildComment(
+          id: 'liked-comment-20',
+          postId: 'post-20',
+          userId: 'other-user',
+          createdAt: now.add(const Duration(minutes: 20)),
+        ),
+      ];
+
+      when(
+        () => communityService.getLikedCommentsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeleted: false,
+        ),
+      ).thenAnswer((_) async => firstPageComments);
+      when(
+        () => communityService.getLikedCommentsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 20,
+          ascending: false,
+          includeDeleted: false,
+        ),
+      ).thenAnswer((_) async => secondPageComments);
+
+      final cubit = MyCommentListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadLikedByUser(user.id);
+      await cubit.loadMore();
+      await cubit.reload();
+
+      verify(
+        () => communityService.getLikedCommentsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeleted: false,
+        ),
+      ).called(2);
+      verify(
+        () => communityService.getLikedCommentsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 20,
+          ascending: false,
+          includeDeleted: false,
+        ),
+      ).called(1);
+    });
+
+    test('좋아요 목록 스코프에서는 좋아요 해제 시 목록에서 즉시 제거한다', () async {
+      final user = _testUser('auth-comment-user');
+      final authCubit = AuthCubit.test(AuthState.authenticated(user: user));
+      final now = DateTime(2026, 2, 25, 11);
+      final first = _buildComment(
+        id: 'liked-comment-1',
+        postId: 'post-1',
+        userId: 'other-user',
+        createdAt: now,
+      );
+      final second = _buildComment(
+        id: 'liked-comment-2',
+        postId: 'post-2',
+        userId: 'other-user',
+        createdAt: now.add(const Duration(minutes: 1)),
+      );
+
+      when(
+        () => communityService.getLikedCommentsByUser(
+          userId: user.id,
+          limit: 20,
+          offset: 0,
+          ascending: false,
+          includeDeleted: false,
+        ),
+      ).thenAnswer((_) async => [first, second]);
+
+      final cubit = MyCommentListCubit(
+        service: communityService,
+        authCubit: authCubit,
+      );
+
+      await cubit.loadLikedByUser(user.id);
+      cubit.applyCommentLike(
+        commentId: 'liked-comment-1',
+        isLikedByMe: false,
+        likeCount: 0,
+      );
+
+      final state = cubit.state as MyCommentListLoaded;
+      expect(state.comments.map((comment) => comment.id).toList(), [
+        'liked-comment-2',
+      ]);
     });
 
     test('부모 댓글이 삭제된 대댓글은 내 댓글 목록에서 제외한다', () async {

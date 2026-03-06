@@ -621,6 +621,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get myComments => '自分のコメント';
 
   @override
+  String get likedContents => 'いいねしたコンテンツ';
+
+  @override
+  String get likedPosts => 'いいねした投稿';
+
+  @override
+  String get likedComments => 'いいねしたコメント';
+
+  @override
+  String get likedPostsEmptyTitle => 'いいねした投稿がありません';
+
+  @override
+  String get likedPostsEmptySubtitle => '気に入った投稿にいいねしてみましょう。';
+
+  @override
+  String get likedCommentsEmptyTitle => 'いいねしたコメントがありません';
+
+  @override
+  String get likedCommentsEmptySubtitle => '役に立ったコメントにいいねしてみましょう。';
+
+  @override
   String get contactReport => 'お問い合わせ/報告';
 
   @override

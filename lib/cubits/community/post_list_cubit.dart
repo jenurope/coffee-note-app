@@ -3,11 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
+import '../../models/community_post.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
 import '../../services/community_service.dart';
 import 'post_filters.dart';
 import 'post_list_state.dart';
+
+enum _PostListScope { all, authored, liked }
 
 class PostListCubit extends Cubit<PostListState> {
   PostListCubit({CommunityService? service, AuthCubit? authCubit})
@@ -20,36 +23,53 @@ class PostListCubit extends Cubit<PostListState> {
   final CommunityService _service;
   final AuthCubit? _authCubit;
   String? _activeUserId;
+  _PostListScope _activeScope = _PostListScope.all;
 
   Future<void> load([PostFilters filters = const PostFilters()]) async {
-    await _loadScoped(filters: filters, userId: null);
+    await _loadScoped(
+      filters: filters,
+      userId: null,
+      scope: _PostListScope.all,
+    );
   }
 
   Future<void> loadForUser(
     String userId, [
     PostFilters filters = const PostFilters(),
   ]) async {
-    await _loadScoped(filters: filters, userId: userId);
+    await _loadScoped(
+      filters: filters,
+      userId: userId,
+      scope: _PostListScope.authored,
+    );
+  }
+
+  Future<void> loadLikedByUser(
+    String userId, [
+    PostFilters filters = const PostFilters(),
+  ]) async {
+    await _loadScoped(
+      filters: filters,
+      userId: userId,
+      scope: _PostListScope.liked,
+    );
   }
 
   Future<void> _loadScoped({
     required PostFilters filters,
     required String? userId,
+    required _PostListScope scope,
   }) async {
+    _activeScope = scope;
     _activeUserId = _normalizeUserId(userId);
-    final includeDeletedPosts = _activeUserId == null;
     final pageSize = _resolvePageSize(filters);
     final initialFilters = filters.copyWith(limit: pageSize, offset: 0);
     emit(PostListState.loading(filters: initialFilters));
     try {
       final authState = _authCubit?.state;
       if (authState is AuthAuthenticated) {
-        final posts = await _service.getPosts(
-          searchQuery: initialFilters.searchQuery,
-          sortBy: initialFilters.sortBy,
-          ascending: initialFilters.ascending,
-          userId: _activeUserId,
-          includeDeletedPosts: includeDeletedPosts,
+        final posts = await _fetchPosts(
+          filters: initialFilters,
           limit: pageSize,
           offset: 0,
         );
@@ -90,12 +110,8 @@ class PostListCubit extends Cubit<PostListState> {
     emit(currentState.copyWith(isLoadingMore: true));
 
     try {
-      final nextPosts = await _service.getPosts(
-        searchQuery: currentState.filters.searchQuery,
-        sortBy: currentState.filters.sortBy,
-        ascending: currentState.filters.ascending,
-        userId: _activeUserId,
-        includeDeletedPosts: _activeUserId == null,
+      final nextPosts = await _fetchPosts(
+        filters: currentState.filters,
         limit: pageSize,
         offset: currentState.posts.length,
       );
@@ -122,6 +138,10 @@ class PostListCubit extends Cubit<PostListState> {
     if (authState is AuthAuthenticated) {
       final currentFilters = _currentFilters();
       if (_activeUserId != null) {
+        if (_activeScope == _PostListScope.liked) {
+          await loadLikedByUser(authState.user.id, currentFilters);
+          return;
+        }
         await loadForUser(authState.user.id, currentFilters);
         return;
       }
@@ -134,6 +154,7 @@ class PostListCubit extends Cubit<PostListState> {
 
   void reset() {
     _activeUserId = null;
+    _activeScope = _PostListScope.all;
     emit(const PostListState.initial());
   }
 
@@ -147,11 +168,19 @@ class PostListCubit extends Cubit<PostListState> {
   }
 
   Future<void> reload() async {
-    await _loadScoped(filters: _currentFilters(), userId: _activeUserId);
+    await _loadScoped(
+      filters: _currentFilters(),
+      userId: _activeUserId,
+      scope: _activeScope,
+    );
   }
 
   Future<void> updateFilters(PostFilters filters) async {
-    await _loadScoped(filters: filters, userId: _activeUserId);
+    await _loadScoped(
+      filters: filters,
+      userId: _activeUserId,
+      scope: _activeScope,
+    );
   }
 
   void applyPostLike({
@@ -161,6 +190,17 @@ class PostListCubit extends Cubit<PostListState> {
   }) {
     final currentState = state;
     if (currentState is! PostListLoaded) return;
+
+    if (_activeScope == _PostListScope.liked && !isLikedByMe) {
+      final updatedPosts = currentState.posts
+          .where((post) => post.id != postId)
+          .toList(growable: false);
+      if (updatedPosts.length == currentState.posts.length) {
+        return;
+      }
+      emit(currentState.copyWith(posts: updatedPosts));
+      return;
+    }
 
     var updated = false;
     final updatedPosts = currentState.posts
@@ -192,5 +232,50 @@ class PostListCubit extends Cubit<PostListState> {
       return null;
     }
     return normalized;
+  }
+
+  Future<List<CommunityPost>> _fetchPosts({
+    required PostFilters filters,
+    required int limit,
+    required int offset,
+  }) {
+    final searchQuery = filters.searchQuery;
+    final sortBy = filters.sortBy;
+    final ascending = filters.ascending;
+
+    switch (_activeScope) {
+      case _PostListScope.authored:
+        return _service.getPosts(
+          searchQuery: searchQuery,
+          sortBy: sortBy,
+          ascending: ascending,
+          userId: _activeUserId,
+          includeDeletedPosts: false,
+          limit: limit,
+          offset: offset,
+        );
+      case _PostListScope.liked:
+        final targetUserId = _activeUserId;
+        if (targetUserId == null) {
+          return SynchronousFuture(const <CommunityPost>[]);
+        }
+        return _service.getLikedPostsByUser(
+          userId: targetUserId,
+          limit: limit,
+          offset: offset,
+          ascending: ascending,
+          includeDeletedPosts: false,
+        );
+      case _PostListScope.all:
+        return _service.getPosts(
+          searchQuery: searchQuery,
+          sortBy: sortBy,
+          ascending: ascending,
+          userId: null,
+          includeDeletedPosts: true,
+          limit: limit,
+          offset: offset,
+        );
+    }
   }
 }
