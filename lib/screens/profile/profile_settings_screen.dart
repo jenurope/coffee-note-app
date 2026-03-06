@@ -63,6 +63,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   }
 
   Future<void> _saveSettings() async {
+    if (_isSaving) {
+      return;
+    }
+
     final authState = context.read<AuthCubit>().state;
     final currentUser = authState is AuthAuthenticated ? authState.user : null;
 
@@ -148,22 +152,26 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                             title: Text(l10n.profileSettingsBeanTitle),
                             subtitle: Text(l10n.profileSettingsBeanSubtitle),
                             value: _isBeanRecordsEnabled,
-                            onChanged: (value) {
-                              setState(() {
-                                _isBeanRecordsEnabled = value;
-                              });
-                            },
+                            onChanged: _isSaving
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _isBeanRecordsEnabled = value;
+                                    });
+                                  },
                           ),
                           const Divider(height: 1),
                           SwitchListTile.adaptive(
                             title: Text(l10n.profileSettingsCoffeeTitle),
                             subtitle: Text(l10n.profileSettingsCoffeeSubtitle),
                             value: _isCoffeeRecordsEnabled,
-                            onChanged: (value) {
-                              setState(() {
-                                _isCoffeeRecordsEnabled = value;
-                              });
-                            },
+                            onChanged: _isSaving
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _isCoffeeRecordsEnabled = value;
+                                    });
+                                  },
                           ),
                         ],
                       ),
@@ -196,8 +204,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                     const SizedBox(height: 24),
                     CustomButton(
                       text: l10n.save,
-                      onPressed: _saveSettings,
-                      isLoading: _isSaving,
+                      onPressed: _isSaving ? null : _saveSettings,
                       width: double.infinity,
                     ),
                   ],

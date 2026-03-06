@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:coffee_note_app/core/di/service_locator.dart';
 import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
@@ -120,6 +122,43 @@ void main() {
         find.text('모든 기록 기능이 꺼져 있습니다. 프로필 탭의 설정에서 다시 켤 수 있습니다.'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('저장 버튼을 빠르게 두 번 눌러도 저장은 한 번만 호출된다', (tester) async {
+      final completer = Completer<void>();
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+      when(
+        () => authService.updateFeatureVisibilitySettings(
+          userId: any(named: 'userId'),
+          isBeanRecordsEnabled: any(named: 'isBeanRecordsEnabled'),
+          isCoffeeRecordsEnabled: any(named: 'isCoffeeRecordsEnabled'),
+        ),
+      ).thenAnswer((_) => completer.future);
+
+      await _pumpProfileSettingsScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await tester.tap(find.text('저장'));
+      await tester.pump();
+      await tester.tap(find.text('저장'), warnIfMissed: false);
+      await tester.pump();
+
+      verify(
+        () => authService.updateFeatureVisibilitySettings(
+          userId: any(named: 'userId'),
+          isBeanRecordsEnabled: any(named: 'isBeanRecordsEnabled'),
+          isCoffeeRecordsEnabled: any(named: 'isCoffeeRecordsEnabled'),
+        ),
+      ).called(1);
+
+      completer.complete();
+      await tester.pumpAndSettle();
     });
   });
 }
