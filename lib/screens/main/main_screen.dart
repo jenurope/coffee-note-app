@@ -9,6 +9,7 @@ import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../core/locale/community_visibility_policy.dart';
 import '../../l10n/l10n.dart';
+import '../../router/app_feature_visibility.dart';
 
 Locale? _defaultDeviceLocaleProvider() => PlatformDispatcher.instance.locale;
 
@@ -17,12 +18,14 @@ class MainScreen extends StatefulWidget {
     super.key,
     required this.navigationShell,
     required this.branchNavigatorKeys,
+    this.featureVisibility = const AppFeatureVisibility(),
     this.loginPath = '/auth/login',
     this.deviceLocaleProvider = _defaultDeviceLocaleProvider,
   });
 
   final StatefulNavigationShell navigationShell;
   final List<GlobalKey<NavigatorState>> branchNavigatorKeys;
+  final AppFeatureVisibility featureVisibility;
   final String loginPath;
   final DeviceLocaleProvider deviceLocaleProvider;
 
@@ -32,9 +35,10 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   static const int _dashboardBranchIndex = 0;
+  static const int _beanBranchIndex = 1;
+  static const int _logBranchIndex = 2;
   static const int _communityBranchIndex = 3;
-  static const List<int> _branchIndicesWithCommunity = [0, 1, 2, 3, 4];
-  static const List<int> _branchIndicesWithoutCommunity = [0, 1, 2, 4];
+  static const int _profileBranchIndex = 4;
 
   late int _activeIndex;
 
@@ -72,10 +76,22 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  List<int> _visibleBranchIndices(bool communityVisible) {
-    return communityVisible
-        ? _branchIndicesWithCommunity
-        : _branchIndicesWithoutCommunity;
+  List<int> _visibleBranchIndices({
+    required bool communityVisible,
+    required AppFeatureVisibility featureVisibility,
+  }) {
+    final indices = <int>[_dashboardBranchIndex];
+    if (featureVisibility.beanRecordsVisible) {
+      indices.add(_beanBranchIndex);
+    }
+    if (featureVisibility.coffeeRecordsVisible) {
+      indices.add(_logBranchIndex);
+    }
+    if (communityVisible) {
+      indices.add(_communityBranchIndex);
+    }
+    indices.add(_profileBranchIndex);
+    return indices;
   }
 
   int _toDisplayIndex(List<int> visibleBranchIndices, int branchIndex) {
@@ -90,7 +106,7 @@ class _MainScreenState extends State<MainScreen> {
     return visibleBranchIndices[displayIndex];
   }
 
-  void _syncHiddenCommunityBranch(List<int> visibleBranchIndices) {
+  void _syncHiddenBranch(List<int> visibleBranchIndices) {
     if (visibleBranchIndices.contains(_currentIndex)) {
       return;
     }
@@ -109,6 +125,7 @@ class _MainScreenState extends State<MainScreen> {
   List<BottomNavigationBarItem> _navItems(
     BuildContext context, {
     required bool communityVisible,
+    required AppFeatureVisibility featureVisibility,
   }) {
     final l10n = context.l10n;
     final items = <BottomNavigationBarItem>[
@@ -117,26 +134,30 @@ class _MainScreenState extends State<MainScreen> {
         activeIcon: const Icon(Icons.dashboard),
         label: l10n.dashboard,
       ),
-      BottomNavigationBarItem(
-        icon: const Icon(Icons.coffee),
-        activeIcon: const Icon(Icons.coffee),
-        label: l10n.beanRecords,
-      ),
-      BottomNavigationBarItem(
-        icon: const Icon(Icons.local_cafe),
-        activeIcon: const Icon(Icons.local_cafe),
-        label: l10n.coffeeRecords,
-      ),
-      BottomNavigationBarItem(
-        icon: const Icon(Icons.person),
-        activeIcon: const Icon(Icons.person),
-        label: l10n.profile,
-      ),
     ];
 
+    if (featureVisibility.beanRecordsVisible) {
+      items.add(
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.coffee),
+          activeIcon: const Icon(Icons.coffee),
+          label: l10n.beanRecords,
+        ),
+      );
+    }
+
+    if (featureVisibility.coffeeRecordsVisible) {
+      items.add(
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.local_cafe),
+          activeIcon: const Icon(Icons.local_cafe),
+          label: l10n.coffeeRecords,
+        ),
+      );
+    }
+
     if (communityVisible) {
-      items.insert(
-        _communityBranchIndex,
+      items.add(
         BottomNavigationBarItem(
           icon: const Icon(Icons.forum),
           activeIcon: const Icon(Icons.forum),
@@ -144,6 +165,14 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
     }
+
+    items.add(
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.person),
+        activeIcon: const Icon(Icons.person),
+        label: l10n.profile,
+      ),
+    );
 
     return items;
   }
@@ -186,8 +215,11 @@ class _MainScreenState extends State<MainScreen> {
       builder: (context, authState) {
         final isGuest = authState is AuthGuest;
         final communityVisible = _isCommunityVisible(context);
-        final visibleBranchIndices = _visibleBranchIndices(communityVisible);
-        _syncHiddenCommunityBranch(visibleBranchIndices);
+        final visibleBranchIndices = _visibleBranchIndices(
+          communityVisible: communityVisible,
+          featureVisibility: widget.featureVisibility,
+        );
+        _syncHiddenBranch(visibleBranchIndices);
         final currentDisplayIndex = _toDisplayIndex(
           visibleBranchIndices,
           _currentIndex,
@@ -246,7 +278,11 @@ class _MainScreenState extends State<MainScreen> {
                 BottomNavigationBar(
                   currentIndex: currentDisplayIndex,
                   onTap: (index) => _onItemTapped(index, visibleBranchIndices),
-                  items: _navItems(context, communityVisible: communityVisible),
+                  items: _navItems(
+                    context,
+                    communityVisible: communityVisible,
+                    featureVisibility: widget.featureVisibility,
+                  ),
                 ),
               ],
             ),

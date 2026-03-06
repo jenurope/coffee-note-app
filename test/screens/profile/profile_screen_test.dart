@@ -166,6 +166,24 @@ void main() {
       expect(find.text('좋아요한 댓글 화면'), findsOneWidget);
     });
 
+    testWidgets('설정 버튼 탭 시 기능 설정 화면으로 이동한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await _pumpProfileScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      await tester.tap(find.byIcon(Icons.settings));
+      await tester.pumpAndSettle();
+
+      expect(find.text('기능설정 화면'), findsOneWidget);
+    });
+
     testWidgets('앱 정보는 다이얼로그 없이 고정 표시된다', (tester) async {
       _stubAuthenticatedState(
         authCubit: authCubit,
@@ -317,6 +335,11 @@ Future<void> _pumpProfileScreen(
                   path: 'profile/edit',
                   builder: (context, state) =>
                       const Scaffold(body: Center(child: Text('프로필수정 화면'))),
+                ),
+                GoRoute(
+                  path: 'profile/settings',
+                  builder: (context, state) =>
+                      const Scaffold(body: Center(child: Text('기능설정 화면'))),
                 ),
               ],
             ),

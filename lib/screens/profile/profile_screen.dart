@@ -249,11 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.settingsPreparing)),
-                      );
-                    },
+                    onPressed: () => context.push('/profile/settings'),
                   ),
                 ],
               ),

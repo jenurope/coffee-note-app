@@ -1,5 +1,6 @@
 import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
 import 'package:coffee_note_app/cubits/auth/auth_state.dart';
+import 'package:coffee_note_app/router/app_feature_visibility.dart';
 import 'package:coffee_note_app/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -352,6 +353,25 @@ void main() {
       expect(find.byIcon(Icons.person), findsOneWidget);
     });
 
+    testWidgets('기록 기능 설정에 따라 하단 탭을 숨긴다', (WidgetTester tester) async {
+      final authController = _TestAuthController(AppAuthSnapshot.authenticated);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        featureVisibility: () => const AppFeatureVisibility(
+          beanRecordsVisible: false,
+          coffeeRecordsVisible: true,
+        ),
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.coffee), findsNothing);
+      expect(find.byIcon(Icons.local_cafe), findsOneWidget);
+    });
+
     testWidgets('en + KR 조합에서는 커뮤니티 탭을 노출한다', (WidgetTester tester) async {
       final authController = _TestAuthController(AppAuthSnapshot.guest);
       final router = createAppRouter(
@@ -391,6 +411,26 @@ void main() {
 
       expect(find.text('DASHBOARD'), findsOneWidget);
       expect(find.text('COMMUNITY_ROOT'), findsNothing);
+    });
+
+    testWidgets('원두 관리 비노출 상태에서 /beans 초기 진입 시 대시보드로 리다이렉트한다', (
+      WidgetTester tester,
+    ) async {
+      final authController = _TestAuthController(AppAuthSnapshot.authenticated);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+        initialLocation: AppRoutePath.beans,
+        featureVisibility: () =>
+            const AppFeatureVisibility(beanRecordsVisible: false),
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(find.text('BEANS_ROOT'), findsNothing);
     });
   });
 }

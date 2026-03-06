@@ -4,6 +4,8 @@ class UserProfile {
   final String? email;
   final String? avatarUrl;
   final bool isWithdrawn;
+  final bool isBeanRecordsEnabled;
+  final bool isCoffeeRecordsEnabled;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -13,6 +15,8 @@ class UserProfile {
     this.email,
     this.avatarUrl,
     this.isWithdrawn = false,
+    this.isBeanRecordsEnabled = true,
+    this.isCoffeeRecordsEnabled = true,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -24,6 +28,9 @@ class UserProfile {
       email: json['email'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       isWithdrawn: json['is_withdrawn'] as bool? ?? false,
+      isBeanRecordsEnabled: json['is_bean_records_enabled'] as bool? ?? true,
+      isCoffeeRecordsEnabled:
+          json['is_coffee_records_enabled'] as bool? ?? true,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -36,6 +43,8 @@ class UserProfile {
       'email': email,
       'avatar_url': avatarUrl,
       'is_withdrawn': isWithdrawn,
+      'is_bean_records_enabled': isBeanRecordsEnabled,
+      'is_coffee_records_enabled': isCoffeeRecordsEnabled,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -47,6 +56,8 @@ class UserProfile {
     String? email,
     String? avatarUrl,
     bool? isWithdrawn,
+    bool? isBeanRecordsEnabled,
+    bool? isCoffeeRecordsEnabled,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -56,6 +67,9 @@ class UserProfile {
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       isWithdrawn: isWithdrawn ?? this.isWithdrawn,
+      isBeanRecordsEnabled: isBeanRecordsEnabled ?? this.isBeanRecordsEnabled,
+      isCoffeeRecordsEnabled:
+          isCoffeeRecordsEnabled ?? this.isCoffeeRecordsEnabled,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

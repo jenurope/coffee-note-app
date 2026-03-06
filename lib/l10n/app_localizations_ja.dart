@@ -619,6 +619,35 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsPreparing => '設定機能は準備中です。';
 
   @override
+  String get profileSettingsTitle => '機能設定';
+
+  @override
+  String get profileSettingsSubtitle => 'ダッシュボードと下部タブに表示する記録機能を選択してください。';
+
+  @override
+  String get profileSettingsBeanTitle => '豆の記録を使う';
+
+  @override
+  String get profileSettingsBeanSubtitle => '豆の記録タブとダッシュボード領域を表示します。';
+
+  @override
+  String get profileSettingsCoffeeTitle => 'コーヒー記録を使う';
+
+  @override
+  String get profileSettingsCoffeeSubtitle => 'コーヒー記録タブとダッシュボード領域を表示します。';
+
+  @override
+  String get profileSettingsEmptyState =>
+      'すべての記録機能がオフになっています。プロフィール設定から再度オンにできます。';
+
+  @override
+  String get profileSettingsSaveSuccess => '設定を保存しました。';
+
+  @override
+  String get profileSettingsSaveFailed =>
+      '設定の保存中にエラーが発生しました。しばらくしてから再試行してください。';
+
+  @override
   String get myPosts => '自分の投稿';
 
   @override

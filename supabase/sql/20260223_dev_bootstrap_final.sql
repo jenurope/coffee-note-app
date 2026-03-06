@@ -71,6 +71,8 @@ create table public.profiles (
   updated_at timestamptz not null default timezone('utc'::text, now()),
   avatar_url text,
   is_withdrawn boolean not null default false,
+  is_bean_records_enabled boolean not null default true,
+  is_coffee_records_enabled boolean not null default true,
   withdrawn_at timestamptz,
   constraint profiles_nickname_format_check
     check (
