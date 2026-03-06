@@ -92,10 +92,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         return;
       }
 
-      await context.read<DashboardCubit>().refresh();
-      if (!mounted) {
-        return;
-      }
+      context.read<DashboardCubit>().updateFeatureVisibility(
+        isBeanRecordsEnabled: _isBeanRecordsEnabled,
+        isCoffeeRecordsEnabled: _isCoffeeRecordsEnabled,
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.profileSettingsSaveSuccess)),

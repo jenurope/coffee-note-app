@@ -5,6 +5,7 @@ import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
+import '../../models/user_profile.dart';
 import '../../services/auth_service.dart';
 import '../../services/coffee_bean_service.dart';
 import '../../services/coffee_log_service.dart';
@@ -137,6 +138,61 @@ class DashboardCubit extends Cubit<DashboardState> {
 
   void reset() {
     emit(const DashboardState.initial());
+  }
+
+  void updateFeatureVisibility({
+    required bool isBeanRecordsEnabled,
+    required bool isCoffeeRecordsEnabled,
+  }) {
+    final currentState = state;
+    if (currentState is! DashboardLoaded) {
+      return;
+    }
+
+    final now = DateTime.now();
+    final nextProfile =
+        currentState.userProfile?.copyWith(
+          isBeanRecordsEnabled: isBeanRecordsEnabled,
+          isCoffeeRecordsEnabled: isCoffeeRecordsEnabled,
+          updatedAt: now,
+        ) ??
+        _buildFallbackUserProfile(
+          isBeanRecordsEnabled: isBeanRecordsEnabled,
+          isCoffeeRecordsEnabled: isCoffeeRecordsEnabled,
+          now: now,
+        );
+
+    emit(currentState.copyWith(userProfile: nextProfile));
+  }
+
+  UserProfile? _buildFallbackUserProfile({
+    required bool isBeanRecordsEnabled,
+    required bool isCoffeeRecordsEnabled,
+    required DateTime now,
+  }) {
+    final authState = _authCubit?.state;
+    if (authState is! AuthAuthenticated) {
+      return null;
+    }
+
+    final rawNickname =
+        authState.user.userMetadata?['name'] ??
+        authState.user.userMetadata?['full_name'] ??
+        authState.user.email?.split('@').first ??
+        'user';
+    final nickname = rawNickname is String && rawNickname.trim().isNotEmpty
+        ? rawNickname.trim()
+        : 'user';
+
+    return UserProfile(
+      id: authState.user.id,
+      nickname: nickname,
+      email: authState.user.email ?? '',
+      isBeanRecordsEnabled: isBeanRecordsEnabled,
+      isCoffeeRecordsEnabled: isCoffeeRecordsEnabled,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 
   Future<void> refresh() => load();
