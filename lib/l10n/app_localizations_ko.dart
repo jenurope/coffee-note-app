@@ -521,7 +521,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get communityContentPolicyConfirmMessage =>
-      '욕설, 폭언, 성적 묘사 등 정책에 맞지 않는 글은 삭제될 수 있습니다. 저장하시겠습니까?';
+      '욕설, 폭언 등 정책에 맞지 않는 글은 삭제될 수 있습니다. 저장하시겠습니까?';
 
   @override
   String get postSaveFailed => '게시글 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';

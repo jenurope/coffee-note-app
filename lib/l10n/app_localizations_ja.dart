@@ -521,7 +521,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get communityContentPolicyConfirmMessage =>
-      '暴言、罵倒、性的描写など、ポリシーに反する内容は削除される場合があります。保存しますか？';
+      '暴言、罵倒など、ポリシーに反する内容は削除される場合があります。保存しますか？';
 
   @override
   String get postSaveFailed => '投稿の保存中にエラーが発生しました。しばらくしてから再試行してください。';

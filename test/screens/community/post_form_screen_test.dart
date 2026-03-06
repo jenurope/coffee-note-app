@@ -28,7 +28,7 @@ class _MockCommunityService extends Mock implements CommunityService {}
 class _MockImageUploadService extends Mock implements ImageUploadService {}
 
 void main() {
-  const policyMessage = '욕설, 폭언, 성적 묘사 등 정책에 맞지 않는 글은 삭제될 수 있습니다. 저장하시겠습니까?';
+  const policyMessage = '욕설, 폭언 등 정책에 맞지 않는 글은 삭제될 수 있습니다. 저장하시겠습니까?';
 
   setUpAll(() {
     registerFallbackValue(

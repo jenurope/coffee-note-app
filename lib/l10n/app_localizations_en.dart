@@ -535,7 +535,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get communityContentPolicyConfirmMessage =>
-      'Content that violates the policy, including profanity, verbal abuse, or sexual descriptions, may be removed. Do you want to save it?';
+      'Content that violates the policy, including profanity or verbal abuse, may be removed. Do you want to save it?';
 
   @override
   String get postSaveFailed =>
