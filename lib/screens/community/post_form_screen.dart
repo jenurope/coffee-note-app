@@ -21,6 +21,7 @@ import '../../models/community_post.dart';
 import '../../services/community_service.dart';
 import '../../services/image_upload_service.dart';
 import '../../widgets/common/common_widgets.dart';
+import '../../widgets/community/community_content_policy_confirm_dialog.dart';
 import '../../widgets/image_picker_widget.dart';
 import '../../widgets/navigation/form_leave_confirm_dialog.dart';
 import 'post_markdown_utils.dart';
@@ -273,6 +274,11 @@ class _PostFormScreenState extends State<PostFormScreen> {
     final currentUser = authState is AuthAuthenticated ? authState.user : null;
     if (currentUser == null) {
       _showMessage(context.l10n.requiredLogin);
+      return;
+    }
+
+    final confirmed = await showCommunityContentPolicyConfirmDialog(context);
+    if (!mounted || !confirmed) {
       return;
     }
 

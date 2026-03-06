@@ -31,6 +31,8 @@ class _MockPostListCubit extends MockCubit<PostListState>
 class _MockCommunityService extends Mock implements CommunityService {}
 
 void main() {
+  const policyMessage = '욕설, 폭언, 성적 묘사 등 정책에 맞지 않는 글은 삭제될 수 있습니다. 저장하시겠습니까?';
+
   setUpAll(() {
     registerFallbackValue(
       CommunityComment(
@@ -117,10 +119,75 @@ void main() {
       await tester.enterText(find.byType(TextField), '새 댓글');
       await tester.tap(find.byIcon(Icons.send));
       await tester.pumpAndSettle();
+      expect(find.text(policyMessage), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('저장'),
+        ),
+      );
+      await tester.pumpAndSettle();
 
       verify(() => communityService.createComment(any())).called(1);
       verify(() => postDetailCubit.load('post-1')).called(1);
       verify(() => postListCubit.reload()).called(1);
+    });
+
+    testWidgets('댓글 작성 안내 팝업에서 취소하면 저장하지 않는다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('writer'));
+      final postState = PostDetailState.loaded(
+        post: _buildActivePost(userId: 'writer'),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => postDetailCubit.state).thenReturn(postState);
+      when(() => postListCubit.state).thenReturn(const PostListState.initial());
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        postDetailCubit,
+        Stream<PostDetailState>.fromIterable([postState]),
+        initialState: postState,
+      );
+      whenListen(
+        postListCubit,
+        Stream<PostListState>.fromIterable([const PostListState.initial()]),
+        initialState: const PostListState.initial(),
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<PostDetailCubit>.value(value: postDetailCubit),
+            BlocProvider<PostListCubit>.value(value: postListCubit),
+          ],
+          child: _buildTestMaterialApp(
+            home: const PostDetailScreen(postId: 'post-1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '새 댓글');
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pumpAndSettle();
+
+      expect(find.text(policyMessage), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('취소'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      verifyNever(() => communityService.createComment(any()));
+      verifyNever(() => postDetailCubit.load(any()));
+      verifyNever(() => postListCubit.reload());
     });
 
     testWidgets('일반 댓글의 답글 버튼을 누르면 댓글 상세 화면으로 이동한다', (tester) async {

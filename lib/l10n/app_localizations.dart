@@ -1078,6 +1078,12 @@ abstract class AppLocalizations {
   /// **'Post has been updated.'**
   String get postUpdated;
 
+  /// No description provided for @communityContentPolicyConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Content that violates the policy, including profanity, verbal abuse, or sexual descriptions, may be removed. Do you want to save it?'**
+  String get communityContentPolicyConfirmMessage;
+
   /// No description provided for @postSaveFailed.
   ///
   /// In en, this message translates to:

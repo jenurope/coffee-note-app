@@ -12,6 +12,7 @@ import '../../l10n/l10n.dart';
 import '../../models/community_post.dart';
 import '../../models/user_profile.dart';
 import '../../services/community_service.dart';
+import '../../widgets/community/community_content_policy_confirm_dialog.dart';
 import '../../widgets/common/common_widgets.dart';
 import '../../widgets/common/user_avatar.dart';
 
@@ -153,6 +154,11 @@ class _CommentDetailScreenState extends State<CommentDetailScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(context.l10n.requiredLogin)));
+      return;
+    }
+
+    final confirmed = await showCommunityContentPolicyConfirmDialog(context);
+    if (!mounted || !confirmed) {
       return;
     }
 

@@ -534,6 +534,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postUpdated => 'Post has been updated.';
 
   @override
+  String get communityContentPolicyConfirmMessage =>
+      'Content that violates the policy, including profanity, verbal abuse, or sexual descriptions, may be removed. Do you want to save it?';
+
+  @override
   String get postSaveFailed =>
       'An error occurred while saving post. Please try again later.';
 
