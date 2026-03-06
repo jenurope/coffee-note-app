@@ -75,7 +75,7 @@ void main() {
       expect(switches[1].value, isTrue);
     });
 
-    testWidgets('저장 시 설정값을 갱신하고 Dashboard 상태를 즉시 반영한다', (tester) async {
+    testWidgets('저장 시 설정값을 저장하고 현재 화면에서 상태를 직접 갱신하지 않는다', (tester) async {
       final user = _stubAuthenticatedState(
         authCubit: authCubit,
         dashboardCubit: dashboardCubit,
@@ -99,12 +99,12 @@ void main() {
           isCoffeeRecordsEnabled: true,
         ),
       ).called(1);
-      verify(
+      verifyNever(
         () => dashboardCubit.updateFeatureVisibility(
-          isBeanRecordsEnabled: false,
-          isCoffeeRecordsEnabled: true,
+          isBeanRecordsEnabled: any(named: 'isBeanRecordsEnabled'),
+          isCoffeeRecordsEnabled: any(named: 'isCoffeeRecordsEnabled'),
         ),
-      ).called(1);
+      );
       verifyNever(() => dashboardCubit.refresh());
     });
 

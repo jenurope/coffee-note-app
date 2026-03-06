@@ -11,6 +11,16 @@ import '../../models/user_profile.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common/common_widgets.dart';
 
+class ProfileSettingsSaveResult {
+  const ProfileSettingsSaveResult({
+    required this.isBeanRecordsEnabled,
+    required this.isCoffeeRecordsEnabled,
+  });
+
+  final bool isBeanRecordsEnabled;
+  final bool isCoffeeRecordsEnabled;
+}
+
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
 
@@ -92,15 +102,12 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         return;
       }
 
-      context.read<DashboardCubit>().updateFeatureVisibility(
-        isBeanRecordsEnabled: _isBeanRecordsEnabled,
-        isCoffeeRecordsEnabled: _isCoffeeRecordsEnabled,
+      Navigator.of(context).pop(
+        ProfileSettingsSaveResult(
+          isBeanRecordsEnabled: _isBeanRecordsEnabled,
+          isCoffeeRecordsEnabled: _isCoffeeRecordsEnabled,
+        ),
       );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.profileSettingsSaveSuccess)),
-      );
-      Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) {
         return;
