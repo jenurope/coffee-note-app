@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
+import '../../cubits/dashboard/dashboard_cubit.dart';
+import '../../cubits/dashboard/dashboard_state.dart';
 import '../../core/locale/community_visibility_policy.dart';
 import '../../l10n/l10n.dart';
 import '../../router/app_feature_visibility.dart';
@@ -73,6 +75,22 @@ class _MainScreenState extends State<MainScreen> {
     return isCommunityVisible(
       appLocale: Localizations.maybeLocaleOf(context),
       deviceLocale: widget.deviceLocaleProvider(),
+    );
+  }
+
+  AppFeatureVisibility _effectiveFeatureVisibility(BuildContext context) {
+    final dashboardState = context.select<DashboardCubit?, DashboardState?>(
+      (cubit) => cubit?.state,
+    );
+
+    if (dashboardState is! DashboardLoaded) {
+      return widget.featureVisibility;
+    }
+
+    final userProfile = dashboardState.userProfile;
+    return AppFeatureVisibility(
+      beanRecordsVisible: userProfile?.isBeanRecordsEnabled ?? true,
+      coffeeRecordsVisible: userProfile?.isCoffeeRecordsEnabled ?? true,
     );
   }
 
@@ -215,9 +233,10 @@ class _MainScreenState extends State<MainScreen> {
       builder: (context, authState) {
         final isGuest = authState is AuthGuest;
         final communityVisible = _isCommunityVisible(context);
+        final featureVisibility = _effectiveFeatureVisibility(context);
         final visibleBranchIndices = _visibleBranchIndices(
           communityVisible: communityVisible,
-          featureVisibility: widget.featureVisibility,
+          featureVisibility: featureVisibility,
         );
         _syncHiddenBranch(visibleBranchIndices);
         final currentDisplayIndex = _toDisplayIndex(
@@ -281,7 +300,7 @@ class _MainScreenState extends State<MainScreen> {
                   items: _navItems(
                     context,
                     communityVisible: communityVisible,
-                    featureVisibility: widget.featureVisibility,
+                    featureVisibility: featureVisibility,
                   ),
                 ),
               ],
