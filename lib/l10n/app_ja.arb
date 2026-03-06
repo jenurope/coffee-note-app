@@ -240,6 +240,7 @@
   "postImageUploadPreparing": "画像をアップロード中です...",
   "postCreated": "投稿が登録されました。",
   "postUpdated": "投稿が更新されました。",
+  "communityContentPolicyConfirmMessage": "暴言、罵倒など、ポリシーに反する内容は削除される場合があります。保存しますか？",
   "postSaveFailed": "投稿の保存中にエラーが発生しました。しばらくしてから再試行してください。",
   "postScreenTitle": "投稿",
   "commentDetailTitle": "コメント詳細",

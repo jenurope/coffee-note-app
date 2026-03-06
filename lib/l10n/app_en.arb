@@ -240,6 +240,7 @@
   "postImageUploadPreparing": "Uploading images...",
   "postCreated": "Post has been registered.",
   "postUpdated": "Post has been updated.",
+  "communityContentPolicyConfirmMessage": "Content that violates the policy, including profanity or verbal abuse, may be removed. Do you want to save it?",
   "postSaveFailed": "An error occurred while saving post. Please try again later.",
   "postScreenTitle": "Post",
   "commentDetailTitle": "Comment Detail",

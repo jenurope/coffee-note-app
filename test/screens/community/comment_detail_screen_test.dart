@@ -18,6 +18,8 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 class _MockCommunityService extends Mock implements CommunityService {}
 
 void main() {
+  const policyMessage = '욕설, 폭언 등 정책에 맞지 않는 글은 삭제될 수 있습니다. 저장하시겠습니까?';
+
   setUpAll(() {
     registerFallbackValue(
       CommunityComment(
@@ -112,6 +114,14 @@ void main() {
       await tester.enterText(find.byType(TextField), '새 답글');
       await tester.tap(find.byIcon(Icons.send));
       await tester.pumpAndSettle();
+      expect(find.text(policyMessage), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('저장'),
+        ),
+      );
+      await tester.pumpAndSettle();
 
       final capturedComment =
           verify(
@@ -120,6 +130,61 @@ void main() {
               as CommunityComment;
       expect(capturedComment.parentId, 'comment-parent');
       expect(capturedComment.content, '새 답글');
+    });
+
+    testWidgets('답글 저장 안내 팝업에서 취소하면 저장하지 않는다', (tester) async {
+      final authState = AuthState.authenticated(user: _testUser('writer'));
+      final parentComment = _comment(
+        id: 'comment-parent',
+        postId: 'post-1',
+        content: '원댓글',
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      when(
+        () => communityService.getCommentById(commentId: 'comment-parent'),
+      ).thenAnswer((_) async => parentComment);
+      when(
+        () => communityService.getReplies(
+          parentCommentId: 'comment-parent',
+          limit: 20,
+          offset: 0,
+          ascending: true,
+        ),
+      ).thenAnswer((_) async => []);
+
+      await tester.pumpWidget(
+        BlocProvider<AuthCubit>.value(
+          value: authCubit,
+          child: _buildTestMaterialApp(
+            home: const CommentDetailScreen(
+              postId: 'post-1',
+              commentId: 'comment-parent',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '새 답글');
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pumpAndSettle();
+
+      expect(find.text(policyMessage), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('취소'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      verifyNever(() => communityService.createComment(any()));
     });
 
     testWidgets('삭제된 부모 댓글에서는 답글 입력창을 노출하지 않는다', (tester) async {
