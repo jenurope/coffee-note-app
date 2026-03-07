@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../ads/ad_placement.dart';
+import '../../ads/app_ads.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
@@ -201,6 +203,7 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
                   ),
                 ],
               ),
+              bottomNavigationBar: _buildBottomAdBar(logState),
               floatingActionButton: currentUser != null && !isGuest
                   ? FloatingActionButton.extended(
                       onPressed: () => context.push('/logs/new'),
@@ -273,6 +276,17 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
           ),
       ],
     );
+  }
+
+  Widget? _buildBottomAdBar(LogListState logState) {
+    return switch (logState) {
+      LogListLoaded() =>
+        appAdsSlotFactory().buildBannerSlot(
+          key: const ValueKey('coffeeLogListBannerSlot'),
+          placement: AdPlacement.coffeeLogListBanner,
+        ),
+      _ => null,
+    };
   }
 }
 

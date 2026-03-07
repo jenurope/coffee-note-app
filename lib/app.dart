@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:go_router/go_router.dart';
+import 'ads/ads_bootstrap.dart';
 import 'config/theme.dart';
+import 'core/di/service_locator.dart';
 import 'cubits/auth/auth_cubit.dart';
 import 'cubits/auth/auth_state.dart';
 import 'cubits/bean/bean_list_cubit.dart';
@@ -31,6 +35,9 @@ class _CoffeeNoteAppState extends State<CoffeeNoteApp> {
       authCubit,
       dashboardCubit: context.read<DashboardCubit>(),
     );
+    if (getIt.isRegistered<AdsBootstrap>()) {
+      unawaited(getIt<AdsBootstrap>().initialize(log: debugPrint));
+    }
   }
 
   @override

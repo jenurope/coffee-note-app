@@ -1,10 +1,14 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:coffee_note_app/ads/ad_placement.dart';
+import 'package:coffee_note_app/ads/ads_slot_factory.dart';
+import 'package:coffee_note_app/core/di/service_locator.dart';
 import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
 import 'package:coffee_note_app/cubits/auth/auth_state.dart';
 import 'package:coffee_note_app/cubits/log/log_filters.dart';
 import 'package:coffee_note_app/cubits/log/log_list_cubit.dart';
 import 'package:coffee_note_app/cubits/log/log_list_state.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
+import 'package:coffee_note_app/models/coffee_log.dart';
 import 'package:coffee_note_app/screens/logs/coffee_log_list_screen.dart';
 import 'package:coffee_note_app/widgets/common/common_widgets.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +35,7 @@ void main() {
     setUp(() {
       authCubit = _MockAuthCubit();
       logListCubit = _MockLogListCubit();
+      getIt.allowReassignment = true;
 
       when(() => logListCubit.updateFilters(any())).thenAnswer((_) async {});
       when(() => logListCubit.hasMore).thenReturn(false);
@@ -39,6 +44,7 @@ void main() {
     tearDown(() async {
       await authCubit.close();
       await logListCubit.close();
+      await getIt.reset();
     });
 
     testWidgets('작은 화면에서 overflow 없이 필터 시트를 스크롤할 수 있다', (tester) async {
@@ -90,6 +96,45 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('loaded + non-empty 상태에서 하단 배너 슬롯을 노출한다', (tester) async {
+      getIt.registerSingleton<AdsSlotFactory>(const _FakeAdsSlotFactory());
+      _bindStates(
+        authCubit: authCubit,
+        logListCubit: logListCubit,
+        logState: LogListState.loaded(
+          logs: [_testLog()],
+          filters: const LogFilters(),
+        ),
+      );
+
+      await _pumpCoffeeLogListScreen(
+        tester,
+        authCubit: authCubit,
+        logListCubit: logListCubit,
+      );
+
+      expect(
+        find.byKey(const ValueKey('fake-banner-coffeeLogListBanner')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('loaded + empty 상태에서도 하단 배너 슬롯을 노출한다', (tester) async {
+      getIt.registerSingleton<AdsSlotFactory>(const _FakeAdsSlotFactory());
+      _bindStates(authCubit: authCubit, logListCubit: logListCubit);
+
+      await _pumpCoffeeLogListScreen(
+        tester,
+        authCubit: authCubit,
+        logListCubit: logListCubit,
+      );
+
+      expect(
+        find.byKey(const ValueKey('fake-banner-coffeeLogListBanner')),
+        findsOneWidget,
+      );
+    });
   });
 }
 
@@ -123,15 +168,15 @@ Future<void> _pumpCoffeeLogListScreen(
 void _bindStates({
   required _MockAuthCubit authCubit,
   required _MockLogListCubit logListCubit,
+  LogListState? logState,
 }) {
   final authState = AuthState.authenticated(user: _testUser('log-user'));
-  final logState = LogListState.loaded(
-    logs: const [],
-    filters: const LogFilters(),
-  );
+  final resolvedLogState =
+      logState ??
+      LogListState.loaded(logs: const [], filters: const LogFilters());
 
   when(() => authCubit.state).thenReturn(authState);
-  when(() => logListCubit.state).thenReturn(logState);
+  when(() => logListCubit.state).thenReturn(resolvedLogState);
 
   whenListen(
     authCubit,
@@ -140,8 +185,8 @@ void _bindStates({
   );
   whenListen(
     logListCubit,
-    Stream<LogListState>.fromIterable([logState]),
-    initialState: logState,
+    Stream<LogListState>.fromIterable([resolvedLogState]),
+    initialState: resolvedLogState,
   );
 }
 
@@ -163,4 +208,35 @@ void _setSmallViewport(WidgetTester tester) {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
+}
+
+class _FakeAdsSlotFactory extends AdsSlotFactory {
+  const _FakeAdsSlotFactory();
+
+  @override
+  Widget buildBannerSlot({Key? key, required AdPlacement placement}) {
+    return SizedBox(
+      key: ValueKey('fake-banner-${placement.slotName}'),
+      height: 50,
+    );
+  }
+
+  @override
+  Widget buildCommunityNativeSlot({Key? key, required int slotIndex}) {
+    return SizedBox(key: ValueKey('fake-community-native-$slotIndex'));
+  }
+}
+
+CoffeeLog _testLog() {
+  final now = DateTime(2026, 3, 7, 9);
+  return CoffeeLog(
+    id: 'log-1',
+    userId: 'log-user',
+    cafeVisitDate: now,
+    coffeeType: 'espresso',
+    cafeName: '테스트 카페',
+    rating: 4.0,
+    createdAt: now,
+    updatedAt: now,
+  );
 }

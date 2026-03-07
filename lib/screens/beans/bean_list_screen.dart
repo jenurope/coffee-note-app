@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../ads/ad_placement.dart';
+import '../../ads/app_ads.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
@@ -140,6 +142,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
                   ),
                 ],
               ),
+              bottomNavigationBar: _buildBottomAdBar(beanState),
               floatingActionButton: isAuthenticated && !isGuest
                   ? FloatingActionButton.extended(
                       onPressed: () => context.push('/beans/new'),
@@ -191,6 +194,17 @@ class _BeanListScreenState extends State<BeanListScreen> {
           ],
         ),
       ),
+    };
+  }
+
+  Widget? _buildBottomAdBar(BeanListState beanState) {
+    return switch (beanState) {
+      BeanListLoaded() =>
+        appAdsSlotFactory().buildBannerSlot(
+          key: const ValueKey('beanListBannerSlot'),
+          placement: AdPlacement.beanListBanner,
+        ),
+      _ => null,
     };
   }
 

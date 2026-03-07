@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../ads/app_ads.dart';
+import '../../ads/community_feed_ad_layout.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
@@ -308,9 +310,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                   ),
-                                  itemCount: posts.length + (hasMore ? 1 : 0),
+                                  itemCount:
+                                      posts.length +
+                                      communityFeedAdCount(posts.length) +
+                                      (hasMore ? 1 : 0),
                                   itemBuilder: (context, index) {
-                                    if (index >= posts.length) {
+                                    final organicAndAdItemCount =
+                                        posts.length +
+                                        communityFeedAdCount(posts.length);
+
+                                    if (index >= organicAndAdItemCount) {
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 12,
@@ -334,7 +343,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                         ),
                                       );
                                     }
-                                    final post = posts[index];
+                                    if (isCommunityFeedAdDisplayIndex(index)) {
+                                      return appAdsSlotFactory()
+                                          .buildCommunityNativeSlot(
+                                            key: ValueKey(
+                                              'communityNativeAdSlot-'
+                                              '${communityFeedAdSlotIndexForDisplayIndex(index)}',
+                                            ),
+                                            slotIndex:
+                                                communityFeedAdSlotIndexForDisplayIndex(
+                                                  index,
+                                                ),
+                                          );
+                                    }
+                                    final post =
+                                        posts[communityFeedOrganicIndexForDisplayIndex(
+                                          index,
+                                        )];
                                     final authorName = _resolveAuthorName(
                                       l10n,
                                       post,

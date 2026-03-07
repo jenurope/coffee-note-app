@@ -22,6 +22,10 @@
    - `APP_ENV`
    - `SUPABASE_URL`
    - `SUPABASE_PUBLISHABLE_KEY`
+   - `ADMOB_APP_ID_ANDROID`
+   - `ADMOB_COMMUNITY_NATIVE_ANDROID`
+   - `ADMOB_BEAN_LIST_BANNER_ANDROID`
+   - `ADMOB_COFFEE_LOG_LIST_BANNER_ANDROID`
    - `GOOGLE_IOS_CLIENT_ID`
    - `GOOGLE_WEB_CLIENT_ID`
 
@@ -121,6 +125,20 @@ SQL Editor 실행 시 Role은 `postgres`(owner)로 지정합니다.
    - Android: 패키지명 + SHA 인증서 제한
    - iOS: 번들 ID 제한
 6. 제한 후 `run_dev.sh`, `run_prod.sh`로 초기화 오류(403 등) 여부 확인
+
+## 6-1. Android AdMob / UMP 수동 작업 체크리스트
+
+1. AdMob 앱 등록
+   - prod: `com.gooun.works.coffeelog`
+   - dev는 sample ads 사용
+2. prod 광고 단위 확인
+   - community native
+   - bean list banner
+   - coffee log list banner
+3. 개인정보처리방침 URL 준비
+   - UMP 메시지와 스토어 정책 반영 시 동일 URL 사용
+4. internal 테스트에서 동의 허용/거부 모두 점검
+5. Play Console에서 `광고 있음`, Data safety 항목 업데이트
 
 ## 7. 금지 사항
 
