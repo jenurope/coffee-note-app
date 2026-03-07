@@ -39,6 +39,10 @@
   "APP_ENV": "dev|prod",
   "SUPABASE_URL": "https://your-project.supabase.co",
   "SUPABASE_PUBLISHABLE_KEY": "your-publishable-key",
+  "ADMOB_APP_ID_ANDROID": "ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy",
+  "ADMOB_COMMUNITY_NATIVE_ANDROID": "ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy",
+  "ADMOB_BEAN_LIST_BANNER_ANDROID": "ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy",
+  "ADMOB_COFFEE_LOG_LIST_BANNER_ANDROID": "ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy",
   "GOOGLE_IOS_CLIENT_ID": "your-ios-client-id.apps.googleusercontent.com",
   "GOOGLE_WEB_CLIENT_ID": "your-web-client-id.apps.googleusercontent.com"
 }
@@ -46,6 +50,17 @@
 
 1. `dart_define.dev.example.json` -> `dart_define.dev.json`
 2. `dart_define.prod.example.json` -> `dart_define.prod.json`
+
+### Android AdMob / UMP 설정
+
+- Android에서만 AdMob을 초기화합니다.
+- `APP_ENV=dev`는 Google sample ads를 사용하고, `APP_ENV=prod`는 실제 광고 ID를 사용합니다.
+- `dart_define.*.json`에 아래 키를 함께 설정해야 합니다.
+  - `ADMOB_APP_ID_ANDROID`
+  - `ADMOB_COMMUNITY_NATIVE_ANDROID`
+  - `ADMOB_BEAN_LIST_BANNER_ANDROID`
+  - `ADMOB_COFFEE_LOG_LIST_BANNER_ANDROID`
+- `build_prod_aab.sh`는 위 AdMob 키가 비어 있으면 빌드를 중단합니다.
 
 ### Firebase 설정 파일 (필수)
 

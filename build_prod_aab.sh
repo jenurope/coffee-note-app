@@ -16,7 +16,13 @@ if ! grep -Eq '"APP_ENV"[[:space:]]*:[[:space:]]*"prod"' "$ENV_FILE"; then
   exit 1
 fi
 
-for key in SUPABASE_URL SUPABASE_PUBLISHABLE_KEY; do
+for key in \
+  SUPABASE_URL \
+  SUPABASE_PUBLISHABLE_KEY \
+  ADMOB_APP_ID_ANDROID \
+  ADMOB_COMMUNITY_NATIVE_ANDROID \
+  ADMOB_BEAN_LIST_BANNER_ANDROID \
+  ADMOB_COFFEE_LOG_LIST_BANNER_ANDROID; do
   if ! grep -Eq "\"${key}\"[[:space:]]*:[[:space:]]*\"[^\"]+\"" "$ENV_FILE"; then
     echo "필수 키가 누락되었거나 비어 있습니다: $key"
     exit 1

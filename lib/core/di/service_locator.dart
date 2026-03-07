@@ -1,5 +1,11 @@
 import 'package:get_it/get_it.dart';
 
+import '../../ads/ads_bootstrap.dart';
+import '../../ads/ads_config.dart';
+import '../../ads/ads_controller.dart';
+import '../../ads/ads_slot_factory.dart';
+import '../../ads/consent_manager.dart';
+import '../../ads/mobile_ads_client.dart';
 import '../../config/supabase_config.dart';
 import '../../services/auth_service.dart';
 import '../../services/coffee_bean_service.dart';
@@ -53,5 +59,22 @@ void setupServiceLocator() {
   // Service Inquiry
   getIt.registerLazySingleton<ServiceInquiryService>(
     () => ServiceInquiryService(client),
+  );
+
+  final adsConfig = AdsConfig.fromEnvironment();
+  getIt.registerSingleton<AdsConfig>(adsConfig);
+  getIt.registerSingleton<AdsController>(AdsController());
+  getIt.registerLazySingleton<ConsentManager>(() => UmpConsentManager());
+  getIt.registerLazySingleton<MobileAdsClient>(() => GoogleMobileAdsClient());
+  getIt.registerLazySingleton<AdsSlotFactory>(
+    () => const GoogleMobileAdsSlotFactory(),
+  );
+  getIt.registerLazySingleton<AdsBootstrap>(
+    () => AdsBootstrap(
+      config: getIt<AdsConfig>(),
+      controller: getIt<AdsController>(),
+      consentManager: getIt<ConsentManager>(),
+      mobileAdsClient: getIt<MobileAdsClient>(),
+    ),
   );
 }

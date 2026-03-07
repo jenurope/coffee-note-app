@@ -50,17 +50,40 @@ fun parseDartDefines(rawValue: String?): Map<String, String> {
 }
 
 val dartDefines = parseDartDefines(project.findProperty("dart-defines") as? String)
+val adMobSampleAppId = "ca-app-pub-3940256099942544~3347511713"
+val appEnv = dartDefines["APP_ENV"] ?: "dev"
+val adMobAppId = when {
+    !dartDefines["ADMOB_APP_ID_ANDROID"].isNullOrBlank() ->
+        dartDefines.getValue("ADMOB_APP_ID_ANDROID")
+    appEnv == "prod" -> ""
+    else -> adMobSampleAppId
+}
 
 if (isProdReleaseTaskRequested) {
-    val appEnv = dartDefines["APP_ENV"]
     val supabaseUrl = dartDefines["SUPABASE_URL"]
     val supabasePublishableKey = dartDefines["SUPABASE_PUBLISHABLE_KEY"]
+    val adMobAppId = dartDefines["ADMOB_APP_ID_ANDROID"]
+    val communityNativeAdUnit = dartDefines["ADMOB_COMMUNITY_NATIVE_ANDROID"]
+    val beanBannerAdUnit = dartDefines["ADMOB_BEAN_LIST_BANNER_ANDROID"]
+    val coffeeLogBannerAdUnit = dartDefines["ADMOB_COFFEE_LOG_LIST_BANNER_ANDROID"]
 
     if (appEnv != "prod" || supabaseUrl.isNullOrBlank() || supabasePublishableKey.isNullOrBlank()) {
         throw GradleException(
             "prod release 빌드는 dart define 설정이 필수입니다. " +
                 "--dart-define-from-file=dart_define.prod.json 옵션과 " +
                 "APP_ENV=prod, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY 값을 확인하세요.",
+        )
+    }
+
+    if (adMobAppId.isNullOrBlank() ||
+        communityNativeAdUnit.isNullOrBlank() ||
+        beanBannerAdUnit.isNullOrBlank() ||
+        coffeeLogBannerAdUnit.isNullOrBlank()) {
+        throw GradleException(
+            "prod release 빌드는 AdMob 설정이 필수입니다. " +
+                "ADMOB_APP_ID_ANDROID, ADMOB_COMMUNITY_NATIVE_ANDROID, " +
+                "ADMOB_BEAN_LIST_BANNER_ANDROID, " +
+                "ADMOB_COFFEE_LOG_LIST_BANNER_ANDROID 값을 확인하세요.",
         )
     }
 }
@@ -113,6 +136,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobAppId"] = adMobAppId
     }
 
     productFlavors {

@@ -1,10 +1,14 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:coffee_note_app/ads/ad_placement.dart';
+import 'package:coffee_note_app/ads/ads_slot_factory.dart';
+import 'package:coffee_note_app/core/di/service_locator.dart';
 import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
 import 'package:coffee_note_app/cubits/auth/auth_state.dart';
 import 'package:coffee_note_app/cubits/bean/bean_filters.dart';
 import 'package:coffee_note_app/cubits/bean/bean_list_cubit.dart';
 import 'package:coffee_note_app/cubits/bean/bean_list_state.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
+import 'package:coffee_note_app/models/coffee_bean.dart';
 import 'package:coffee_note_app/screens/beans/bean_list_screen.dart';
 import 'package:coffee_note_app/widgets/common/common_widgets.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +35,7 @@ void main() {
     setUp(() {
       authCubit = _MockAuthCubit();
       beanListCubit = _MockBeanListCubit();
+      getIt.allowReassignment = true;
 
       when(() => beanListCubit.updateFilters(any())).thenAnswer((_) async {});
       when(() => beanListCubit.hasMore).thenReturn(false);
@@ -39,6 +44,7 @@ void main() {
     tearDown(() async {
       await authCubit.close();
       await beanListCubit.close();
+      await getIt.reset();
     });
 
     testWidgets('작은 화면에서 overflow 없이 필터 시트를 스크롤할 수 있다', (tester) async {
@@ -90,6 +96,45 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('loaded + non-empty 상태에서 하단 배너 슬롯을 노출한다', (tester) async {
+      getIt.registerSingleton<AdsSlotFactory>(const _FakeAdsSlotFactory());
+      _bindStates(
+        authCubit: authCubit,
+        beanListCubit: beanListCubit,
+        beanState: BeanListState.loaded(
+          beans: [_testBean()],
+          filters: const BeanFilters(),
+        ),
+      );
+
+      await _pumpBeanListScreen(
+        tester,
+        authCubit: authCubit,
+        beanListCubit: beanListCubit,
+      );
+
+      expect(
+        find.byKey(const ValueKey('fake-banner-beanListBanner')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('빈 상태에서는 광고 슬롯을 노출하지 않는다', (tester) async {
+      getIt.registerSingleton<AdsSlotFactory>(const _FakeAdsSlotFactory());
+      _bindStates(authCubit: authCubit, beanListCubit: beanListCubit);
+
+      await _pumpBeanListScreen(
+        tester,
+        authCubit: authCubit,
+        beanListCubit: beanListCubit,
+      );
+
+      expect(
+        find.byKey(const ValueKey('fake-banner-beanListBanner')),
+        findsNothing,
+      );
+    });
   });
 }
 
@@ -123,15 +168,15 @@ Future<void> _pumpBeanListScreen(
 void _bindStates({
   required _MockAuthCubit authCubit,
   required _MockBeanListCubit beanListCubit,
+  BeanListState? beanState,
 }) {
   final authState = AuthState.authenticated(user: _testUser('bean-user'));
-  final beanState = BeanListState.loaded(
-    beans: const [],
-    filters: const BeanFilters(),
-  );
+  final resolvedBeanState =
+      beanState ??
+      BeanListState.loaded(beans: const [], filters: const BeanFilters());
 
   when(() => authCubit.state).thenReturn(authState);
-  when(() => beanListCubit.state).thenReturn(beanState);
+  when(() => beanListCubit.state).thenReturn(resolvedBeanState);
 
   whenListen(
     authCubit,
@@ -140,8 +185,8 @@ void _bindStates({
   );
   whenListen(
     beanListCubit,
-    Stream<BeanListState>.fromIterable([beanState]),
-    initialState: beanState,
+    Stream<BeanListState>.fromIterable([resolvedBeanState]),
+    initialState: resolvedBeanState,
   );
 }
 
@@ -163,4 +208,35 @@ void _setSmallViewport(WidgetTester tester) {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
+}
+
+class _FakeAdsSlotFactory extends AdsSlotFactory {
+  const _FakeAdsSlotFactory();
+
+  @override
+  Widget buildBannerSlot({Key? key, required AdPlacement placement}) {
+    return SizedBox(
+      key: ValueKey('fake-banner-${placement.slotName}'),
+      height: 50,
+    );
+  }
+
+  @override
+  Widget buildCommunityNativeSlot({Key? key, required int slotIndex}) {
+    return SizedBox(key: ValueKey('fake-community-native-$slotIndex'));
+  }
+}
+
+CoffeeBean _testBean() {
+  final now = DateTime(2026, 3, 7, 9);
+  return CoffeeBean(
+    id: 'bean-1',
+    userId: 'bean-user',
+    name: '에티오피아',
+    roastery: '테스트 로스터리',
+    purchaseDate: now,
+    rating: 4.5,
+    createdAt: now,
+    updatedAt: now,
+  );
 }

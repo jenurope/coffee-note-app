@@ -1,4 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:coffee_note_app/ads/ad_placement.dart';
+import 'package:coffee_note_app/ads/ads_slot_factory.dart';
+import 'package:coffee_note_app/core/di/service_locator.dart';
 import 'package:coffee_note_app/cubits/auth/auth_cubit.dart';
 import 'package:coffee_note_app/cubits/auth/auth_state.dart';
 import 'package:coffee_note_app/cubits/community/post_filters.dart';
@@ -32,6 +35,7 @@ void main() {
     setUp(() {
       authCubit = _MockAuthCubit();
       postListCubit = _MockPostListCubit();
+      getIt.allowReassignment = true;
 
       when(() => postListCubit.updateFilters(any())).thenAnswer((_) async {});
     });
@@ -39,6 +43,7 @@ void main() {
     tearDown(() async {
       await authCubit.close();
       await postListCubit.close();
+      await getIt.reset();
     });
 
     testWidgets('검색이 적용된 상태면 전체보기 버튼이 노출된다', (tester) async {
@@ -166,7 +171,13 @@ void main() {
 
       expect(find.byIcon(Icons.favorite_border), findsOneWidget);
       expect(find.text('7'), findsOneWidget);
-      expect(find.byType(IconButton), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(Card).first,
+          matching: find.byType(IconButton),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('탈퇴 사용자 게시글은 작성자와 제목만 안내 문구로 표시한다', (tester) async {
@@ -195,6 +206,7 @@ void main() {
         postState: PostListState.loaded(
           posts: [withdrawnPost],
           filters: const PostFilters(),
+          hasMore: false,
         ),
       );
 
@@ -228,6 +240,7 @@ void main() {
         postState: PostListState.loaded(
           posts: [deletedPost],
           filters: const PostFilters(),
+          hasMore: false,
         ),
       );
 
@@ -250,6 +263,59 @@ void main() {
             .first,
       );
       expect(postInkWell.onTap, isNull);
+    });
+
+    testWidgets('게시글이 5개 이상이면 첫 native ad 슬롯을 5번째 뒤에 삽입한다', (tester) async {
+      _setTallViewport(tester);
+      getIt.registerSingleton<AdsSlotFactory>(const _FakeAdsSlotFactory());
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: PostListState.loaded(
+          posts: _posts(5),
+          filters: const PostFilters(),
+          hasMore: false,
+        ),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      expect(
+        find.byKey(const ValueKey('fake-community-native-0')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('게시글이 많은 목록에서도 native ad 슬롯을 유지한다', (tester) async {
+      _setTallViewport(tester);
+      getIt.registerSingleton<AdsSlotFactory>(const _FakeAdsSlotFactory());
+      _bindStates(
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        postState: PostListState.loaded(
+          posts: _posts(13),
+          filters: const PostFilters(),
+          hasMore: false,
+        ),
+      );
+
+      await _pumpCommunityScreen(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+      );
+
+      expect(
+        find.byKey(const ValueKey('fake-community-native-0')),
+        findsOneWidget,
+      );
+      await tester.drag(find.byType(ListView), const Offset(0, -1200));
+      await tester.pumpAndSettle();
+      expect(find.text('게시글 12'), findsOneWidget);
     });
   });
 }
@@ -324,6 +390,7 @@ PostListState _loadedState({
       ),
     ],
     filters: PostFilters(searchQuery: searchQuery),
+    hasMore: false,
   );
 }
 
@@ -335,5 +402,46 @@ User _testUser(String id) {
     aud: 'authenticated',
     email: '$id@example.com',
     createdAt: '2026-02-21T00:00:00.000Z',
+  );
+}
+
+void _setTallViewport(WidgetTester tester) {
+  tester.view.devicePixelRatio = 1.0;
+  tester.view.physicalSize = const Size(390, 2200);
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+}
+
+class _FakeAdsSlotFactory extends AdsSlotFactory {
+  const _FakeAdsSlotFactory();
+
+  @override
+  Widget buildBannerSlot({Key? key, required AdPlacement placement}) {
+    return SizedBox(
+      key: ValueKey('fake-banner-${placement.slotName}'),
+      height: 50,
+    );
+  }
+
+  @override
+  Widget buildCommunityNativeSlot({Key? key, required int slotIndex}) {
+    return SizedBox(key: ValueKey('fake-community-native-$slotIndex'));
+  }
+}
+
+List<CommunityPost> _posts(int count) {
+  final now = DateTime(2026, 2, 21, 14);
+  return List.generate(
+    count,
+    (index) => CommunityPost(
+      id: 'post-$index',
+      userId: 'community-user',
+      title: '게시글 $index',
+      content: '내용 $index',
+      createdAt: now.add(Duration(minutes: index)),
+      updatedAt: now.add(Duration(minutes: index)),
+    ),
   );
 }
