@@ -120,7 +120,7 @@ void main() {
       );
     });
 
-    testWidgets('빈 상태에서는 광고 슬롯을 노출하지 않는다', (tester) async {
+    testWidgets('loaded + empty 상태에서도 하단 배너 슬롯을 노출한다', (tester) async {
       getIt.registerSingleton<AdsSlotFactory>(const _FakeAdsSlotFactory());
       _bindStates(authCubit: authCubit, logListCubit: logListCubit);
 
@@ -132,7 +132,7 @@ void main() {
 
       expect(
         find.byKey(const ValueKey('fake-banner-coffeeLogListBanner')),
-        findsNothing,
+        findsOneWidget,
       );
     });
   });

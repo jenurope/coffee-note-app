@@ -199,7 +199,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
 
   Widget? _buildBottomAdBar(BeanListState beanState) {
     return switch (beanState) {
-      BeanListLoaded(beans: final beans) when beans.isNotEmpty =>
+      BeanListLoaded() =>
         appAdsSlotFactory().buildBannerSlot(
           key: const ValueKey('beanListBannerSlot'),
           placement: AdPlacement.beanListBanner,

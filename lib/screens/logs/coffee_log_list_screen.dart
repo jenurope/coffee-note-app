@@ -280,7 +280,7 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
 
   Widget? _buildBottomAdBar(LogListState logState) {
     return switch (logState) {
-      LogListLoaded(logs: final logs) when logs.isNotEmpty =>
+      LogListLoaded() =>
         appAdsSlotFactory().buildBannerSlot(
           key: const ValueKey('coffeeLogListBannerSlot'),
           placement: AdPlacement.coffeeLogListBanner,
