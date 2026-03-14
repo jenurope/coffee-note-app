@@ -83,13 +83,12 @@ class BeanDetailScreen extends StatelessWidget {
                                   onPressed: () async {
                                     final detailCubit =
                                         context.read<BeanDetailCubit>();
-                                    final didUpdate = await context.push<bool>(
+                                    await context.push<bool>(
                                       '/beans/$beanId/edit',
                                     );
-                                    if (context.mounted && didUpdate == true) {
-                                      await AppImageCachePolicy.evict(imageUrl);
-                                      detailCubit.load(beanId);
-                                    }
+                                    if (!context.mounted) return;
+                                    await AppImageCachePolicy.evict(imageUrl);
+                                    detailCubit.load(beanId);
                                   },
                                 ),
                                 IconButton(

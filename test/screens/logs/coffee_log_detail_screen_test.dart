@@ -70,7 +70,7 @@ void main() {
       verify(() => detailCubit.load('log-1')).called(1);
     });
 
-    testWidgets('취소로 복귀하면 상세를 다시 로드하지 않는다', (tester) async {
+    testWidgets('편집 화면에서 돌아오면 상세를 다시 로드한다', (tester) async {
       final authState = AuthState.authenticated(user: _testUser('user-1'));
       final detailState = LogDetailState.loaded(log: _testLog());
 
@@ -103,7 +103,7 @@ void main() {
       await tester.tap(find.text('취소'));
       await tester.pumpAndSettle();
 
-      verifyNever(() => detailCubit.load('log-1'));
+      verify(() => detailCubit.load('log-1')).called(1);
     });
   });
 }
