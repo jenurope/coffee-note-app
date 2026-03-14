@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class AppImageCachePolicy {
@@ -56,12 +57,42 @@ class AppImageCachePolicy {
   }
 
   static Future<void> evict(String? imageUrl) async {
-    for (final key in evictionKeysFor(imageUrl)) {
+    final normalizedUrl = imageUrl?.trim();
+    if (normalizedUrl == null || normalizedUrl.isEmpty) {
+      return;
+    }
+
+    final cacheKey = cacheKeyFor(normalizedUrl);
+
+    for (final key in evictionKeysFor(normalizedUrl)) {
       try {
         await cacheManager.removeFile(key);
       } catch (_) {
         // Ignore cache eviction failures and continue with the refresh flow.
       }
+    }
+
+    try {
+      await CachedNetworkImageProvider(
+        normalizedUrl,
+        cacheManager: cacheManager,
+      ).evict();
+    } catch (_) {
+      // Ignore in-memory eviction failures and continue with the refresh flow.
+    }
+
+    if (cacheKey == null) {
+      return;
+    }
+
+    try {
+      await CachedNetworkImageProvider(
+        normalizedUrl,
+        cacheManager: cacheManager,
+        cacheKey: cacheKey,
+      ).evict();
+    } catch (_) {
+      // Ignore in-memory eviction failures and continue with the refresh flow.
     }
   }
 }
