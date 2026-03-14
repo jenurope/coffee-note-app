@@ -14,6 +14,7 @@ import '../../cubits/bean/bean_list_cubit.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../domain/catalogs/roast_level_catalog.dart';
 import '../../l10n/l10n.dart';
+import '../../models/coffee_bean.dart';
 import '../../services/coffee_bean_service.dart';
 import '../../widgets/common/common_widgets.dart';
 
@@ -83,10 +84,20 @@ class BeanDetailScreen extends StatelessWidget {
                                   onPressed: () async {
                                     final detailCubit =
                                         context.read<BeanDetailCubit>();
-                                    await context.push<bool>(
+                                    final result = await context.push<Object?>(
                                       '/beans/$beanId/edit',
                                     );
                                     if (!context.mounted) return;
+                                    final updatedBean =
+                                        result is CoffeeBean ? result : null;
+                                    if (updatedBean != null) {
+                                      await AppImageCachePolicy.evict(imageUrl);
+                                      await AppImageCachePolicy.evict(
+                                        updatedBean.imageUrl,
+                                      );
+                                      detailCubit.showBean(updatedBean);
+                                      return;
+                                    }
                                     await AppImageCachePolicy.evict(imageUrl);
                                     detailCubit.load(beanId);
                                   },

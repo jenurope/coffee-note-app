@@ -275,7 +275,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     return shouldLeave;
   }
 
-  void _popSafely([bool? result]) {
+  void _popSafely([Object? result]) {
     if (_allowPop) {
       if (mounted) {
         context.pop(result);
@@ -345,11 +345,9 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
         updatedAt: DateTime.now(),
       );
 
-      if (isEditing) {
-        await service.updateBean(bean);
-      } else {
-        await service.createBean(bean);
-      }
+      final savedBean = isEditing
+          ? await service.updateBean(bean)
+          : await service.createBean(bean);
 
       // Cubit 간 갱신 계약 (P1)
       if (mounted) {
@@ -360,7 +358,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
       if (mounted) {
         final messenger = ScaffoldMessenger.of(context);
         _captureInitialSnapshot();
-        _popSafely(true);
+        _popSafely(savedBean);
         messenger.showSnackBar(
           SnackBar(
             content: Text(

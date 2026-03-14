@@ -34,13 +34,15 @@ void main() {
       await detailCubit.close();
     });
 
-    testWidgets('수정 저장으로 복귀하면 상세를 다시 로드한다', (tester) async {
+    testWidgets('수정 저장으로 복귀하면 최신 상세 모델을 반영한다', (tester) async {
       final authState = AuthState.authenticated(user: _testUser('user-1'));
       final detailState = BeanDetailState.loaded(bean: _testBean());
+      final updatedBean = _testBean().copyWith(name: '수정된 원두');
 
       when(() => authCubit.state).thenReturn(authState);
       when(() => detailCubit.state).thenReturn(detailState);
       when(() => detailCubit.load(any())).thenAnswer((_) async {});
+      when(() => detailCubit.showBean(updatedBean)).thenReturn(null);
 
       whenListen(
         authCubit,
@@ -56,7 +58,7 @@ void main() {
       final router = _buildRouter(
         authCubit: authCubit,
         detailCubit: detailCubit,
-        editResult: true,
+        editResult: updatedBean,
       );
 
       await tester.pumpWidget(_buildApp(router, authCubit, detailCubit));
@@ -67,7 +69,8 @@ void main() {
       await tester.tap(find.text('저장 완료'));
       await tester.pumpAndSettle();
 
-      verify(() => detailCubit.load('bean-1')).called(1);
+      verify(() => detailCubit.showBean(updatedBean)).called(1);
+      verifyNever(() => detailCubit.load('bean-1'));
     });
 
     testWidgets('편집 화면에서 돌아오면 상세를 다시 로드한다', (tester) async {
@@ -92,7 +95,7 @@ void main() {
       final router = _buildRouter(
         authCubit: authCubit,
         detailCubit: detailCubit,
-        editResult: false,
+        editResult: null,
       );
 
       await tester.pumpWidget(_buildApp(router, authCubit, detailCubit));
@@ -139,7 +142,7 @@ Widget _buildApp(
 GoRouter _buildRouter({
   required AuthCubit authCubit,
   required BeanDetailCubit detailCubit,
-  required bool editResult,
+  required Object? editResult,
 }) {
   return GoRouter(
     initialLocation: '/beans/bean-1',
@@ -159,8 +162,8 @@ GoRouter _buildRouter({
             builder: (context, state) => Scaffold(
               body: Center(
                 child: TextButton(
-                  onPressed: () => context.pop(editResult ? true : null),
-                  child: Text(editResult ? '저장 완료' : '취소'),
+                  onPressed: () => context.pop(editResult),
+                  child: Text(editResult == null ? '취소' : '저장 완료'),
                 ),
               ),
             ),

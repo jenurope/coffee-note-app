@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
+import '../../models/coffee_bean.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
 import '../../services/coffee_bean_service.dart';
@@ -22,6 +23,10 @@ class BeanDetailCubit extends Cubit<BeanDetailState> {
   final CoffeeBeanService _service;
   final AuthCubit? _authCubit;
   final GuestSampleService _sampleService;
+
+  void showBean(CoffeeBean bean) {
+    emit(BeanDetailState.loaded(bean: bean));
+  }
 
   Future<void> load(String beanId) async {
     emit(const BeanDetailState.loading());

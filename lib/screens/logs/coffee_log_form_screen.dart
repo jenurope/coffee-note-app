@@ -254,7 +254,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
     return shouldLeave;
   }
 
-  void _popSafely([bool? result]) {
+  void _popSafely([Object? result]) {
     if (_allowPop) {
       if (mounted) {
         context.pop(result);
@@ -321,11 +321,9 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
         updatedAt: DateTime.now(),
       );
 
-      if (isEditing) {
-        await service.updateLog(log);
-      } else {
-        await service.createLog(log);
-      }
+      final savedLog = isEditing
+          ? await service.updateLog(log)
+          : await service.createLog(log);
 
       // Cubit 간 갱신 계약 (P1)
       if (mounted) {
@@ -336,7 +334,7 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
       if (mounted) {
         final messenger = ScaffoldMessenger.of(context);
         _captureInitialSnapshot();
-        _popSafely(true);
+        _popSafely(savedLog);
         messenger.showSnackBar(
           SnackBar(
             content: Text(
