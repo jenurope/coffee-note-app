@@ -175,6 +175,85 @@ void main() {
       expect(find.text('에티오피아 예가체프'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('첫 원두/커피 등록 카드는 좌우로 꽉 차게 노출한다', (tester) async {
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final user = _testUser('dashboard-user');
+      final authState = AuthState.authenticated(user: user);
+      final now = DateTime(2026, 3, 6, 9);
+      final dashboardState = DashboardState.loaded(
+        totalBeans: 0,
+        averageBeanRating: 0,
+        totalLogs: 0,
+        averageLogRating: 0,
+        coffeeTypeCount: const {},
+        recentBeans: const <CoffeeBean>[],
+        recentLogs: const <CoffeeLog>[],
+        userProfile: UserProfile(
+          id: user.id,
+          nickname: '테스터',
+          email: user.email ?? '',
+          isBeanRecordsEnabled: true,
+          isCoffeeRecordsEnabled: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+
+      when(() => authCubit.state).thenReturn(authState);
+      when(() => dashboardCubit.state).thenReturn(dashboardState);
+
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        dashboardCubit,
+        Stream<DashboardState>.fromIterable([dashboardState]),
+        initialState: dashboardState,
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: authCubit),
+            BlocProvider<DashboardCubit>.value(value: dashboardCubit),
+          ],
+          child: MaterialApp(
+            home: const DashboardScreen(),
+            locale: const Locale('ko'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .getSize(find.byKey(const ValueKey('dashboardEmptyBeanCard')))
+            .width,
+        moreOrLessEquals(358),
+      );
+      expect(
+        tester
+            .getSize(find.byKey(const ValueKey('dashboardEmptyCoffeeCard')))
+            .width,
+        moreOrLessEquals(358),
+      );
+    });
   });
 }
 
