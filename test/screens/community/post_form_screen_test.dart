@@ -196,6 +196,23 @@ void main() {
       verify(() => postListCubit.reload()).called(1);
       expect(find.text('HOME'), findsOneWidget);
     });
+
+    testWidgets('수정 프리로드 실패 시 스낵바를 노출하고 현재 화면을 닫는다', (tester) async {
+      _stubAuthenticatedState(authCubit);
+      when(
+        () => communityService.getPost('post-1'),
+      ).thenThrow(Exception('load failed'));
+
+      await _pumpFormRoute(
+        tester,
+        authCubit: authCubit,
+        postListCubit: postListCubit,
+        form: const PostFormScreen(postId: 'post-1'),
+      );
+
+      expect(find.text('게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'), findsOneWidget);
+      expect(find.text('HOME'), findsOneWidget);
+    });
   });
 }
 

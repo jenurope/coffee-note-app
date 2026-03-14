@@ -205,6 +205,22 @@ void main() {
       verifyNever(() => authClient.signOut(scope: SignOutScope.local));
     });
 
+    test('refresh_token_already_used 코드면 로컬 세션을 정리하고 null을 반환한다', () async {
+      when(() => authClient.currentUser).thenReturn(localUser);
+      when(() => authClient.getClaims()).thenThrow(
+        AuthApiException(
+          'Invalid Refresh Token: Already Used',
+          statusCode: '400',
+          code: 'refresh_token_already_used',
+        ),
+      );
+
+      final result = await authService.getValidatedCurrentUser();
+
+      expect(result, isNull);
+      verify(() => authClient.signOut(scope: SignOutScope.local)).called(1);
+    });
+
     test('getClaims null-check 오류 시 getUser fallback으로 검증한다', () async {
       when(() => authClient.currentUser).thenReturn(localUser);
       when(
@@ -219,6 +235,22 @@ void main() {
       expect(result?.id, localUser.id);
       verify(() => authClient.getUser()).called(1);
       verifyNever(() => authClient.signOut(scope: SignOutScope.local));
+    });
+
+    test('already used 메시지면 fallback 검증에서도 로컬 세션을 정리한다', () async {
+      when(() => authClient.currentUser).thenReturn(localUser);
+      when(
+        () => authClient.getClaims(),
+      ).thenThrow(Exception('Null check operator used on a null value'));
+      when(
+        () => authClient.getUser(),
+      ).thenThrow(const AuthException('Invalid Refresh Token: Already Used'));
+
+      final result = await authService.getValidatedCurrentUser();
+
+      expect(result, isNull);
+      verify(() => authClient.getUser()).called(1);
+      verify(() => authClient.signOut(scope: SignOutScope.local)).called(1);
     });
   });
 

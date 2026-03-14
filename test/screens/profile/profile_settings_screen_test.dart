@@ -164,6 +164,47 @@ void main() {
       completer.complete();
       await tester.pumpAndSettle();
     });
+
+    testWidgets('프로필 조회 실패 시 기본 설정으로 초기화하고 저장을 계속할 수 있다', (tester) async {
+      final user = _testUser('settings-fallback');
+      final authState = AuthState.authenticated(user: user);
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        dashboardCubit,
+        Stream<DashboardState>.fromIterable([const DashboardState.initial()]),
+        initialState: const DashboardState.initial(),
+      );
+      when(
+        () => authService.getProfile(user.id),
+      ).thenThrow(Exception('profile load failed'));
+
+      await _pumpProfileSettingsScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      expect(find.text('요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.'), findsOneWidget);
+
+      final switches = tester.widgetList<Switch>(find.byType(Switch)).toList();
+      expect(switches[0].value, isTrue);
+      expect(switches[1].value, isTrue);
+
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => authService.updateFeatureVisibilitySettings(
+          userId: user.id,
+          isBeanRecordsEnabled: true,
+          isCoffeeRecordsEnabled: true,
+        ),
+      ).called(1);
+    });
   });
 }
 

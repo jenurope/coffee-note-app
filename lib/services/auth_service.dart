@@ -86,7 +86,7 @@ class AuthService {
 
       return localUser;
     } on AuthException catch (e) {
-      if (_shouldForceSignOutForValidationError(e.message)) {
+      if (_shouldForceSignOutForValidationError(e)) {
         debugPrint(
           'Validate current user via getClaims failed and session cleared: '
           '${e.message}',
@@ -720,8 +720,15 @@ class AuthService {
     }
   }
 
-  bool _shouldForceSignOutForValidationError(String message) {
-    final normalized = message.toLowerCase();
+  bool _shouldForceSignOutForValidationError(AuthException error) {
+    if (error case AuthApiException(code: final code?)) {
+      final normalizedCode = code.trim().toLowerCase();
+      if (normalizedCode == 'refresh_token_already_used') {
+        return true;
+      }
+    }
+
+    final normalized = error.message.toLowerCase();
     const patterns = <String>[
       'user not found',
       'does not exist',
@@ -729,6 +736,8 @@ class AuthService {
       'invalid jwt',
       'jwt expired',
       'token expired',
+      'refresh_token_already_used',
+      'already used',
       'invalid signature',
       'invalid refresh token',
       'refresh token not found',
@@ -846,7 +855,7 @@ class AuthService {
       );
       return localUser;
     } on AuthException catch (e) {
-      if (_shouldForceSignOutForValidationError(e.message)) {
+      if (_shouldForceSignOutForValidationError(e)) {
         debugPrint(
           'Validate current user via getUser failed and session cleared: '
           '${e.message}',

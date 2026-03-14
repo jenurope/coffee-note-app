@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
+import '../../core/errors/user_error_message.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
@@ -54,21 +55,50 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       return;
     }
 
-    UserProfile? profile;
-    final dashboardState = context.read<DashboardCubit>().state;
-    if (dashboardState is DashboardLoaded) {
-      profile = dashboardState.userProfile;
-    }
-    profile ??= await getIt<AuthService>().getProfile(currentUser.id);
+    try {
+      UserProfile? profile;
+      final dashboardState = context.read<DashboardCubit>().state;
+      if (dashboardState is DashboardLoaded) {
+        profile = dashboardState.userProfile;
+      }
+      profile ??= await getIt<AuthService>().getProfile(currentUser.id);
 
-    if (!mounted) {
-      return;
-    }
+      if (!mounted) {
+        return;
+      }
 
-    setState(() {
-      _isBeanRecordsEnabled = profile?.isBeanRecordsEnabled ?? true;
-      _isCoffeeRecordsEnabled = profile?.isCoffeeRecordsEnabled ?? true;
-      _isInitialized = true;
+      setState(() {
+        _isBeanRecordsEnabled = profile?.isBeanRecordsEnabled ?? true;
+        _isCoffeeRecordsEnabled = profile?.isCoffeeRecordsEnabled ?? true;
+        _isInitialized = true;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      _showInitializationError(e);
+      setState(() {
+        _isBeanRecordsEnabled = true;
+        _isCoffeeRecordsEnabled = true;
+        _isInitialized = true;
+      });
+    }
+  }
+
+  void _showInitializationError(Object error) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            UserErrorMessage.localize(
+              context.l10n,
+              UserErrorMessage.from(error),
+            ),
+          ),
+        ),
+      );
     });
   }
 

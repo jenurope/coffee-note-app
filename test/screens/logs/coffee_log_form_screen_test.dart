@@ -1,12 +1,30 @@
+import 'package:coffee_note_app/core/di/service_locator.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:coffee_note_app/screens/logs/coffee_log_form_screen.dart';
+import 'package:coffee_note_app/services/coffee_log_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _MockCoffeeLogService extends Mock implements CoffeeLogService {}
 
 void main() {
   group('CoffeeLogFormScreen', () {
+    late _MockCoffeeLogService service;
+
+    setUp(() async {
+      service = _MockCoffeeLogService();
+      await getIt.reset();
+      getIt.allowReassignment = true;
+      getIt.registerSingleton<CoffeeLogService>(service);
+    });
+
+    tearDown(() async {
+      await getIt.reset();
+    });
+
     testWidgets('앱바 우측 저장 액션만 노출한다', (tester) async {
       await _pumpFormRoute(tester, const CoffeeLogFormScreen());
 
@@ -37,6 +55,15 @@ void main() {
       await tester.tap(find.text('나가기'));
       await tester.pumpAndSettle();
 
+      expect(find.text('HOME'), findsOneWidget);
+    });
+
+    testWidgets('수정 프리로드 실패 시 스낵바를 노출하고 현재 화면을 닫는다', (tester) async {
+      when(() => service.getLog('log-1')).thenThrow(Exception('load failed'));
+
+      await _pumpFormRoute(tester, const CoffeeLogFormScreen(logId: 'log-1'));
+
+      expect(find.text('기록 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'), findsOneWidget);
       expect(find.text('HOME'), findsOneWidget);
     });
   });
