@@ -85,11 +85,14 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                                 IconButton(
                                   icon: const Icon(Icons.edit),
                                   onPressed: () async {
-                                    await context.push('/logs/$logId/edit');
-                                    if (context.mounted) {
-                                      context.read<LogDetailCubit>().load(
-                                        logId,
-                                      );
+                                    final detailCubit =
+                                        context.read<LogDetailCubit>();
+                                    final didUpdate = await context.push<bool>(
+                                      '/logs/$logId/edit',
+                                    );
+                                    if (context.mounted && didUpdate == true) {
+                                      await AppImageCachePolicy.evict(imageUrl);
+                                      detailCubit.load(logId);
                                     }
                                   },
                                 ),

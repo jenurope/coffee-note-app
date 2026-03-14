@@ -40,4 +40,28 @@ class AppImageCachePolicy {
       path: uri.path,
     ).toString();
   }
+
+  static Set<String> evictionKeysFor(String? imageUrl) {
+    final normalizedUrl = imageUrl?.trim();
+    if (normalizedUrl == null || normalizedUrl.isEmpty) {
+      return const <String>{};
+    }
+
+    final keys = <String>{normalizedUrl};
+    final cacheKey = cacheKeyFor(normalizedUrl);
+    if (cacheKey != null && cacheKey.isNotEmpty) {
+      keys.add(cacheKey);
+    }
+    return keys;
+  }
+
+  static Future<void> evict(String? imageUrl) async {
+    for (final key in evictionKeysFor(imageUrl)) {
+      try {
+        await cacheManager.removeFile(key);
+      } catch (_) {
+        // Ignore cache eviction failures and continue with the refresh flow.
+      }
+    }
+  }
 }

@@ -275,10 +275,10 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     return shouldLeave;
   }
 
-  void _popSafely() {
+  void _popSafely([bool? result]) {
     if (_allowPop) {
       if (mounted) {
-        context.pop();
+        context.pop(result);
       }
       return;
     }
@@ -288,7 +288,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.pop();
+      context.pop(result);
     });
   }
 
@@ -360,7 +360,7 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
       if (mounted) {
         final messenger = ScaffoldMessenger.of(context);
         _captureInitialSnapshot();
-        _popSafely();
+        _popSafely(true);
         messenger.showSnackBar(
           SnackBar(
             content: Text(
