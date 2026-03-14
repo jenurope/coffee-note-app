@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -49,21 +50,38 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
   void initState() {
     super.initState();
     if (widget.logId != null) {
-      _loadLog();
+      _isLoading = true;
+      unawaited(_loadLog());
     } else {
       _captureInitialSnapshot();
     }
   }
 
-  void _loadLog() {
+  Future<void> _loadLog() async {
     final service = getIt<CoffeeLogService>();
-    service.getLog(widget.logId!).then((log) {
-      if (log != null && mounted) {
+    try {
+      final log = await service.getLog(widget.logId!);
+      if (!mounted) return;
+
+      if (log == null) {
         setState(() {
-          _initializeWithLog(log);
+          _isLoading = false;
         });
+        _showLoadFailureAndClose(messageKey: 'errLogNotFound');
+        return;
       }
-    });
+
+      setState(() {
+        _initializeWithLog(log);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      _showLoadFailureAndClose(error: e, fallbackKey: 'errLoadLogDetail');
+    }
   }
 
   // 이미지 관련 상태
@@ -347,6 +365,29 @@ class _CoffeeLogFormScreenState extends State<CoffeeLogFormScreen> {
         });
       }
     }
+  }
+
+  void _showLoadFailureAndClose({
+    Object? error,
+    String fallbackKey = UserErrorMessage.defaultKey,
+    String? messageKey,
+  }) {
+    if (!mounted) return;
+
+    final resolvedMessageKey =
+        messageKey ?? UserErrorMessage.from(error!, fallbackKey: fallbackKey);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            UserErrorMessage.localize(context.l10n, resolvedMessageKey),
+          ),
+        ),
+      );
+      Navigator.of(context).maybePop();
+    });
   }
 
   @override

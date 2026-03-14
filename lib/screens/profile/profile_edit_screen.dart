@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/errors/user_error_message.dart';
 import '../../core/di/service_locator.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/auth/auth_state.dart';
@@ -66,27 +67,61 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       return;
     }
 
-    UserProfile? profile;
-    final dashboardState = context.read<DashboardCubit>().state;
-    if (dashboardState is DashboardLoaded) {
-      profile = dashboardState.userProfile;
+    try {
+      UserProfile? profile;
+      final dashboardState = context.read<DashboardCubit>().state;
+      if (dashboardState is DashboardLoaded) {
+        profile = dashboardState.userProfile;
+      }
+      profile ??= await getIt<AuthService>().getProfile(currentUser.id);
+
+      if (!mounted) return;
+
+      final nickname = _resolveInitialNickname(currentUser, profile);
+      setState(() {
+        _nicknameController.text = nickname;
+        _initialAvatarUrl = profile?.avatarUrl;
+        _existingAvatarUrl = profile?.avatarUrl;
+        _isInitialized = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      _showInitializationError(e);
+      setState(() {
+        _nicknameController.text = _resolveFallbackNickname(currentUser);
+        _initialAvatarUrl = null;
+        _existingAvatarUrl = null;
+        _isInitialized = true;
+      });
     }
-    profile ??= await getIt<AuthService>().getProfile(currentUser.id);
+  }
 
-    if (!mounted) return;
+  String _resolveInitialNickname(User currentUser, UserProfile? profile) {
+    final fallbackNickname = _resolveFallbackNickname(currentUser);
+    final nickname = profile?.nickname.trim() ?? '';
+    return nickname.isNotEmpty ? profile!.nickname : fallbackNickname;
+  }
 
+  String _resolveFallbackNickname(User currentUser) {
     final rawName = currentUser.userMetadata?['name'];
     final metadataName = rawName is String ? rawName.trim() : '';
-    final fallbackNickname = metadataName.isNotEmpty ? metadataName : 'user';
-    final nickname = (profile?.nickname.trim().isNotEmpty ?? false)
-        ? profile!.nickname
-        : fallbackNickname;
+    return metadataName.isNotEmpty ? metadataName : 'user';
+  }
 
-    setState(() {
-      _nicknameController.text = nickname;
-      _initialAvatarUrl = profile?.avatarUrl;
-      _existingAvatarUrl = profile?.avatarUrl;
-      _isInitialized = true;
+  void _showInitializationError(Object error) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            UserErrorMessage.localize(
+              context.l10n,
+              UserErrorMessage.from(error),
+            ),
+          ),
+        ),
+      );
     });
   }
 

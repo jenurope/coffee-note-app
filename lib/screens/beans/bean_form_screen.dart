@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -49,21 +50,38 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
   void initState() {
     super.initState();
     if (widget.beanId != null) {
-      _loadBean();
+      _isLoading = true;
+      unawaited(_loadBean());
     } else {
       _captureInitialSnapshot();
     }
   }
 
-  void _loadBean() {
+  Future<void> _loadBean() async {
     final service = getIt<CoffeeBeanService>();
-    service.getBean(widget.beanId!).then((bean) {
-      if (bean != null && mounted) {
+    try {
+      final bean = await service.getBean(widget.beanId!);
+      if (!mounted) return;
+
+      if (bean == null) {
         setState(() {
-          _initializeWithBean(bean);
+          _isLoading = false;
         });
+        _showLoadFailureAndClose(messageKey: 'errBeanNotFound');
+        return;
       }
-    });
+
+      setState(() {
+        _initializeWithBean(bean);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      _showLoadFailureAndClose(error: e, fallbackKey: 'errLoadBeanDetail');
+    }
   }
 
   // 이미지 관련 상태
@@ -371,6 +389,29 @@ class _BeanFormScreenState extends State<BeanFormScreen> {
         });
       }
     }
+  }
+
+  void _showLoadFailureAndClose({
+    Object? error,
+    String fallbackKey = UserErrorMessage.defaultKey,
+    String? messageKey,
+  }) {
+    if (!mounted) return;
+
+    final resolvedMessageKey =
+        messageKey ?? UserErrorMessage.from(error!, fallbackKey: fallbackKey);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            UserErrorMessage.localize(context.l10n, resolvedMessageKey),
+          ),
+        ),
+      );
+      Navigator.of(context).maybePop();
+    });
   }
 
   @override

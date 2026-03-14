@@ -19,44 +19,44 @@ import 'cubits/dashboard/dashboard_cubit.dart';
 import 'cubits/log/log_list_cubit.dart';
 import 'app.dart';
 
-void main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  FirebaseBootstrap? firebaseBootstrap;
-
-  // BLoC 옵저버 (개발 시 디버그 로그)
-  Bloc.observer = const AppBlocObserver();
-  String? initializationError;
-
-  try {
-    // Supabase 초기화 (환경변수에서 설정 로드)
-    await SupabaseConfig.initialize();
-    // GetIt 서비스 등록 (Supabase 초기화 후)
-    setupServiceLocator();
-    firebaseBootstrap = FirebaseBootstrap.fromEnvironment();
-    // Firebase 관측 계층 초기화 (실패해도 앱은 계속 실행)
-    await firebaseBootstrap.initialize(log: debugPrint);
-  } catch (e, st) {
-    initializationError = UserErrorMessage.from(
-      e,
-      fallbackKey: 'appStartUnavailable',
-    );
-    debugPrint('초기화 실패: $e');
-    debugPrint(st.toString());
-  } finally {
-    // 초기화 성공/실패와 관계없이 스플래시 제거
-    FlutterNativeSplash.remove();
-  }
-
-  final errorMessage = initializationError;
-  if (errorMessage != null) {
-    runApp(_InitializationErrorApp(message: errorMessage));
-    return;
-  }
-  final telemetryBootstrap = firebaseBootstrap!;
+void main() {
+  FirebaseBootstrap? telemetryBootstrap;
 
   runZonedGuarded(
-    () {
+    () async {
+      WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+      FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+      // BLoC 옵저버 (개발 시 디버그 로그)
+      Bloc.observer = const AppBlocObserver();
+      String? initializationError;
+
+      try {
+        // Supabase 초기화 (환경변수에서 설정 로드)
+        await SupabaseConfig.initialize();
+        // GetIt 서비스 등록 (Supabase 초기화 후)
+        setupServiceLocator();
+        telemetryBootstrap = FirebaseBootstrap.fromEnvironment();
+        // Firebase 관측 계층 초기화 (실패해도 앱은 계속 실행)
+        await telemetryBootstrap!.initialize(log: debugPrint);
+      } catch (e, st) {
+        initializationError = UserErrorMessage.from(
+          e,
+          fallbackKey: 'appStartUnavailable',
+        );
+        debugPrint('초기화 실패: $e');
+        debugPrint(st.toString());
+      } finally {
+        // 초기화 성공/실패와 관계없이 스플래시 제거
+        FlutterNativeSplash.remove();
+      }
+
+      final errorMessage = initializationError;
+      if (errorMessage != null) {
+        runApp(_InitializationErrorApp(message: errorMessage));
+        return;
+      }
+
       runApp(
         MultiBlocProvider(
           providers: [
@@ -85,9 +85,13 @@ void main() async {
     (error, stackTrace) {
       debugPrint('Uncaught zone error: $error');
       debugPrint(stackTrace.toString());
-      unawaited(
-        telemetryBootstrap.recordZoneError(error, stackTrace, log: debugPrint),
-      );
+
+      final bootstrap = telemetryBootstrap;
+      if (bootstrap == null) {
+        return;
+      }
+
+      unawaited(bootstrap.recordZoneError(error, stackTrace, log: debugPrint));
     },
   );
 }

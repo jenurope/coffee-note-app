@@ -252,6 +252,50 @@ void main() {
       verify(() => postListCubit.reload()).called(1);
     });
 
+    testWidgets('프로필 조회 실패 시 fallback UI를 보여주고 저장을 계속할 수 있다', (tester) async {
+      final user = _testUser('profile-edit-fallback');
+      final authState = AuthState.authenticated(user: user);
+      whenListen(
+        authCubit,
+        Stream<AuthState>.fromIterable([authState]),
+        initialState: authState,
+      );
+      whenListen(
+        dashboardCubit,
+        Stream<DashboardState>.fromIterable([const DashboardState.initial()]),
+        initialState: const DashboardState.initial(),
+      );
+      when(
+        () => authService.getProfile(user.id),
+      ).thenThrow(Exception('profile load failed'));
+
+      await _pumpProfileEditScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+        postListCubit: postListCubit,
+      );
+
+      expect(find.text('요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.'), findsOneWidget);
+
+      final textField = tester.widget<TextFormField>(
+        find.byType(TextFormField),
+      );
+      expect(textField.controller?.text, 'user');
+
+      await tester.enterText(find.byType(TextFormField), '새닉네임');
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => authService.updateProfile(
+          userId: user.id,
+          nickname: '새닉네임',
+          avatarUrl: null,
+        ),
+      ).called(1);
+    });
+
     testWidgets('갤러리 선택 시 아바타 크롭 선택 경로를 호출한다', (tester) async {
       _stubAuthenticatedState(
         authCubit: authCubit,

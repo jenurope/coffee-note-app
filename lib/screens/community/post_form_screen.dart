@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -106,21 +107,38 @@ class _PostFormScreenState extends State<PostFormScreen> {
     _quillController.addListener(_handleEditorChanged);
 
     if (isEditing) {
-      _loadPost();
+      _isLoading = true;
+      unawaited(_loadPost());
     } else {
       _captureInitialSnapshot();
     }
   }
 
-  void _loadPost() {
+  Future<void> _loadPost() async {
     final service = getIt<CommunityService>();
-    service.getPost(widget.postId!).then((post) {
-      if (post != null && mounted) {
+    try {
+      final post = await service.getPost(widget.postId!);
+      if (!mounted) return;
+
+      if (post == null) {
         setState(() {
-          _initializeWithPost(post);
+          _isLoading = false;
         });
+        _showLoadFailureAndClose(messageKey: 'errPostNotFound');
+        return;
       }
-    });
+
+      setState(() {
+        _initializeWithPost(post);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      _showLoadFailureAndClose(error: e, fallbackKey: 'errLoadPostDetail');
+    }
   }
 
   @override
@@ -488,6 +506,29 @@ class _PostFormScreenState extends State<PostFormScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showLoadFailureAndClose({
+    Object? error,
+    String fallbackKey = UserErrorMessage.defaultKey,
+    String? messageKey,
+  }) {
+    if (!mounted) return;
+
+    final resolvedMessageKey =
+        messageKey ?? UserErrorMessage.from(error!, fallbackKey: fallbackKey);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            UserErrorMessage.localize(context.l10n, resolvedMessageKey),
+          ),
+        ),
+      );
+      Navigator.of(context).maybePop();
+    });
   }
 
   String get _currentTitle => _titleController.text.trim();

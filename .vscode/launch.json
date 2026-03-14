@@ -2,32 +2,49 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Coffee Note App (Debug)",
+            "name": "Run(dev)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
-                "--dart-define-from-file=dart_define.json"
+                "--flavor",
+                "dev",
+                "--dart-define-from-file=dart_define.dev.json"
             ]
         },
         {
-            "name": "Coffee Note App (Profile)",
+            "name": "Run(prod)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "prod",
+                "--dart-define-from-file=dart_define.prod.json"
+            ]
+        },
+        {
+            "name": "Profile(prod)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "flutterMode": "profile",
             "args": [
-                "--dart-define-from-file=dart_define.json"
+                "--flavor",
+                "prod",
+                "--dart-define-from-file=dart_define.prod.json"
             ]
         },
         {
-            "name": "Coffee Note App (Release)",
+            "name": "Release(prod)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "flutterMode": "release",
             "args": [
-                "--dart-define-from-file=dart_define.json"
+                "--flavor",
+                "prod",
+                "--dart-define-from-file=dart_define.prod.json"
             ]
         }
     ]
