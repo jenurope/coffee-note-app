@@ -7,9 +7,9 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/dashboard/dashboard_state.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/bean_list_tile.dart';
 import '../../widgets/common/common_widgets.dart';
-import '../../widgets/bean_card.dart';
-import '../../widgets/coffee_log_card.dart';
+import '../../widgets/coffee_log_list_tile.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -284,31 +284,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       ),
                                     ),
                                   )
-                                : SizedBox(
-                                    width: MediaQuery.sizeOf(context).width,
-                                    height: 280,
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      clipBehavior: Clip.none,
-                                      itemCount: recentBeans.length,
-                                      itemBuilder: (context, index) {
-                                        final bean = recentBeans[index];
-                                        return Container(
-                                          width: 200,
-                                          margin: EdgeInsets.only(
-                                            right:
-                                                index < recentBeans.length - 1
-                                                ? 12
-                                                : 0,
+                                : Column(
+                                    children: recentBeans
+                                        .map(
+                                          (bean) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 8,
+                                            ),
+                                            child: BeanListTile(
+                                              bean: bean,
+                                              onTap: () => context.go(
+                                                '/beans/${bean.id}',
+                                              ),
+                                            ),
                                           ),
-                                          child: BeanCard(
-                                            bean: bean,
-                                            onTap: () =>
-                                                context.go('/beans/${bean.id}'),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                        )
+                                        .toList(),
                                   ),
                             const SizedBox(height: 24),
                           ],

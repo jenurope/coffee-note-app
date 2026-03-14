@@ -12,7 +12,7 @@ import '../../cubits/bean/bean_list_state.dart';
 import '../../domain/catalogs/roast_level_catalog.dart';
 import '../../l10n/l10n.dart';
 import '../../models/coffee_bean.dart';
-import '../../widgets/bean_card.dart';
+import '../../widgets/bean_list_tile.dart';
 import '../../widgets/common/common_widgets.dart';
 
 class BeanListScreen extends StatefulWidget {
@@ -26,7 +26,6 @@ class _BeanListScreenState extends State<BeanListScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   BeanFilters _filters = const BeanFilters();
-  bool _isGridView = true;
   bool _isPagingLoading = false;
 
   @override
@@ -108,19 +107,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
         return BlocBuilder<BeanListCubit, BeanListState>(
           builder: (context, beanState) {
             return Scaffold(
-              appBar: AppBar(
-                title: Text(context.l10n.beansScreenTitle),
-                actions: [
-                  IconButton(
-                    icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
-                    onPressed: () {
-                      setState(() {
-                        _isGridView = !_isGridView;
-                      });
-                    },
-                  ),
-                ],
-              ),
+              appBar: AppBar(title: Text(context.l10n.beansScreenTitle)),
               body: Column(
                 children: [
                   Padding(
@@ -199,56 +186,33 @@ class _BeanListScreenState extends State<BeanListScreen> {
 
   Widget? _buildBottomAdBar(BeanListState beanState) {
     return switch (beanState) {
-      BeanListLoaded() =>
-        appAdsSlotFactory().buildBannerSlot(
-          key: const ValueKey('beanListBannerSlot'),
-          placement: AdPlacement.beanListBanner,
-        ),
+      BeanListLoaded() => appAdsSlotFactory().buildBannerSlot(
+        key: const ValueKey('beanListBannerSlot'),
+        placement: AdPlacement.beanListBanner,
+      ),
       _ => null,
     };
   }
 
   Widget _buildBeanList(List<CoffeeBean> beans) {
-    final listWidget = _isGridView
-        ? RefreshIndicator(
-            onRefresh: () async => context.read<BeanListCubit>().reload(),
-            child: GridView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.7,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: beans.length,
-              itemBuilder: (context, index) {
-                final bean = beans[index];
-                return BeanCard(
-                  bean: bean,
-                  onTap: () => context.push('/beans/${bean.id}'),
-                );
-              },
-            ),
-          )
-        : RefreshIndicator(
-            onRefresh: () async => context.read<BeanListCubit>().reload(),
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: beans.length,
-              itemBuilder: (context, index) {
-                final bean = beans[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: BeanListTile(
-                    bean: bean,
-                    onTap: () => context.push('/beans/${bean.id}'),
-                  ),
-                );
-              },
+    final listWidget = RefreshIndicator(
+      onRefresh: () async => context.read<BeanListCubit>().reload(),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
+        itemCount: beans.length,
+        itemBuilder: (context, index) {
+          final bean = beans[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: BeanListTile(
+              bean: bean,
+              onTap: () => context.push('/beans/${bean.id}'),
             ),
           );
+        },
+      ),
+    );
 
     return Stack(
       children: [

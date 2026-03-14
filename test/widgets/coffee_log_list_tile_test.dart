@@ -1,6 +1,6 @@
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:coffee_note_app/models/coffee_log.dart';
-import 'package:coffee_note_app/widgets/coffee_log_card.dart';
+import 'package:coffee_note_app/widgets/coffee_log_list_tile.dart';
 import 'package:coffee_note_app/widgets/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,7 +13,7 @@ void main() {
     await initializeDateFormatting('ko');
   });
 
-  testWidgets('CoffeeLogCard에 별점 하단 방문일이 표시된다', (tester) async {
+  testWidgets('CoffeeLogListTile에 커피 정보와 방문일이 표시된다', (tester) async {
     final log = CoffeeLog(
       id: 'log-1',
       userId: 'user-1',
@@ -25,52 +25,21 @@ void main() {
       createdAt: DateTime(2026, 2, 15),
       updatedAt: DateTime(2026, 2, 15),
     );
-    final expectedDate = DateFormat.yMd('ko').format(log.cafeVisitDate);
+    final expectedDate = DateFormat.Md('ko').format(log.cafeVisitDate);
     final expectedRating = log.rating.toStringAsFixed(1);
 
     await tester.pumpWidget(
       _TestApp(
-        child: Scaffold(body: CoffeeLogCard(log: log)),
+        child: Scaffold(body: CoffeeLogListTile(log: log)),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.byType(RatingStars), findsOneWidget);
-    expect(find.text(expectedRating), findsOneWidget);
+    expect(find.text(log.coffeeName!), findsOneWidget);
+    expect(find.text(log.cafeName), findsOneWidget);
     expect(find.text(expectedDate), findsOneWidget);
-
-    final hasVerticalRatingDate = tester
-        .widgetList<Column>(find.byType(Column))
-        .any((column) {
-          final hasRatingRow = column.children.any((child) {
-            if (child is! Row) {
-              return false;
-            }
-            final hasRatingStars = child.children.any(
-              (rowChild) => rowChild is RatingStars,
-            );
-            final hasRatingText = child.children.any(
-              (rowChild) => rowChild is Text && rowChild.data == expectedRating,
-            );
-            return hasRatingStars && hasRatingText;
-          });
-          final hasDateText = column.children.any(
-            (child) => child is Text && child.data == expectedDate,
-          );
-          return hasRatingRow && hasDateText;
-        });
-    expect(hasVerticalRatingDate, isTrue);
-
-    final hasHorizontalRatingDate = tester
-        .widgetList<Row>(find.byType(Row))
-        .any((row) {
-          final hasRating = row.children.any((child) => child is RatingStars);
-          final hasDateText = row.children.any(
-            (child) => child is Text && child.data == expectedDate,
-          );
-          return hasRating && hasDateText;
-        });
-    expect(hasHorizontalRatingDate, isFalse);
+    expect(find.text(expectedRating), findsNothing);
   });
 }
 

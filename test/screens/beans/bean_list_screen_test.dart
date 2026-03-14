@@ -10,6 +10,7 @@ import 'package:coffee_note_app/cubits/bean/bean_list_state.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:coffee_note_app/models/coffee_bean.dart';
 import 'package:coffee_note_app/screens/beans/bean_list_screen.dart';
+import 'package:coffee_note_app/widgets/bean_list_tile.dart';
 import 'package:coffee_note_app/widgets/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,7 +29,7 @@ void main() {
     registerFallbackValue(const BeanFilters());
   });
 
-  group('BeanListScreen 필터 바텀시트', () {
+  group('BeanListScreen', () {
     late _MockAuthCubit authCubit;
     late _MockBeanListCubit beanListCubit;
 
@@ -118,6 +119,27 @@ void main() {
         find.byKey(const ValueKey('fake-banner-beanListBanner')),
         findsOneWidget,
       );
+    });
+
+    testWidgets('loaded 상태에서는 리스트 타일만 노출하고 보기 전환 아이콘은 숨긴다', (tester) async {
+      _bindStates(
+        authCubit: authCubit,
+        beanListCubit: beanListCubit,
+        beanState: BeanListState.loaded(
+          beans: [_testBean()],
+          filters: const BeanFilters(),
+        ),
+      );
+
+      await _pumpBeanListScreen(
+        tester,
+        authCubit: authCubit,
+        beanListCubit: beanListCubit,
+      );
+
+      expect(find.byType(BeanListTile), findsOneWidget);
+      expect(find.byIcon(Icons.grid_view), findsNothing);
+      expect(find.byIcon(Icons.view_list), findsNothing);
     });
 
     testWidgets('loaded + empty 상태에서도 하단 배너 슬롯을 노출한다', (tester) async {
