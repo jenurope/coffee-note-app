@@ -74,6 +74,46 @@ void main() {
     expect(imageRect.bottom, cardRect.bottom);
   });
 
+  testWidgets('BeanListTile은 이미지 유무와 상관없이 같은 내용이면 높이가 같다', (tester) async {
+    final baseBean = CoffeeBean(
+      id: 'bean-1',
+      userId: 'user-1',
+      name: '에티오피아 예가체프',
+      roastery: '테스트 로스터리',
+      purchaseDate: DateTime(2026, 2, 14),
+      rating: 4.5,
+      tastingNotes: '자스민, 복숭아, 홍차',
+      roastLevel: 'light',
+      purchaseLocation: '성수 로스터리',
+      createdAt: DateTime(2026, 2, 14),
+      updatedAt: DateTime(2026, 2, 14),
+    );
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: Scaffold(
+          body: Column(
+            children: [
+              BeanListTile(
+                bean: baseBean.copyWith(
+                  imageUrl: 'https://example.com/bean.jpg',
+                ),
+              ),
+              const SizedBox(height: 12),
+              BeanListTile(bean: baseBean),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final withImageRect = tester.getRect(find.byType(Card).at(0));
+    final withoutImageRect = tester.getRect(find.byType(Card).at(1));
+
+    expect(withImageRect.height, closeTo(withoutImageRect.height, 0.01));
+  });
+
   testWidgets('BeanListTile은 큰 글자에서도 overflow 없이 높이가 늘어난다', (tester) async {
     final bean = CoffeeBean(
       id: 'bean-1',

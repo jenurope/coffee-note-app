@@ -35,90 +35,94 @@ class CoffeeLogListTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: _minTileHeight),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  key: const Key('coffee-log-list-tile-image'),
-                  width: _imageWidth,
-                  child: hasImage
-                      ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          cacheManager: AppImageCachePolicy.cacheManager,
-                          cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.1,
-                            ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: _imageWidth,
+              child: SizedBox(
+                key: const Key('coffee-log-list-tile-image'),
+                width: _imageWidth,
+                child: hasImage
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        cacheManager: AppImageCachePolicy.cacheManager,
+                        cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
                           ),
-                          errorWidget: (context, url, error) =>
-                              _buildPlaceholder(theme),
-                        )
-                      : _buildPlaceholder(theme),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                        ),
+                        errorWidget: (context, url, error) =>
+                            _buildPlaceholder(theme),
+                      )
+                    : _buildPlaceholder(theme),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: _imageWidth),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: _minTileHeight),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              log.coffeeName ??
+                                  CoffeeTypeCatalog.label(
+                                    context.l10n,
+                                    log.coffeeType,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (hasCafeName)
                               Text(
-                                log.coffeeName ??
-                                    CoffeeTypeCatalog.label(
-                                      context.l10n,
-                                      log.coffeeType,
-                                    ),
+                                cafeName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium,
                               ),
-                              if (hasCafeName)
-                                Text(
-                                  cafeName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodyMedium,
+                            if (hasNotes)
+                              Text(
+                                notes,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                              if (hasNotes)
-                                Text(
-                                  notes,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            RatingStars(rating: log.rating, size: 14),
-                            const SizedBox(height: 4),
-                            Text(
-                              dateFormat.format(log.cafeVisitDate),
-                              style: theme.textTheme.labelSmall,
-                            ),
+                              ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          RatingStars(rating: log.rating, size: 14),
+                          const SizedBox(height: 4),
+                          Text(
+                            dateFormat.format(log.cafeVisitDate),
+                            style: theme.textTheme.labelSmall,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

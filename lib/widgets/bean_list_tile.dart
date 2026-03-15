@@ -40,92 +40,96 @@ class BeanListTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: _minTileHeight),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  key: const Key('bean-list-tile-image'),
-                  width: _imageWidth,
-                  child: hasImage
-                      ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          cacheManager: AppImageCachePolicy.cacheManager,
-                          cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.1,
-                            ),
-                          ),
-                          errorWidget: (context, url, error) =>
-                              _buildPlaceholder(theme),
-                        )
-                      : _buildPlaceholder(theme),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                bean.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                secondaryText,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                              if (tertiaryText != null)
-                                Text(
-                                  tertiaryText,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                            ],
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: _imageWidth,
+              child: SizedBox(
+                key: const Key('bean-list-tile-image'),
+                width: _imageWidth,
+                child: hasImage
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        cacheManager: AppImageCachePolicy.cacheManager,
+                        cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Column(
+                        errorWidget: (context, url, error) =>
+                            _buildPlaceholder(theme),
+                      )
+                    : _buildPlaceholder(theme),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: _imageWidth),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: _minTileHeight),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            RatingStars(rating: bean.rating, size: 14),
-                            if (bean.roastLevel != null) ...[
-                              const SizedBox(height: 4),
+                            Text(
+                              bean.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              secondaryText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            if (tertiaryText != null)
                               Text(
-                                RoastLevelCatalog.label(
-                                  context.l10n,
-                                  bean.roastLevel!,
-                                ),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.primary,
+                                tertiaryText,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                            ],
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          RatingStars(rating: bean.rating, size: 14),
+                          if (bean.roastLevel != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              RoastLevelCatalog.label(
+                                context.l10n,
+                                bean.roastLevel!,
+                              ),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
