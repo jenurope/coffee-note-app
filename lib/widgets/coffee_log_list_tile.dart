@@ -10,6 +10,7 @@ import 'common/common_widgets.dart';
 
 class CoffeeLogListTile extends StatelessWidget {
   static const double _imageWidth = 88;
+  static const double _tileHeight = 96;
 
   final CoffeeLog log;
   final VoidCallback? onTap;
@@ -26,6 +27,8 @@ class CoffeeLogListTile extends StatelessWidget {
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
     final cafeName = log.cafeName.trim();
     final hasCafeName = cafeName.isNotEmpty;
+    final notes = log.notes?.trim();
+    final hasNotes = notes != null && notes.isNotEmpty;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -33,7 +36,7 @@ class CoffeeLogListTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
-          height: 88,
+          height: _tileHeight,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -80,6 +83,16 @@ class CoffeeLogListTile extends StatelessWidget {
                                 cafeName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            if (hasNotes)
+                              Text(
+                                notes,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
                           ],
                         ),

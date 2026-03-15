@@ -20,7 +20,9 @@ void main() {
       roastery: '테스트 로스터리',
       purchaseDate: DateTime(2026, 2, 14),
       rating: 4.5,
+      tastingNotes: '자스민, 복숭아, 홍차',
       roastLevel: 'light',
+      purchaseLocation: '성수 로스터리',
       createdAt: DateTime(2026, 2, 14),
       updatedAt: DateTime(2026, 2, 14),
     );
@@ -34,8 +36,13 @@ void main() {
 
     expect(find.byType(RatingStars), findsOneWidget);
     expect(find.text(bean.name), findsOneWidget);
-    expect(find.text(bean.roastery), findsOneWidget);
+    expect(find.text(bean.purchaseLocation!), findsOneWidget);
+    expect(find.text(bean.tastingNotes!), findsOneWidget);
     expect(find.text('4.5'), findsNothing);
+
+    final notesText = tester.widget<Text>(find.text(bean.tastingNotes!));
+    expect(notesText.maxLines, 1);
+    expect(notesText.overflow, TextOverflow.ellipsis);
   });
 
   testWidgets('BeanListTile 이미지는 카드의 좌측과 상하에 여백 없이 붙는다', (tester) async {

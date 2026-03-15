@@ -22,6 +22,7 @@ void main() {
       coffeeName: '바닐라 라떼',
       cafeName: '테스트 카페',
       rating: 4.0,
+      notes: '바닐라 향이 진하고 피니시가 길다',
       createdAt: DateTime(2026, 2, 15),
       updatedAt: DateTime(2026, 2, 15),
     );
@@ -38,8 +39,13 @@ void main() {
     expect(find.byType(RatingStars), findsOneWidget);
     expect(find.text(log.coffeeName!), findsOneWidget);
     expect(find.text(log.cafeName), findsOneWidget);
+    expect(find.text(log.notes!), findsOneWidget);
     expect(find.text(expectedDate), findsOneWidget);
     expect(find.text(expectedRating), findsNothing);
+
+    final notesText = tester.widget<Text>(find.text(log.notes!));
+    expect(notesText.maxLines, 1);
+    expect(notesText.overflow, TextOverflow.ellipsis);
   });
 
   testWidgets('CoffeeLogListTile 이미지는 카드의 좌측과 상하에 여백 없이 붙는다', (tester) async {

@@ -9,6 +9,7 @@ import 'common/common_widgets.dart';
 
 class BeanListTile extends StatelessWidget {
   static const double _imageWidth = 88;
+  static const double _tileHeight = 96;
 
   final CoffeeBean bean;
   final VoidCallback? onTap;
@@ -20,6 +21,19 @@ class BeanListTile extends StatelessWidget {
     final theme = Theme.of(context);
     final imageUrl = bean.imageUrl?.trim();
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+    final purchaseLocation = bean.purchaseLocation?.trim();
+    final hasPurchaseLocation =
+        purchaseLocation != null && purchaseLocation.isNotEmpty;
+    final tastingNotes = bean.tastingNotes?.trim();
+    final hasTastingNotes = tastingNotes != null && tastingNotes.isNotEmpty;
+    final secondaryText = hasPurchaseLocation
+        ? purchaseLocation
+        : bean.roastery;
+    final tertiaryText = hasTastingNotes
+        ? tastingNotes
+        : hasPurchaseLocation
+        ? bean.roastery
+        : null;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -27,7 +41,7 @@ class BeanListTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
-          height: 88,
+          height: _tileHeight,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -66,10 +80,20 @@ class BeanListTile extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              bean.roastery,
+                              secondaryText,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium,
                             ),
+                            if (tertiaryText != null)
+                              Text(
+                                tertiaryText,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
                           ],
                         ),
                       ),
