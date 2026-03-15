@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -333,7 +334,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.profileEditSaveSuccess)),
       );
-      Navigator.of(context).pop();
+      _closeAfterSuccessfulSave();
     } on PostgrestException catch (e) {
       await _rollbackUploadedAvatar(uploadedAvatarUrl);
 
@@ -360,6 +361,23 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         });
       }
     }
+  }
+
+  void _closeAfterSuccessfulSave() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final router = GoRouter.maybeOf(context);
+      if (router?.canPop() ?? false) {
+        context.pop();
+        return;
+      }
+
+      final navigator = Navigator.maybeOf(context);
+      if (navigator?.canPop() ?? false) {
+        navigator!.pop();
+      }
+    });
   }
 
   Widget _buildAvatarPreview() {

@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show PostgrestException, User;
@@ -252,6 +253,66 @@ void main() {
       verify(() => postListCubit.reload()).called(1);
     });
 
+    testWidgets('저장 성공 시 /profile 로 복귀한다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+
+      final router = _createProfileEditRouter();
+      await _pumpProfileEditRouterScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+        postListCubit: postListCubit,
+        router: router,
+      );
+
+      await tester.enterText(find.byType(TextFormField), '업데이트닉네임');
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('프로필 루트 화면'), findsOneWidget);
+      expect(find.byType(ProfileEditScreen), findsNothing);
+      expect(router.routeInformationProvider.value.uri.path, '/profile');
+    });
+
+    testWidgets('저장 실패 시 /profile/edit 에 머문다', (tester) async {
+      _stubAuthenticatedState(
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+      );
+      when(
+        () => authService.updateProfile(
+          userId: any(named: 'userId'),
+          nickname: any(named: 'nickname'),
+          avatarUrl: any(named: 'avatarUrl'),
+        ),
+      ).thenThrow(
+        const PostgrestException(
+          message: 'duplicate key value violates unique constraint',
+          code: '23505',
+        ),
+      );
+
+      final router = _createProfileEditRouter();
+      await _pumpProfileEditRouterScreen(
+        tester,
+        authCubit: authCubit,
+        dashboardCubit: dashboardCubit,
+        postListCubit: postListCubit,
+        router: router,
+      );
+
+      await tester.enterText(find.byType(TextFormField), '새닉네임');
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProfileEditScreen), findsOneWidget);
+      expect(find.text('프로필 루트 화면'), findsNothing);
+      expect(router.routeInformationProvider.value.uri.path, '/profile/edit');
+    });
+
     testWidgets('프로필 조회 실패 시 fallback UI를 보여주고 저장을 계속할 수 있다', (tester) async {
       final user = _testUser('profile-edit-fallback');
       final authState = AuthState.authenticated(user: user);
@@ -347,6 +408,55 @@ Future<void> _pumpProfileEditScreen(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+Future<void> _pumpProfileEditRouterScreen(
+  WidgetTester tester, {
+  required AuthCubit authCubit,
+  required DashboardCubit dashboardCubit,
+  required PostListCubit postListCubit,
+  required GoRouter router,
+}) async {
+  await tester.pumpWidget(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthCubit>.value(value: authCubit),
+        BlocProvider<DashboardCubit>.value(value: dashboardCubit),
+        BlocProvider<PostListCubit>.value(value: postListCubit),
+      ],
+      child: MaterialApp.router(
+        routerConfig: router,
+        locale: const Locale('ko'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+GoRouter _createProfileEditRouter() {
+  return GoRouter(
+    initialLocation: '/profile/edit',
+    routes: [
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) =>
+            const Scaffold(body: Center(child: Text('프로필 루트 화면'))),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (context, state) => const ProfileEditScreen(),
+          ),
+        ],
+      ),
+    ],
+  );
 }
 
 User _stubAuthenticatedState({
