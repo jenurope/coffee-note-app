@@ -15,6 +15,7 @@ import '../../cubits/log/log_list_cubit.dart';
 import '../../domain/catalogs/caffeine_type_catalog.dart';
 import '../../domain/catalogs/coffee_type_catalog.dart';
 import '../../l10n/l10n.dart';
+import '../../models/coffee_log.dart';
 import '../../services/coffee_log_service.dart';
 import '../../widgets/common/common_widgets.dart';
 
@@ -85,12 +86,24 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                                 IconButton(
                                   icon: const Icon(Icons.edit),
                                   onPressed: () async {
-                                    await context.push('/logs/$logId/edit');
-                                    if (context.mounted) {
-                                      context.read<LogDetailCubit>().load(
-                                        logId,
+                                    final result = await context.push<Object?>(
+                                      '/logs/$logId/edit',
+                                    );
+                                    if (!context.mounted) return;
+                                    final detailCubit =
+                                        context.read<LogDetailCubit>();
+                                    final updatedLog =
+                                        result is CoffeeLog ? result : null;
+                                    if (updatedLog != null) {
+                                      await AppImageCachePolicy.evict(imageUrl);
+                                      await AppImageCachePolicy.evict(
+                                        updatedLog.imageUrl,
                                       );
+                                      detailCubit.showLog(updatedLog);
+                                      return;
                                     }
+                                    await AppImageCachePolicy.evict(imageUrl);
+                                    detailCubit.load(logId);
                                   },
                                 ),
                                 IconButton(

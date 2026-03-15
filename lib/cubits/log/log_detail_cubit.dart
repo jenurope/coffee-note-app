@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
+import '../../models/coffee_log.dart';
 import '../auth/auth_cubit.dart';
 import '../auth/auth_state.dart';
 import '../../services/coffee_log_service.dart';
@@ -22,6 +23,10 @@ class LogDetailCubit extends Cubit<LogDetailState> {
   final CoffeeLogService _service;
   final AuthCubit? _authCubit;
   final GuestSampleService _sampleService;
+
+  void showLog(CoffeeLog log) {
+    emit(LogDetailState.loaded(log: log));
+  }
 
   Future<void> load(String logId) async {
     emit(const LogDetailState.loading());

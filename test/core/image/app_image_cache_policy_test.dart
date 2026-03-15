@@ -31,4 +31,24 @@ void main() {
       expect(AppImageCachePolicy.cacheKeyFor('not-a-signed-url'), isNull);
     });
   });
+
+  group('AppImageCachePolicy.evictionKeysFor', () {
+    test('signed url은 원본 url과 normalized cache key를 함께 반환한다', () {
+      const signedUrl =
+          'https://abc.supabase.co/storage/v1/object/sign/beans/user1/123.jpg'
+          '?token=foo&expires=123';
+
+      final keys = AppImageCachePolicy.evictionKeysFor(signedUrl);
+
+      expect(keys, {
+        signedUrl,
+        'https://abc.supabase.co/storage/v1/object/sign/beans/user1/123.jpg',
+      });
+    });
+
+    test('빈 값은 비어있는 집합을 반환한다', () {
+      expect(AppImageCachePolicy.evictionKeysFor(null), isEmpty);
+      expect(AppImageCachePolicy.evictionKeysFor('   '), isEmpty);
+    });
+  });
 }

@@ -12,7 +12,7 @@ import '../../cubits/log/log_list_state.dart';
 import '../../domain/catalogs/coffee_type_catalog.dart';
 import '../../l10n/l10n.dart';
 import '../../models/coffee_log.dart';
-import '../../widgets/coffee_log_card.dart';
+import '../../widgets/coffee_log_list_tile.dart';
 import '../../widgets/common/common_widgets.dart';
 
 class CoffeeLogListScreen extends StatefulWidget {
@@ -25,7 +25,6 @@ class CoffeeLogListScreen extends StatefulWidget {
 class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  bool _isGridView = true;
   bool _isPagingLoading = false;
 
   @override
@@ -122,19 +121,7 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
         return BlocBuilder<LogListCubit, LogListState>(
           builder: (context, logState) {
             return Scaffold(
-              appBar: AppBar(
-                title: Text(context.l10n.logsScreenTitle),
-                actions: [
-                  IconButton(
-                    icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
-                    onPressed: () {
-                      setState(() {
-                        _isGridView = !_isGridView;
-                      });
-                    },
-                  ),
-                ],
-              ),
+              appBar: AppBar(title: Text(context.l10n.logsScreenTitle)),
               body: Column(
                 children: [
                   Padding(
@@ -219,46 +206,24 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
   }
 
   Widget _buildLogList(List<CoffeeLog> logs) {
-    final listWidget = _isGridView
-        ? RefreshIndicator(
-            onRefresh: () => context.read<LogListCubit>().reload(),
-            child: GridView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.7,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: logs.length,
-              itemBuilder: (context, index) {
-                final log = logs[index];
-                return CoffeeLogCard(
-                  log: log,
-                  onTap: () => context.push('/logs/${log.id}'),
-                );
-              },
-            ),
-          )
-        : RefreshIndicator(
-            onRefresh: () => context.read<LogListCubit>().reload(),
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: logs.length,
-              itemBuilder: (context, index) {
-                final log = logs[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: CoffeeLogListTile(
-                    log: log,
-                    onTap: () => context.push('/logs/${log.id}'),
-                  ),
-                );
-              },
+    final listWidget = RefreshIndicator(
+      onRefresh: () => context.read<LogListCubit>().reload(),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
+        itemCount: logs.length,
+        itemBuilder: (context, index) {
+          final log = logs[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: CoffeeLogListTile(
+              log: log,
+              onTap: () => context.push('/logs/${log.id}'),
             ),
           );
+        },
+      ),
+    );
 
     return Stack(
       children: [
@@ -280,11 +245,10 @@ class _CoffeeLogListScreenState extends State<CoffeeLogListScreen> {
 
   Widget? _buildBottomAdBar(LogListState logState) {
     return switch (logState) {
-      LogListLoaded() =>
-        appAdsSlotFactory().buildBannerSlot(
-          key: const ValueKey('coffeeLogListBannerSlot'),
-          placement: AdPlacement.coffeeLogListBanner,
-        ),
+      LogListLoaded() => appAdsSlotFactory().buildBannerSlot(
+        key: const ValueKey('coffeeLogListBannerSlot'),
+        placement: AdPlacement.coffeeLogListBanner,
+      ),
       _ => null,
     };
   }

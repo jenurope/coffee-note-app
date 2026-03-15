@@ -7,9 +7,9 @@ import '../../cubits/auth/auth_state.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../cubits/dashboard/dashboard_state.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/bean_list_tile.dart';
 import '../../widgets/common/common_widgets.dart';
-import '../../widgets/bean_card.dart';
-import '../../widgets/coffee_log_card.dart';
+import '../../widgets/coffee_log_list_tile.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -258,57 +258,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 12),
                             recentBeans.isEmpty
-                                ? Card(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(24),
-                                      child: Column(
-                                        children: [
-                                          Icon(
-                                            Icons.coffee,
-                                            size: 48,
-                                            color: theme.colorScheme.primary
-                                                .withValues(alpha: 0.5),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(l10n.noBeanRecordsYet),
-                                          if (currentUser != null &&
-                                              !isGuest) ...[
-                                            const SizedBox(height: 12),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  context.go('/beans/new'),
-                                              child: Text(l10n.firstBeanRecord),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
+                                ? _buildEmptyRecordCard(
+                                    context,
+                                    key: const ValueKey(
+                                      'dashboardEmptyBeanCard',
                                     ),
+                                    icon: Icons.coffee,
+                                    iconColor: theme.colorScheme.primary
+                                        .withValues(alpha: 0.5),
+                                    message: l10n.noBeanRecordsYet,
+                                    actionLabel: l10n.firstBeanRecord,
+                                    onAction: currentUser != null && !isGuest
+                                        ? () => context.go('/beans/new')
+                                        : null,
                                   )
-                                : SizedBox(
-                                    width: MediaQuery.sizeOf(context).width,
-                                    height: 280,
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      clipBehavior: Clip.none,
-                                      itemCount: recentBeans.length,
-                                      itemBuilder: (context, index) {
-                                        final bean = recentBeans[index];
-                                        return Container(
-                                          width: 200,
-                                          margin: EdgeInsets.only(
-                                            right:
-                                                index < recentBeans.length - 1
-                                                ? 12
-                                                : 0,
+                                : Column(
+                                    children: recentBeans
+                                        .map(
+                                          (bean) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 8,
+                                            ),
+                                            child: BeanListTile(
+                                              bean: bean,
+                                              onTap: () => context.go(
+                                                '/beans/${bean.id}',
+                                              ),
+                                            ),
                                           ),
-                                          child: BeanCard(
-                                            bean: bean,
-                                            onTap: () =>
-                                                context.go('/beans/${bean.id}'),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                        )
+                                        .toList(),
                                   ),
                             const SizedBox(height: 24),
                           ],
@@ -322,33 +301,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 12),
                             recentLogs.isEmpty
-                                ? Card(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(24),
-                                      child: Column(
-                                        children: [
-                                          Icon(
-                                            Icons.local_cafe,
-                                            size: 48,
-                                            color: theme.colorScheme.secondary
-                                                .withValues(alpha: 0.5),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(l10n.noCoffeeRecordsYet),
-                                          if (currentUser != null &&
-                                              !isGuest) ...[
-                                            const SizedBox(height: 12),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  context.go('/logs/new'),
-                                              child: Text(
-                                                l10n.firstCoffeeRecord,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
+                                ? _buildEmptyRecordCard(
+                                    context,
+                                    key: const ValueKey(
+                                      'dashboardEmptyCoffeeCard',
                                     ),
+                                    icon: Icons.local_cafe,
+                                    iconColor: theme.colorScheme.secondary
+                                        .withValues(alpha: 0.5),
+                                    message: l10n.noCoffeeRecordsYet,
+                                    actionLabel: l10n.firstCoffeeRecord,
+                                    onAction: currentUser != null && !isGuest
+                                        ? () => context.go('/logs/new')
+                                        : null,
                                   )
                                 : Column(
                                     children: recentLogs
@@ -408,6 +373,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildEmptyRecordCard(
+    BuildContext context, {
+    required Key key,
+    required IconData icon,
+    required Color iconColor,
+    required String message,
+    required String actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        key: key,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Icon(icon, size: 48, color: iconColor),
+              const SizedBox(height: 12),
+              Text(message),
+              if (onAction != null) ...[
+                const SizedBox(height: 12),
+                TextButton(onPressed: onAction, child: Text(actionLabel)),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
