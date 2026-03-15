@@ -39,6 +39,7 @@ import '../screens/profile/my_post_list_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../widgets/navigation/guest_tab_root_back_guard.dart';
 import 'app_feature_visibility.dart';
+import 'app_route_observers.dart';
 
 abstract final class AppRoutePath {
   static const splash = '/splash';
@@ -391,6 +392,7 @@ GoRouter createAppRouter({
           ),
           StatefulShellBranch(
             navigatorKey: branchKeys[1],
+            observers: [beanBranchRouteObserver],
             routes: [
               GoRoute(
                 path: AppRoutePath.beans,
@@ -434,6 +436,7 @@ GoRouter createAppRouter({
           ),
           StatefulShellBranch(
             navigatorKey: branchKeys[2],
+            observers: [logBranchRouteObserver],
             routes: [
               GoRoute(
                 path: AppRoutePath.logs,

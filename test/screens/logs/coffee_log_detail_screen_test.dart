@@ -5,6 +5,7 @@ import 'package:coffee_note_app/cubits/log/log_detail_cubit.dart';
 import 'package:coffee_note_app/cubits/log/log_detail_state.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:coffee_note_app/models/coffee_log.dart';
+import 'package:coffee_note_app/router/app_route_observers.dart';
 import 'package:coffee_note_app/screens/logs/coffee_log_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,15 +35,13 @@ void main() {
       await detailCubit.close();
     });
 
-    testWidgets('수정 저장으로 복귀하면 최신 상세 모델을 반영한다', (tester) async {
+    testWidgets('수정 저장으로 복귀하면 상세를 다시 로드한다', (tester) async {
       final authState = AuthState.authenticated(user: _testUser('user-1'));
       final detailState = LogDetailState.loaded(log: _testLog());
-      final updatedLog = _testLog().copyWith(cafeName: '수정된 카페');
 
       when(() => authCubit.state).thenReturn(authState);
       when(() => detailCubit.state).thenReturn(detailState);
       when(() => detailCubit.load(any())).thenAnswer((_) async {});
-      when(() => detailCubit.showLog(updatedLog)).thenReturn(null);
 
       whenListen(
         authCubit,
@@ -58,7 +57,7 @@ void main() {
       final router = _buildRouter(
         authCubit: authCubit,
         detailCubit: detailCubit,
-        editResult: updatedLog,
+        editResult: _testLog().copyWith(cafeName: '수정된 카페'),
       );
 
       await tester.pumpWidget(_buildApp(router, authCubit, detailCubit));
@@ -69,8 +68,7 @@ void main() {
       await tester.tap(find.text('저장 완료'));
       await tester.pumpAndSettle();
 
-      verify(() => detailCubit.showLog(updatedLog)).called(1);
-      verifyNever(() => detailCubit.load('log-1'));
+      verify(() => detailCubit.load('log-1')).called(1);
     });
 
     testWidgets('편집 화면에서 돌아오면 상세를 다시 로드한다', (tester) async {
@@ -145,6 +143,7 @@ GoRouter _buildRouter({
   required Object? editResult,
 }) {
   return GoRouter(
+    observers: [logBranchRouteObserver],
     initialLocation: '/logs/log-1',
     routes: [
       GoRoute(
@@ -175,7 +174,7 @@ GoRouter _buildRouter({
 }
 
 CoffeeLog _testLog() {
-  final now = DateTime(2026, 3, 14, 12);
+  final now = DateTime(2026, 3, 15, 12);
   return CoffeeLog(
     id: 'log-1',
     userId: 'user-1',
@@ -195,6 +194,6 @@ User _testUser(String id) {
     userMetadata: const {},
     aud: 'authenticated',
     email: '$id@example.com',
-    createdAt: '2026-03-14T00:00:00.000Z',
+    createdAt: '2026-03-15T00:00:00.000Z',
   );
 }
