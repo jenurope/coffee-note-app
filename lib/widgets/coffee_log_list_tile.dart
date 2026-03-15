@@ -10,7 +10,7 @@ import 'common/common_widgets.dart';
 
 class CoffeeLogListTile extends StatelessWidget {
   static const double _imageWidth = 88;
-  static const double _tileHeight = 96;
+  static const double _minTileHeight = 96;
 
   final CoffeeLog log;
   final VoidCallback? onTap;
@@ -35,86 +35,89 @@ class CoffeeLogListTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: SizedBox(
-          height: _tileHeight,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                key: const Key('coffee-log-list-tile-image'),
-                width: _imageWidth,
-                child: hasImage
-                    ? CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        cacheManager: AppImageCachePolicy.cacheManager,
-                        cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: _minTileHeight),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  key: const Key('coffee-log-list-tile-image'),
+                  width: _imageWidth,
+                  child: hasImage
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          cacheManager: AppImageCachePolicy.cacheManager,
+                          cacheKey: AppImageCachePolicy.cacheKeyFor(imageUrl),
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              _buildPlaceholder(theme),
+                        )
+                      : _buildPlaceholder(theme),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                log.coffeeName ??
+                                    CoffeeTypeCatalog.label(
+                                      context.l10n,
+                                      log.coffeeType,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (hasCafeName)
+                                Text(
+                                  cafeName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              if (hasNotes)
+                                Text(
+                                  notes,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                        errorWidget: (context, url, error) =>
-                            _buildPlaceholder(theme),
-                      )
-                    : _buildPlaceholder(theme),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(width: 12),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
+                            RatingStars(rating: log.rating, size: 14),
+                            const SizedBox(height: 4),
                             Text(
-                              log.coffeeName ??
-                                  CoffeeTypeCatalog.label(
-                                    context.l10n,
-                                    log.coffeeType,
-                                  ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              dateFormat.format(log.cafeVisitDate),
+                              style: theme.textTheme.labelSmall,
                             ),
-                            if (hasCafeName)
-                              Text(
-                                cafeName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                            if (hasNotes)
-                              Text(
-                                notes,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          RatingStars(rating: log.rating, size: 14),
-                          const SizedBox(height: 4),
-                          Text(
-                            dateFormat.format(log.cafeVisitDate),
-                            style: theme.textTheme.labelSmall,
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

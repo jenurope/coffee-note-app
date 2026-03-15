@@ -73,6 +73,42 @@ void main() {
     expect(imageRect.top, cardRect.top);
     expect(imageRect.bottom, cardRect.bottom);
   });
+
+  testWidgets('BeanListTile은 큰 글자에서도 overflow 없이 높이가 늘어난다', (tester) async {
+    final bean = CoffeeBean(
+      id: 'bean-1',
+      userId: 'user-1',
+      name: '에티오피아 예가체프 워시드',
+      roastery: '테스트 로스터리',
+      purchaseDate: DateTime(2026, 2, 14),
+      rating: 4.5,
+      tastingNotes: '자스민, 복숭아, 홍차',
+      roastLevel: 'medium',
+      purchaseLocation: '성수 로스터리',
+      createdAt: DateTime(2026, 2, 14),
+      updatedAt: DateTime(2026, 2, 14),
+    );
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(360, 640),
+            textScaler: TextScaler.linear(1.4),
+          ),
+          child: Scaffold(
+            body: SizedBox(width: 360, child: BeanListTile(bean: bean)),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+
+    final cardRect = tester.getRect(find.byType(Card));
+    expect(cardRect.height, greaterThan(96));
+  });
 }
 
 class _TestApp extends StatelessWidget {
