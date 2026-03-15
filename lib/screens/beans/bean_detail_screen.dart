@@ -82,12 +82,12 @@ class BeanDetailScreen extends StatelessWidget {
                                 IconButton(
                                   icon: const Icon(Icons.edit),
                                   onPressed: () async {
-                                    final detailCubit =
-                                        context.read<BeanDetailCubit>();
                                     final result = await context.push<Object?>(
                                       '/beans/$beanId/edit',
                                     );
                                     if (!context.mounted) return;
+                                    final detailCubit =
+                                        context.read<BeanDetailCubit>();
                                     final updatedBean =
                                         result is CoffeeBean ? result : null;
                                     if (updatedBean != null) {
