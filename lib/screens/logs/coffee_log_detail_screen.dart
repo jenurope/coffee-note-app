@@ -1,8 +1,11 @@
+import 'dart:async';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../core/image/app_image_cache_policy.dart';
@@ -15,13 +18,63 @@ import '../../cubits/log/log_list_cubit.dart';
 import '../../domain/catalogs/caffeine_type_catalog.dart';
 import '../../domain/catalogs/coffee_type_catalog.dart';
 import '../../l10n/l10n.dart';
+import '../../router/app_route_observers.dart';
 import '../../services/coffee_log_service.dart';
 import '../../widgets/common/common_widgets.dart';
 
-class CoffeeLogDetailScreen extends StatelessWidget {
+class CoffeeLogDetailScreen extends StatefulWidget {
   final String logId;
 
   const CoffeeLogDetailScreen({super.key, required this.logId});
+
+  @override
+  State<CoffeeLogDetailScreen> createState() => _CoffeeLogDetailScreenState();
+}
+
+class _CoffeeLogDetailScreenState extends State<CoffeeLogDetailScreen>
+    with RouteAware {
+  PageRoute<dynamic>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (_route == route) {
+      return;
+    }
+    if (_route != null) {
+      logBranchRouteObserver.unsubscribe(this);
+    }
+    if (route is PageRoute<dynamic>) {
+      _route = route;
+      logBranchRouteObserver.subscribe(this, route);
+    } else {
+      _route = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_route != null) {
+      logBranchRouteObserver.unsubscribe(this);
+    }
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    unawaited(_refreshDetail());
+  }
+
+  Future<void> _refreshDetail() async {
+    final logState = context.read<LogDetailCubit>().state;
+    final imageUrl = logState is LogDetailLoaded
+        ? logState.log.imageUrl?.trim()
+        : null;
+    await AppImageCachePolicy.evict(imageUrl);
+    if (!mounted) return;
+    await context.read<LogDetailCubit>().load(widget.logId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,12 +138,9 @@ class CoffeeLogDetailScreen extends StatelessWidget {
                                 IconButton(
                                   icon: const Icon(Icons.edit),
                                   onPressed: () async {
-                                    await context.push('/logs/$logId/edit');
-                                    if (context.mounted) {
-                                      context.read<LogDetailCubit>().load(
-                                        logId,
-                                      );
-                                    }
+                                    await context.push<Object?>(
+                                      '/logs/${widget.logId}/edit',
+                                    );
                                   },
                                 ),
                                 IconButton(
@@ -335,7 +385,7 @@ class CoffeeLogDetailScreen extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
       try {
-        await getIt<CoffeeLogService>().deleteLog(logId);
+        await getIt<CoffeeLogService>().deleteLog(widget.logId);
         if (context.mounted) {
           context.read<LogListCubit>().reload();
           context.read<DashboardCubit>().refresh();

@@ -1,8 +1,11 @@
+import 'dart:async';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/di/service_locator.dart';
 import '../../core/errors/user_error_message.dart';
 import '../../core/image/app_image_cache_policy.dart';
@@ -14,13 +17,62 @@ import '../../cubits/bean/bean_list_cubit.dart';
 import '../../cubits/dashboard/dashboard_cubit.dart';
 import '../../domain/catalogs/roast_level_catalog.dart';
 import '../../l10n/l10n.dart';
+import '../../router/app_route_observers.dart';
 import '../../services/coffee_bean_service.dart';
 import '../../widgets/common/common_widgets.dart';
 
-class BeanDetailScreen extends StatelessWidget {
+class BeanDetailScreen extends StatefulWidget {
   final String beanId;
 
   const BeanDetailScreen({super.key, required this.beanId});
+
+  @override
+  State<BeanDetailScreen> createState() => _BeanDetailScreenState();
+}
+
+class _BeanDetailScreenState extends State<BeanDetailScreen> with RouteAware {
+  PageRoute<dynamic>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (_route == route) {
+      return;
+    }
+    if (_route != null) {
+      beanBranchRouteObserver.unsubscribe(this);
+    }
+    if (route is PageRoute<dynamic>) {
+      _route = route;
+      beanBranchRouteObserver.subscribe(this, route);
+    } else {
+      _route = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_route != null) {
+      beanBranchRouteObserver.unsubscribe(this);
+    }
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    unawaited(_refreshDetail());
+  }
+
+  Future<void> _refreshDetail() async {
+    final beanState = context.read<BeanDetailCubit>().state;
+    final imageUrl = beanState is BeanDetailLoaded
+        ? beanState.bean.imageUrl?.trim()
+        : null;
+    await AppImageCachePolicy.evict(imageUrl);
+    if (!mounted) return;
+    await context.read<BeanDetailCubit>().load(widget.beanId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,12 +133,9 @@ class BeanDetailScreen extends StatelessWidget {
                                 IconButton(
                                   icon: const Icon(Icons.edit),
                                   onPressed: () async {
-                                    await context.push('/beans/$beanId/edit');
-                                    if (context.mounted) {
-                                      context.read<BeanDetailCubit>().load(
-                                        beanId,
-                                      );
-                                    }
+                                    await context.push<Object?>(
+                                      '/beans/${widget.beanId}/edit',
+                                    );
                                   },
                                 ),
                                 IconButton(
@@ -322,7 +371,7 @@ class BeanDetailScreen extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
       try {
-        await getIt<CoffeeBeanService>().deleteBean(beanId);
+        await getIt<CoffeeBeanService>().deleteBean(widget.beanId);
         if (context.mounted) {
           context.read<BeanListCubit>().reload();
           context.read<DashboardCubit>().refresh();
