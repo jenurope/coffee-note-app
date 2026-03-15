@@ -41,6 +41,36 @@ void main() {
     expect(find.text(expectedDate), findsOneWidget);
     expect(find.text(expectedRating), findsNothing);
   });
+
+  testWidgets('CoffeeLogListTile 이미지는 카드의 좌측과 상하에 여백 없이 붙는다', (tester) async {
+    final log = CoffeeLog(
+      id: 'log-1',
+      userId: 'user-1',
+      cafeVisitDate: DateTime(2026, 2, 15),
+      coffeeType: 'latte',
+      coffeeName: '바닐라 라떼',
+      cafeName: '테스트 카페',
+      rating: 4.0,
+      createdAt: DateTime(2026, 2, 15),
+      updatedAt: DateTime(2026, 2, 15),
+    );
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: Scaffold(body: CoffeeLogListTile(log: log)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final cardRect = tester.getRect(find.byType(Card));
+    final imageRect = tester.getRect(
+      find.byKey(const Key('coffee-log-list-tile-image')),
+    );
+
+    expect(imageRect.left, cardRect.left);
+    expect(imageRect.top, cardRect.top);
+    expect(imageRect.bottom, cardRect.bottom);
+  });
 }
 
 class _TestApp extends StatelessWidget {
