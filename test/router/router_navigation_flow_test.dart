@@ -534,6 +534,42 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('프로필 수정 저장 후 다시 프로필 탭에 진입해도 루트 화면이 유지된다', (
+      WidgetTester tester,
+    ) async {
+      final authController = _TestAuthController(AppAuthSnapshot.authenticated);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      await _tapBottomTab(tester, _TabTarget.profile);
+      await tester.pumpAndSettle();
+      expect(find.text('PROFILE_ROOT'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('open-profile-edit-button')));
+      await tester.pumpAndSettle();
+      expect(find.text('PROFILE_EDIT'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('save-profile-edit-button')));
+      await tester.pumpAndSettle();
+      expect(find.text('PROFILE_ROOT'), findsOneWidget);
+      expect(find.text('PROFILE_EDIT'), findsNothing);
+
+      await _tapBottomTab(tester, _TabTarget.beans);
+      await tester.pumpAndSettle();
+      expect(find.text('BEANS_ROOT'), findsOneWidget);
+
+      await _tapBottomTab(tester, _TabTarget.profile);
+      await tester.pumpAndSettle();
+      expect(find.text('PROFILE_ROOT'), findsOneWidget);
+      expect(find.text('PROFILE_EDIT'), findsNothing);
+    });
   });
 }
 
@@ -585,7 +621,8 @@ Future<void> _tapBottomTab(WidgetTester tester, _TabTarget target) async {
 enum _TabTarget {
   beans(Icons.coffee),
   logs(Icons.local_cafe),
-  community(Icons.forum);
+  community(Icons.forum),
+  profile(Icons.person);
 
   const _TabTarget(this.icon);
   final IconData icon;
@@ -714,7 +751,12 @@ class _TestRouteBuilders extends AppRouteBuilders {
 
   @override
   Widget buildProfile(BuildContext context, GoRouterState state) {
-    return const _LabelScreen('PROFILE_ROOT');
+    return const _ProfileRootScreen();
+  }
+
+  @override
+  Widget buildProfileEdit(BuildContext context, GoRouterState state) {
+    return const _ProfileEditTestScreen();
   }
 }
 
@@ -796,6 +838,64 @@ class _LogsRootScreen extends StatelessWidget {
               key: const Key('open-log-new-button'),
               onPressed: () => context.push('/logs/new'),
               child: const Text('Open Log New'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileRootScreen extends StatelessWidget {
+  const _ProfileRootScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('PROFILE_ROOT'),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              key: const Key('open-profile-edit-button'),
+              onPressed: () => context.push('/profile/edit'),
+              child: const Text('Open Profile Edit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileEditTestScreen extends StatelessWidget {
+  const _ProfileEditTestScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('PROFILE_EDIT'),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              key: const Key('save-profile-edit-button'),
+              onPressed: () {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('저장되었습니다.')));
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!context.mounted) {
+                    return;
+                  }
+                  context.pop();
+                });
+              },
+              child: const Text('Save Profile Edit'),
             ),
           ],
         ),
