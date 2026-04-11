@@ -3,6 +3,7 @@
   "appTitle": "コーヒーログ",
   "appInitFailedTitle": "アプリの初期化に失敗しました。",
   "appExit": "アプリを終了",
+  "pressBackAgainToExitApp": "もう一度戻るとアプリを終了します。",
   "appStartUnavailable": "アプリを起動できません。しばらくしてから再試行してください。",
   "pageNotFound": "ページが見つかりません",
   "backToHome": "ホームへ戻る",

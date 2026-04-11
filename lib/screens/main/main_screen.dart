@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:flutter/material.dart';
@@ -41,8 +42,11 @@ class _MainScreenState extends State<MainScreen> {
   static const int _logBranchIndex = 2;
   static const int _communityBranchIndex = 3;
   static const int _profileBranchIndex = 4;
+  static const Duration _exitConfirmationDuration = Duration(seconds: 2);
 
   late int _activeIndex;
+  Timer? _exitConfirmationTimer;
+  bool _isExitConfirmationActive = false;
 
   @override
   void initState() {
@@ -55,8 +59,15 @@ class _MainScreenState extends State<MainScreen> {
     super.didUpdateWidget(oldWidget);
     final nextIndex = widget.navigationShell.currentIndex;
     if (_activeIndex != nextIndex) {
+      _clearExitConfirmation();
       _activeIndex = nextIndex;
     }
+  }
+
+  @override
+  void dispose() {
+    _exitConfirmationTimer?.cancel();
+    super.dispose();
   }
 
   StatefulNavigationShell get _navigationShell => widget.navigationShell;
@@ -129,6 +140,7 @@ class _MainScreenState extends State<MainScreen> {
       return;
     }
 
+    _clearExitConfirmation();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -195,9 +207,56 @@ class _MainScreenState extends State<MainScreen> {
     return items;
   }
 
+  void _hideExitConfirmationSnackBar() {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
+  }
+
+  void _clearExitConfirmation({bool hideSnackBar = true}) {
+    _exitConfirmationTimer?.cancel();
+    _exitConfirmationTimer = null;
+    _isExitConfirmationActive = false;
+    if (hideSnackBar) {
+      _hideExitConfirmationSnackBar();
+    }
+  }
+
+  void _resetExitConfirmation({bool hideSnackBar = true}) {
+    final wasActive = _isExitConfirmationActive;
+    _clearExitConfirmation(hideSnackBar: hideSnackBar);
+    if (wasActive && mounted) {
+      setState(() {});
+    }
+  }
+
+  void _startExitConfirmation() {
+    _exitConfirmationTimer?.cancel();
+    _isExitConfirmationActive = true;
+    _hideExitConfirmationSnackBar();
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(context.l10n.pressBackAgainToExitApp),
+        duration: _exitConfirmationDuration,
+      ),
+    );
+    if (mounted) {
+      setState(() {});
+    }
+    _exitConfirmationTimer = Timer(_exitConfirmationDuration, () {
+      if (!mounted || !_isExitConfirmationActive) {
+        return;
+      }
+      _clearExitConfirmation(hideSnackBar: false);
+      setState(() {});
+    });
+  }
+
   void _onItemTapped(int displayIndex, List<int> visibleBranchIndices) {
     // Prevent hidden form fields from keeping focus and consuming the first back gesture.
     FocusManager.instance.primaryFocus?.unfocus();
+    _resetExitConfirmation();
     final branchIndex = _toBranchIndex(visibleBranchIndices, displayIndex);
 
     if (branchIndex == _currentIndex) {
@@ -214,16 +273,24 @@ class _MainScreenState extends State<MainScreen> {
   Future<bool> _onBackPressed(BuildContext context, bool isGuest) async {
     final branchNavigator = _currentBranchNavigator;
     if (branchNavigator?.canPop() ?? false) {
+      _resetExitConfirmation();
       branchNavigator!.pop();
       return true;
     }
 
     if (isGuest) {
+      _resetExitConfirmation();
       context.go(widget.loginPath);
       return true;
     }
 
-    SystemNavigator.pop();
+    if (_isExitConfirmationActive) {
+      _resetExitConfirmation();
+      await SystemNavigator.pop();
+      return true;
+    }
+
+    _startExitConfirmation();
     return true;
   }
 

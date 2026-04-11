@@ -118,6 +118,12 @@ abstract class AppLocalizations {
   /// **'Exit App'**
   String get appExit;
 
+  /// No description provided for @pressBackAgainToExitApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Press back again to exit the app.'**
+  String get pressBackAgainToExitApp;
+
   /// No description provided for @appStartUnavailable.
   ///
   /// In en, this message translates to:

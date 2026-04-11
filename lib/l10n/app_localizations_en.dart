@@ -18,6 +18,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appExit => 'Exit App';
 
   @override
+  String get pressBackAgainToExitApp => 'Press back again to exit the app.';
+
+  @override
   String get appStartUnavailable =>
       'Unable to start the app. Please try again later.';
 
