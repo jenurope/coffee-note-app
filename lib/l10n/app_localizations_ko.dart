@@ -18,6 +18,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get appExit => '앱 종료';
 
   @override
+  String get pressBackAgainToExitApp => '한 번 더 누르면 앱이 종료됩니다.';
+
+  @override
   String get appStartUnavailable => '앱을 시작할 수 없습니다. 잠시 후 다시 시도해주세요.';
 
   @override

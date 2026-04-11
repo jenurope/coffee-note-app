@@ -3,6 +3,7 @@
   "appTitle": "Coffee Log",
   "appInitFailedTitle": "App initialization failed.",
   "appExit": "Exit App",
+  "pressBackAgainToExitApp": "Press back again to exit the app.",
   "appStartUnavailable": "Unable to start the app. Please try again later.",
   "pageNotFound": "Page not found",
   "backToHome": "Back to Home",

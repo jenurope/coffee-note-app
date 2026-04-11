@@ -6,6 +6,7 @@ import 'package:coffee_note_app/models/user_profile.dart';
 import 'package:coffee_note_app/router/app_feature_visibility.dart';
 import 'package:coffee_note_app/router/app_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coffee_note_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,8 +14,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
+const _exitConfirmationMessage = '한 번 더 누르면 앱이 종료됩니다.';
+
 void main() {
   group('App navigation flow', () {
+    int systemNavigatorPopCount = 0;
+
+    setUp(() {
+      systemNavigatorPopCount = 0;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (
+            methodCall,
+          ) async {
+            if (methodCall.method == 'SystemNavigator.pop') {
+              systemNavigatorPopCount += 1;
+            }
+            return null;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
     testWidgets('splash route does not remain in the back stack', (
       WidgetTester tester,
     ) async {
@@ -97,6 +120,34 @@ void main() {
 
       expect(find.text('LOGIN'), findsNothing);
       expect(find.text('DASHBOARD'), findsOneWidget);
+    });
+
+    testWidgets('authenticated back at dashboard root exits on second press', (
+      WidgetTester tester,
+    ) async {
+      final authController = _TestAuthController(AppAuthSnapshot.authenticated);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      final firstDidHandleBack = await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      expect(firstDidHandleBack, isTrue);
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(systemNavigatorPopCount, 0);
+      expect(find.text(_exitConfirmationMessage), findsOneWidget);
+
+      final secondDidHandleBack = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(secondDidHandleBack, isTrue);
+      expect(systemNavigatorPopCount, 1);
     });
 
     testWidgets('인증 직후 기능 설정이 준비될 때까지 splash를 유지한다', (
@@ -213,7 +264,7 @@ void main() {
     });
 
     testWidgets(
-      'authenticated back at non-dashboard tab root requests app exit',
+      'authenticated back at non-dashboard tab root exits on second press',
       (WidgetTester tester) async {
         final authController = _TestAuthController(
           AppAuthSnapshot.authenticated,
@@ -232,11 +283,19 @@ void main() {
 
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
-        final didHandleBack = await tester.binding.handlePopRoute();
+        final firstDidHandleBack = await tester.binding.handlePopRoute();
+        await tester.pump();
+
+        expect(firstDidHandleBack, isTrue);
+        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+        expect(systemNavigatorPopCount, 0);
+        expect(find.text(_exitConfirmationMessage), findsOneWidget);
+
+        final secondDidHandleBack = await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
 
-        expect(didHandleBack, isTrue);
-        expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+        expect(secondDidHandleBack, isTrue);
+        expect(systemNavigatorPopCount, 1);
       },
     );
 
@@ -304,7 +363,7 @@ void main() {
     );
 
     testWidgets(
-      'authenticated back from another tab after opening bean new requests app exit',
+      'authenticated first back from another tab keeps hidden bean stack intact',
       (WidgetTester tester) async {
         final authController = _TestAuthController(
           AppAuthSnapshot.authenticated,
@@ -330,11 +389,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
-        final didHandleBack = await tester.binding.handlePopRoute();
-        await tester.pumpAndSettle();
+        final firstDidHandleBack = await tester.binding.handlePopRoute();
+        await tester.pump();
 
-        expect(didHandleBack, isTrue);
+        expect(firstDidHandleBack, isTrue);
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+        expect(systemNavigatorPopCount, 0);
+        expect(find.text(_exitConfirmationMessage), findsOneWidget);
 
         // The first back should not consume hidden tab stack entries.
         await _tapBottomTab(tester, _TabTarget.beans);
@@ -344,7 +405,7 @@ void main() {
     );
 
     testWidgets(
-      'authenticated back from another tab after opening log new requests app exit',
+      'authenticated first back from another tab keeps hidden log stack intact',
       (WidgetTester tester) async {
         final authController = _TestAuthController(
           AppAuthSnapshot.authenticated,
@@ -370,11 +431,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
 
-        final didHandleBack = await tester.binding.handlePopRoute();
-        await tester.pumpAndSettle();
+        final firstDidHandleBack = await tester.binding.handlePopRoute();
+        await tester.pump();
 
-        expect(didHandleBack, isTrue);
+        expect(firstDidHandleBack, isTrue);
         expect(find.text('COMMUNITY_ROOT'), findsOneWidget);
+        expect(systemNavigatorPopCount, 0);
+        expect(find.text(_exitConfirmationMessage), findsOneWidget);
 
         // The first back should not consume hidden tab stack entries.
         await _tapBottomTab(tester, _TabTarget.logs);
@@ -382,6 +445,40 @@ void main() {
         expect(find.text('LOG_NEW'), findsOneWidget);
       },
     );
+
+    testWidgets('back confirmation expires after two seconds', (
+      WidgetTester tester,
+    ) async {
+      final authController = _TestAuthController(AppAuthSnapshot.authenticated);
+      final router = createAppRouter(
+        authSnapshot: () => authController.snapshot,
+        refreshListenable: authController,
+        routeBuilders: _TestRouteBuilders(authController),
+      );
+
+      await tester.pumpWidget(_buildTestApp(router));
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      expect(systemNavigatorPopCount, 0);
+      expect(find.text(_exitConfirmationMessage), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      expect(systemNavigatorPopCount, 0);
+      expect(find.text(_exitConfirmationMessage), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(systemNavigatorPopCount, 1);
+    });
 
     testWidgets('비허용 locale에서는 커뮤니티 탭을 숨긴다', (WidgetTester tester) async {
       final authController = _TestAuthController(AppAuthSnapshot.guest);
